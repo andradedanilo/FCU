@@ -1,17 +1,17 @@
 .visual{min-height:0;flex:1;display:flex;flex-direction:column;color:#f8e6b8;overflow:hidden}
-.stage{min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+.stage{min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:20px}
 .commentary{min-height:0;display:flex;flex-direction:column;background:linear-gradient(130deg,#213e5e,#10233c);border:2px solid #7286a0;overflow:hidden}
 .toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#1b3454;border-bottom:2px solid #61768f;gap:12px}
 .toolbar strong{font:900 14px monospace;letter-spacing:2px;text-transform:uppercase}
 .toolbar>span{font:13px monospace;color:#ebc66e}
-.lead{font-size:clamp(20px,1.6vw,28px);line-height:1.4;color:#ffe3a0;border-bottom:2px solid #58718b;padding:22px;display:flex;align-items:center;gap:18px;min-height:110px;margin:0}
+.lead{font-size:clamp(18px,1.4vw,25px);line-height:1.4;color:#ffe3a0;border-bottom:2px solid #58718b;padding:14px;display:flex;align-items:center;gap:18px;min-height:78px;margin:0}
 .lead>span{font:900 30px monospace;color:#91bbca}
 .commentary ol{margin:0;padding:0 18px;list-style:none;overflow:auto;flex:1;min-height:0}
-.commentary li{padding:15px 10px;border-bottom:1px solid #415772;font-size:clamp(15px,1.2vw,21px);line-height:1.5;color:#c2d4e3}
+.commentary li{padding:10px 8px;border-bottom:1px solid #415772;font-size:clamp(15px,1.2vw,21px);line-height:1.5;color:#c2d4e3}
 .commentary li:first-child{background:#2e4762}
 .commentary li.goal{color:#ffe2a0;background:#364e4c}
-.analysis{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:16px;background:#0c1a31;border:2px solid #7286a0;padding:18px}
-.highlight{position:relative;flex-shrink:0;background:#081021;}
+.analysis{min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:14px}
+.highlight{min-height:0;display:flex;flex-direction:column;justify-content:center;background:#081021;border:2px solid #7286a0;padding:14px}
 .highlight canvas{display:block;width:100%;aspect-ratio:16/9;image-rendering:pixelated}
 .clipLabel{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:8px 10px;background:#091c35;color:#ffdd90}
 .clipLabel span{font:13px monospace}
@@ -21,15 +21,15 @@
 .previews>div{display:flex;gap:8px;justify-content:center;margin-top:8px}
 .previews button{font-size:12px;padding:6px 12px;min-height:32px}
 .notice{font-size:14px;padding:8px;color:#e7c880}
-@keyframes arrive{from{opacity:0}to{opacity:1}}
-@media(min-width:1800px){.stage{gap:28px}.analysis{padding:24px}.toolbar strong{font-size:18px}.toolbar{padding:20px 24px}.lead{min-height:140px}}
-@media(max-height:800px){.stage{gap:14px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.analysis{padding:10px;gap:10px}.highlight{width:min(100%,400px);align-self:center}.lead{padding:16px;min-height:88px}.commentary li{padding:12px 8px}.toolbar{padding:10px 16px}}
-@media(max-width:750px){.stage{grid-template-columns:1fr;overflow:auto}.commentary{min-height:320px}.analysis{overflow:visible}.highlight{width:100%;max-width:480px;align-self:center}}
-@media(prefers-reduced-motion:reduce){.highlight{animation:none}}
-.analysis>section{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;align-content:center}
-.analysis>section>div{padding:12px 0}
-.analysis>section>h3,.analysis>section>header{grid-column:1/-1}
-.highlight{width:min(100%,500px);align-self:center}
-@media(max-height:800px){.highlight{width:240px}.clipLabel{height:36px;min-height:36px;padding:4px}.clipLabel span{font-size:10px}.clipLabel button{font-size:10px;min-height:26px;padding:3px 5px}.analysis>section{gap:0 16px}.analysis>section>div{padding:6px 0}.analysis>section b{font-size:19px}.analysis>section span{font-size:13px}}
 
-.picture{aspect-ratio:16/9;position:relative;overflow:hidden}.idle{height:100%;background:repeating-linear-gradient(0deg,#39704b 0 24px,#437d50 24px 48px);position:relative}.idle::before{content:'';position:absolute;inset:0 0 55%;background:repeating-linear-gradient(90deg,#859581 0 3px,#253d48 3px 8px);border-bottom:8px solid #d3c498}.idle i{position:absolute;left:12%;right:12%;top:18%;height:37%;border:3px solid #dce2ce;background:repeating-linear-gradient(0deg,transparent 0 8px,#c5d5bd88 8px 9px),repeating-linear-gradient(90deg,transparent 0 8px,#c5d5bd88 8px 9px)}
+.picture{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden}
+.highlight canvas{height:100%;object-fit:contain}
+.analysis>section{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;padding:10px 16px;border:2px solid #7286a0}
+.analysis>section>h3,.analysis>section>header{grid-column:1/-1}
+.analysis>section>h3{font-size:16px;margin:4px 0 10px}
+.analysis>section>header{padding-bottom:8px}
+.analysis>section>div{padding:10px 0}
+.analysis>section b{font-size:23px}
+.analysis>section span{font-size:15px}
+@media(max-height:800px){.stage{gap:14px}.toolbar{padding:10px 14px}.toolbar strong{font-size:12px}.lead{font-size:18px;padding:10px;min-height:64px}.lead>span{font-size:24px}.commentary li{font-size:14px;padding:8px}.analysis{gap:10px}.analysis>section{padding:6px 12px;gap:0 14px}.analysis>section>div{padding:6px 0}.analysis>section b{font-size:19px}.analysis>section span{font-size:13px}.analysis>section>h3{font-size:14px;margin:2px 0 6px}.highlight{padding:8px}.clipLabel{min-height:42px}.clipLabel span{font-size:11px}}
+@media(max-width:750px){.stage{grid-template-columns:1fr;overflow:auto}.highlight{min-height:260px}.analysis{min-height:520px}.commentary{min-height:240px}}

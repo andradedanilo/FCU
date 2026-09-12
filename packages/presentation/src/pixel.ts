@@ -4,7 +4,7 @@ import { sampleHighlight } from './highlights.ts';
 import { text as t } from './text.ts';
 
 // Original 320x180 pixel scene; all sprites and scenery are authored here.
-export function paintHighlight(c:CanvasRenderingContext2D,h:Highlight,progress:number,time:number) {
+export function paintHighlight(c:CanvasRenderingContext2D,h:Highlight|null,progress:number,time:number,idleColor:string) {
   c.imageSmoothingEnabled=false;
   const rect=(x:number,y:number,w:number,height:number,color:string)=>{c.fillStyle=color;c.fillRect(Math.round(x),Math.round(y),w,height);};
   const line=(x:number,y:number,x2:number,y2:number,color:string)=>{c.strokeStyle=color;c.lineWidth=1;c.beginPath();c.moveTo(Math.round(x)+.5,Math.round(y)+.5);c.lineTo(Math.round(x2)+.5,Math.round(y2)+.5);c.stroke();};
@@ -13,7 +13,7 @@ export function paintHighlight(c:CanvasRenderingContext2D,h:Highlight,progress:n
   rect(0,10,320,3,'#e5c883');rect(0,14,320,2,'#485675');
   for(let row=0;row<4;row++)for(let col=0;col<64;col++){
     const x=col*5,y=17+row*6;const wave=Math.sin(time*4+col*.4+row)>.5;
-    rect(x,y,3,3,'#dab184');rect(x-1,y+3,5,3,(col+row)%3===0?h.color:'#dfd6ac');
+    rect(x,y,3,3,'#dab184');rect(x-1,y+3,5,3,(col+row)%3===0?(h?.color??idleColor):'#dfd6ac');
     if(wave){rect(x-2,y,1,4,'#dab184');rect(x+4,y,1,4,'#dab184');}
   }
   rect(0,42,320,10,'#f0d399');label(t.pixelBoards,49,7,'#193349');
@@ -22,6 +22,7 @@ export function paintHighlight(c:CanvasRenderingContext2D,h:Highlight,progress:n
   for(let x=43;x<278;x+=8)line(x,32,x,91,'#b0c7bb');
   for(let y=32;y<=91;y+=6)line(42,y,278,y,'#b0c7bb');
   rect(39,29,4,66,'#fff4d3');rect(39,28,242,4,'#fff4d3');rect(277,29,4,66,'#fff4d3');
+  if(!h)return;
   const player=(x:number,y:number,kit:string,pose:Parameters<typeof paintFootballer>[4],scale=1,back=false)=>paintFootballer(c,x,y,kit,pose,time,scale,back);
   const pose=sampleHighlight(h.kind,progress);
   const ball=(x:number,y:number)=>{rect(x-3,y-3,6,6,'#fff4d6');rect(x-1,y-1,2,2,'#25374c');};
