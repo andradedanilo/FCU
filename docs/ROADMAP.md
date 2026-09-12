@@ -2,7 +2,7 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.5 software implemented and verified on Windows. Stop here before v0.6 under the latest owner direction. Native Linux remains an open platform gate.
+- Current milestone: v0.6 publisher roster pipeline. Owner renewed autonomous work across milestones; continue in complete slices until real input is needed. v0.5 Windows software gate passed; native Linux remains open.
 - Latest verified software gate: v0.5 Windows competition world. Earlier native Linux, low-end and physical-controller requirements remain unverified; no cumulative cross-platform completion claim.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
@@ -13,8 +13,8 @@
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
 - Test inventory/runtime: unchanged 60 registered cases in eleven files (59 Vitest, one Electron journey), within 65/12/3. Eleven focused cases pass in .390 seconds; typecheck/affected lint pass. Full season journey not repeated for this audio change.
-- Evidence from latest change: Windows typecheck and affected renderer lint pass within the 60-second cosmetic budget; renderer build .667 seconds. Manual screen inspection at 1280x720, 1920x1080 and 2560x1440: equal panel bounds, 18px scoreboard-to-board gap, no page overflow, and contained highlight art. Initial screenshot raced the screen transition; corrected capture waits for Play. Corrected inspection 2.02 seconds. Eight ASCII documents checked. No registered tests added or suite rerun (60 cases, eleven files unchanged).
-- Open issues/next action: native Linux package/launch, low-end measurement, physical-controller checks and human audio/pacing review remain unverified. Next requested match-rules work: offside, cancelled-goal cause, corners, post hits/near misses and awarded in-play penalties, then corresponding art. These are not implemented or fabricated by the current presenter; shootout penalties are supported. Do not begin v0.6 roster work during this visual revision.
+- Evidence from latest change: synchronized renewed owner scope and corrected obsolete Canvas presentation guidance. Documentation consistency/ASCII check only; no game suite required. Prior match-board Windows inspection and build remain valid.
+- Open issues/next action: native Linux package/launch, low-end measurement, physical-controller checks and human audio/pacing review remain unverified. Next requested match-rules work: offside, cancelled-goal cause, corners, post hits/near misses and awarded in-play penalties, then corresponding art. These are not implemented or fabricated by the current presenter; shootout penalties are supported. Proceed with v0.6 roster contracts, completeness validation and offline fixtures; retain match-rule requests for subsequent gameplay work.
 - Build identity: app/engine 0.5.2, schema 16, world-2 unchanged. Windows portable build-o8jI95 refreshed. Launch npm run start:packaged. Commit subject: Balance match panels and prevent scoreboard overlap. Native Linux remains unverified.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
