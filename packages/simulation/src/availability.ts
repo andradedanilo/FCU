@@ -11,7 +11,7 @@ export function addDays(date:string,days:number):string{
 }
 export function available(p:Player,date:string){return p.leagueBan===0&&(p.injuryUntil===null||p.injuryUntil<=date);}
 export function activeLineup(match:Match,club:ClubId):PlayerId[]{return (club===match.home?match.homeLineup:match.awayLineup).filter(id=>!match.dismissed.includes(id)&&!match.injuries.some(injury=>injury.playerId===id));}
-export function needsDecision(match:Match){return match.tick<90&&(match.pendingDismissal||match.pendingInjuries.length>0);}
+export function needsDecision(match:Match){return match.phase!=='finished'&&(match.pendingDismissal||match.pendingInjuries.length>0);}
 export function settleAvailability(player:Player,match:Match):Player{
  const events=match.events.filter(e=>e.playerId===player.id);
  const yellows=events.filter(e=>e.type==='yellow'||e.type==='secondYellow').length;
@@ -26,7 +26,7 @@ export function incidents(match:Match,players:Player[],roll:()=>number,weighted:
   const emit=(type:'foul'|'yellow'|'secondYellow'|'red'|'injury',id:PlayerId)=>match.events.push({tick:match.tick,order:match.events.length,clubId:club,playerId:id,assistId:null,type,homeGoals:match.homeGoals,awayGoals:match.awayGoals});
   const outfield=team().filter(p=>p.role!=='GK');
   if(roll()<rules.foul&&outfield.length){
-   const player=weighted(outfield,p=>101-p.discipline);emit('foul',player.id);
+   const player=weighted(outfield,p=>(101-p.discipline)*(match.events.some(e=>e.playerId===p.id&&e.type==='yellow')?rules.bookedFoulWeight:10000));emit('foul',player.id);
    if(roll()<rules.yellow){const second=match.events.some(e=>e.playerId===player.id&&e.type==='yellow');emit(second?'secondYellow':'yellow',player.id);if(second)match.dismissed.push(player.id);}
    else if(roll()<rules.red){emit('red',player.id);match.dismissed.push(player.id);}
    if(club===match.managedClubId&&match.dismissed.includes(player.id))match.pendingDismissal=true;

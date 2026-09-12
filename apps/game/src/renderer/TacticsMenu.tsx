@@ -6,7 +6,7 @@ import {arrangeLineup,validLineup} from '../../../../packages/simulation/src/eng
 import {text as t} from '../../../../packages/presentation/src/text.ts';
 import s from './TacticsMenu.module.css';
 export function TacticsMenu({state,store,draftLineup,busy,confirm,close}:{state:Career;store:(slot:number,tactics:Tactics|null)=>Promise<boolean>;draftLineup:PlayerId[];busy:boolean;confirm:(tactics:Tactics)=>Promise<boolean>;close:()=>void}) {
- const match=state.match&&state.match.tick<90?state.match:null;const home=match?.home===state.clubId;
+ const match=state.match&&state.match.phase!=='finished'?state.match:null;const home=match?.home===state.clubId;
  const initial=match?(home?match.homeTactics:match.awayTactics):state.tactics;
  const [feedback,setFeedback]=useState('');
  const [draft,setDraft]=useState<Tactics>({...initial});const dialog=useRef<HTMLDialogElement>(null);

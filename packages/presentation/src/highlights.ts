@@ -1,4 +1,4 @@
-import type { Career, MatchEvent } from '../../contracts/src/index.ts';
+import type { Career, Match, MatchEvent } from '../../contracts/src/index.ts';
 export type HighlightKind='goal'|'save'|'shot';
 export type Highlight={kind:HighlightKind;player:string;color:string;tick:number;score:string};
 export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEvent|undefined {
@@ -19,9 +19,14 @@ export function minuteDuration(events:MatchEvent[],tick:number):number {
  const before=events.filter(e=>e.tick<tick).at(-1)?.order??-1;
  return selectHighlight(events,before)?3000:600;
 }
-export function clockLabel(tick:number,elapsed:number,duration:number):string {
- const seconds=tick===45||tick===90?0:Math.min(59,Math.floor(Math.max(0,elapsed)/duration*60));
- return `${String(tick).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+export function matchMinute(tick:number,firstAdded=0):string {
+ if(tick>45&&tick<=45+firstAdded)return '45+'+(tick-45);
+ const minute=tick>45+firstAdded?tick-firstAdded:tick;
+ return minute>90?'90+'+(minute-90):String(minute).padStart(2,'0');
+}
+export function clockLabel(tick:number,elapsed:number,duration:number,match?:Pick<Match,'phase'|'addedTime'>):string {
+ const seconds=(match?match.phase==='interval'||match.phase==='finished':tick===45||tick===90)?0:Math.min(59,Math.floor(Math.max(0,elapsed)/duration*60));
+ return `${matchMinute(tick,match?.addedTime[0]??0)}:${String(seconds).padStart(2,'0')}`;
 }
 export function sampleHighlight(kind:HighlightKind,progress:number) {
   const p=Math.max(0,Math.min(1,progress));

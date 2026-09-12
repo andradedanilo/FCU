@@ -4,19 +4,19 @@ import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { z } from 'zod';
 import { canonical, type SaveEntry } from '../../../../packages/contracts/src/index.ts';
-import { validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer } from '../../../../packages/simulation/src/engine.ts';
+import { validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer } from '../../../../packages/simulation/src/engine.ts';
 
 const MAX_BYTES=4*1024*1024;
 export const checksum=(value:unknown)=>createHash('sha256').update(canonical(value)).digest('hex');
-const envelopeSchema=z.object({schema:z.union([z.literal(1),z.literal(2),z.literal(3),z.literal(4),z.literal(5),z.literal(6)]),appVersion:z.enum(['0.1.0','0.2.0','0.2.1','0.2.2','0.3.0','0.3.1']),engineVersion:z.enum(['0.1.0','0.2.0','0.2.1','0.2.2','0.3.0','0.3.1']),rulesetVersion:z.enum(['exhibition-1','exhibition-2','exhibition-3','exhibition-4','exhibition-5']),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.literal('fictional-2026-v1'),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
+const envelopeSchema=z.object({schema:z.union([z.literal(1),z.literal(2),z.literal(3),z.literal(4),z.literal(5),z.literal(6),z.literal(7)]),appVersion:z.enum(['0.1.0','0.2.0','0.2.1','0.2.2','0.3.0','0.3.1','0.3.2']),engineVersion:z.enum(['0.1.0','0.2.0','0.2.1','0.2.2','0.3.0','0.3.1','0.3.2']),rulesetVersion:z.enum(['exhibition-1','exhibition-2','exhibition-3','exhibition-4','exhibition-5','exhibition-6']),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.literal('fictional-2026-v1'),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decode(bytes:Uint8Array) {
   if(bytes.length>MAX_BYTES)throw new Error('INVALID_SAVE');
   const raw:unknown=JSON.parse(gunzipSync(bytes,{maxOutputLength:MAX_BYTES}).toString('utf8'));
-  if(typeof raw==='object'&&raw!==null&&'schema' in raw&&typeof raw.schema==='number'&&raw.schema>6)throw new Error('FUTURE_SAVE');
+  if(typeof raw==='object'&&raw!==null&&'schema' in raw&&typeof raw.schema==='number'&&raw.schema>7)throw new Error('FUTURE_SAVE');
   const e=envelopeSchema.parse(raw);
   if(checksum(e.payload)!==e.checksum)throw new Error('INVALID_SAVE');
-  if((e.schema===6&&(e.engineVersion!=='0.3.1'||e.appVersion!=='0.3.1'||e.rulesetVersion!=='exhibition-5'))||(e.schema===5&&(e.engineVersion!=='0.3.0'||e.appVersion!=='0.3.0'||e.rulesetVersion!=='exhibition-4'))||(e.schema===4&&(e.engineVersion!=='0.2.2'||e.appVersion!=='0.2.2'||e.rulesetVersion!=='exhibition-3'))||(e.schema===3&&(e.engineVersion!=='0.2.1'||e.appVersion!=='0.2.1'||e.rulesetVersion!=='exhibition-2'))||(e.schema<3&&e.rulesetVersion!=='exhibition-1')||(e.schema===1&&(e.engineVersion!=='0.1.0'||e.appVersion!=='0.1.0'))||(e.schema===2&&(e.engineVersion!=='0.2.0'||e.appVersion!=='0.2.0')))throw new Error('INVALID_SAVE');
-  const state=e.schema===1?migrateLegacyCareer(e.payload):e.schema===2?migratePreviousCareer(e.payload):e.schema===3?migrateTacticalCareer(e.payload):e.schema===4?migratePlanningCareer(e.payload):e.schema===5?migrateConditionCareer(e.payload):validateCareer(e.payload);
+  if((e.schema===7&&(e.engineVersion!=='0.3.2'||e.appVersion!=='0.3.2'||e.rulesetVersion!=='exhibition-6'))||(e.schema===6&&(e.engineVersion!=='0.3.1'||e.appVersion!=='0.3.1'||e.rulesetVersion!=='exhibition-5'))||(e.schema===5&&(e.engineVersion!=='0.3.0'||e.appVersion!=='0.3.0'||e.rulesetVersion!=='exhibition-4'))||(e.schema===4&&(e.engineVersion!=='0.2.2'||e.appVersion!=='0.2.2'||e.rulesetVersion!=='exhibition-3'))||(e.schema===3&&(e.engineVersion!=='0.2.1'||e.appVersion!=='0.2.1'||e.rulesetVersion!=='exhibition-2'))||(e.schema<3&&e.rulesetVersion!=='exhibition-1')||(e.schema===1&&(e.engineVersion!=='0.1.0'||e.appVersion!=='0.1.0'))||(e.schema===2&&(e.engineVersion!=='0.2.0'||e.appVersion!=='0.2.0')))throw new Error('INVALID_SAVE');
+  const state=e.schema===1?migrateLegacyCareer(e.payload):e.schema===2?migratePreviousCareer(e.payload):e.schema===3?migrateTacticalCareer(e.payload):e.schema===4?migratePlanningCareer(e.payload):e.schema===5?migrateConditionCareer(e.payload):e.schema===6?migrateAvailabilityCareer(e.payload):validateCareer(e.payload);
   if(state.careerId!==e.careerId||state.revision!==e.stateRevision)throw new Error('INVALID_SAVE');
   return {envelope:e,state};
 }
@@ -53,7 +53,7 @@ export function createSaveStore(root:string) {
     const action=pending.then(async()=>{
       const state=validateCareer(input);const saveCommitId=randomUUID();const folder=directory(state.careerId);
       await mkdir(folder,{recursive:true});
-      const envelope={schema:6,appVersion:'0.3.1',engineVersion:state.engineVersion,rulesetVersion:state.rulesetVersion,careerId:state.careerId,saveCommitId,parentCommitId:parents.get(state.careerId)??null,stateRevision:state.revision,savedAtUTC:new Date().toISOString(),snapshotId:state.snapshotId,kind,checksum:checksum(state),payload:state};
+      const envelope={schema:7,appVersion:'0.3.2',engineVersion:state.engineVersion,rulesetVersion:state.rulesetVersion,careerId:state.careerId,saveCommitId,parentCommitId:parents.get(state.careerId)??null,stateRevision:state.revision,savedAtUTC:new Date().toISOString(),snapshotId:state.snapshotId,kind,checksum:checksum(state),payload:state};
       const temp=join(folder,`${saveCommitId}.tmp`);const handle=await open(temp,'wx');
       try {await handle.writeFile(gzipSync(canonical(envelope)));await handle.sync();}finally{await handle.close();}
       decode(await readFile(temp));await rename(temp,filename(state.careerId,saveCommitId));

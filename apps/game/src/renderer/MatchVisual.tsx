@@ -1,3 +1,4 @@
+import {matchMinute} from '../../../../packages/presentation/src/highlights.ts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Career } from '../../../../packages/contracts/src/index.ts';
 import { projectHighlight, selectHighlight, highlightDuration, playbackSpeed, type Highlight, type HighlightKind } from '../../../../packages/presentation/src/highlights.ts';
@@ -49,11 +50,11 @@ export function MatchVisual({state,playing,onGoal,statistics}:{statistics:ReactN
     elapsed.current=0;sounded.current=false;
     setClip({preview:true,highlight:{kind,player:player.name,color:state.clubs.find(c=>c.id===state.clubId)!.color,tick:0,score:''}});
   }
-  const recent=event&&event.tick===match.tick?describeEvent(state,event):match.tick===0?t.noEvents:match.tick===90?t.fullTime:playing?t.noChance:t.paused;
+  const recent=event&&event.tick===match.tick?describeEvent(state,event):match.tick===0?t.noEvents:match.phase==='finished'?t.fullTime:playing?t.noChance:t.paused;
   return <section className={s.visual}>
     <div className={s.stage}>
       <div className={s.highlight} role="region" aria-label={t.highlights}><div className={s.picture}>{!failed?<canvas ref={canvas} width={320} height={180} aria-label={clip?.preview?t.previewNote:t.highlights}/>:<p className={s.notice}>{t.canvasFailed}</p>}</div><div className={s.clipLabel}><span>{clip?clip.preview?t.previewNote:clip.highlight.player:t.highlights}</span>{clip&&<button onClick={()=>setClip(null)}>{t.skipHighlight}</button>}</div></div>
-      <aside className={s.analysis}><div className={s.commentary}><header className={s.toolbar}><strong>{t.events}</strong><span>{match.tick===90?t.fullTime:playing?t.live:t.paused}</span></header><p className={s.lead} aria-live="polite">{(!event||event.tick!==match.tick)&&<span>{match.tick}'</span>}{recent}</p><ol aria-label={t.events}>{[...match.events].filter(e=>e.type!=='pass').reverse().map(e=><li key={e.order} className={e.type==='goal'?s.goal:e.type==='yellow'?s.yellow:e.type==='red'||e.type==='secondYellow'||e.type==='injury'?s.incident:undefined}>{describeEvent(state,e)}</li>)}</ol></div>{statistics}</aside>
+      <aside className={s.analysis}><div className={s.commentary}><header className={s.toolbar}><strong>{t.events}</strong><span>{match.phase==='finished'?t.fullTime:playing?t.live:t.paused}</span></header><p className={s.lead} aria-live="polite">{(!event||event.tick!==match.tick)&&<span>{matchMinute(match.tick,match.addedTime[0]??0)}'</span>}{recent}</p><ol aria-label={t.events}>{[...match.events].filter(e=>e.type!=='pass').reverse().map(e=><li key={e.order} className={e.type==='goal'?s.goal:e.type==='yellow'?s.yellow:e.type==='red'||e.type==='secondYellow'||e.type==='injury'?s.incident:undefined}>{describeEvent(state,e)}</li>)}</ol></div>{statistics}</aside>
     </div>
     {!failed&&!reduced&&<details className={s.previews}><summary>{t.artPreview}</summary><div role="group" aria-label={t.artPreview}><button disabled={playing} onClick={()=>preview('goal')}>{t.previewGoal}</button><button disabled={playing} onClick={()=>preview('save')}>{t.previewSave}</button><button disabled={playing} onClick={()=>preview('shot')}>{t.previewMiss}</button></div></details>}
   </section>;

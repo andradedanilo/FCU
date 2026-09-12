@@ -1,3 +1,4 @@
+import {matchMinute} from './highlights.ts';
 import { brand, type Career, type MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
   tactics:'Tactics',formation:'Formation',mentality:'Mentality',tempo:'Tempo',pressing:'Pressing',applyTactics:'Apply tactics',tacticsConfirmed:'Tactics confirmed. Changes affect the next minute.',tacticsHint:'Arrange the current eleven. Use Suggest lineup in Squad to pick natural roles before kickoff. Changes also carry into the next fixture.',positionWarning:'Out of position: 80% effectiveness',pressingHint:'High pressing strengthens midfield and increases condition loss by 20%; low pressing reduces both.',mentalityHint:'Cautious reduces chances for both teams; attacking increases them.',tempoHint:'Slow creates fewer attempts; fast creates more.',tacticalMigration:'Earlier checkpoints are upgraded with missing match controls. Future play uses the new tactical rules; original checkpoints are preserved.',choices:{cautious:'Cautious',balanced:'Balanced',attacking:'Attacking',slow:'Slow',normal:'Normal',fast:'Fast',low:'Low',high:'High'},
@@ -34,5 +35,5 @@ export const text = {
 export function describeEvent(state:Career,event:MatchEvent):string {
   const club=state.clubs.find(c=>c.id===event.clubId)!.short;
   const player=state.players.find(p=>p.id===event.playerId)!.name;
-  return `${event.tick}' ${club} / ${player} ${text.event[event.type]}${event.type==='goal'?` (${event.homeGoals}-${event.awayGoals})`:''}`;
+  return `${matchMinute(event.tick,state.match?.addedTime[0]??0)}' ${club} / ${player} ${text.event[event.type]}${event.type==='goal'?` (${event.homeGoals}-${event.awayGoals})`:''}`;
 }

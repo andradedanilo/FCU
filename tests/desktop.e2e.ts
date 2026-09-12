@@ -13,14 +13,26 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
   const save=async()=>{await click('Save');await expect(page.getByRole('status')).toHaveText('Saved to disk.');};
   const entries=()=>page.evaluate(()=>window.fcu.list());
   const latest=async()=>{const list=await entries();if(!list.ok)throw new Error(list.error);const entry=list.value[0]!;const result=await page.evaluate(e=>window.fcu.load(e.careerId,e.commitId),entry);if(!result.ok)throw new Error(result.error);return result.value;};
-  async function playUntil(from:number,to:number){
-    await click(from===45?'Continue':'Play');
-    // Advance the presentation clock only; every minute still goes through the real worker.
-    for(let minute=from+1;minute<=to;minute++){
-      if(minute>from+1)await page.clock.fastForward(6001);
-      await expect(page.getByTestId('minute')).toHaveAttribute('data-tick',String(minute));
-      if(minute!==90)await expect(page.getByRole('button',{name:minute===to&&to===45?'Continue':'Pause',exact:true})).toBeEnabled();
+  async function playUntil(_from:number,to:number){
+    const resume=async()=>{
+      if(await page.locator('[data-decision="true"]').count())await page.getByRole('button',{name:/Continue short-handed|Acknowledge dismissal/}).click();
+      const phase=await page.getByTestId('minute').getAttribute('data-phase');
+      await click(phase==='interval'?'Continue':'Play');
+    };
+    let tick=Number(await page.getByTestId('minute').getAttribute('data-tick'));
+    await resume();
+    // The clock is accelerated; all simulation and incident decisions use the real worker.
+    for(;tick<100;){
+      const previous=tick;
+      await expect(page.getByTestId('minute')).toHaveAttribute('data-tick',String(previous+1));
+      tick=Number(await page.getByTestId('minute').getAttribute('data-tick'));
+      const phase=await page.getByTestId('minute').getAttribute('data-phase');
+      if(phase==='finished'||(to===45&&phase==='interval')||(to===1&&tick===1))return;
+      if(await page.locator('[data-decision="true"]').count())await resume();
+      else if(phase==='interval'&&!await page.getByRole('checkbox',{name:'Continue through half-time'}).isChecked())await click('Continue');
+      else await page.clock.fastForward(6001);
     }
+    throw Error('Match did not reach its phase boundary');
   }
   async function tactics(){
     await click('Tactics');const menu=page.getByRole('dialog',{name:'Tactics',exact:true});await menu.getByRole('button',{name:'4-3-3',exact:true}).click();await menu.getByRole('button',{name:'Attacking',exact:true}).click();await menu.getByRole('button',{name:'Fast',exact:true}).click();await menu.getByRole('button',{name:'High',exact:true}).click();await menu.getByRole('button',{name:'Apply tactics',exact:true}).click();await expect(menu).toHaveCount(0);
@@ -48,12 +60,12 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
     await expect(page.getByRole('button',{name:'Start a career',exact:true})).toBeFocused();await page.keyboard.press('Enter');await page.getByRole('button',{name:'Begin career'}).click();await page.getByRole('button',{name:'Squad',exact:true}).click();
     await expect(page.getByRole('checkbox')).toHaveCount(22);const selected=page.getByRole('checkbox').filter({visible:true});
     const first=await selected.evaluateAll(nodes=>nodes.findIndex(n=>(n as HTMLInputElement).checked));await selected.nth(first).uncheck();await click('Confirm lineup');await expect(page.getByRole('status')).toContainText('eleven distinct');
-    await click('Tactics');const pregame=page.getByRole('dialog',{name:'Tactics',exact:true});await pregame.getByRole('button',{name:'4-3-3',exact:true}).click();await pregame.getByRole('button',{name:'Save setup 1',exact:true}).click();await expect(pregame.getByRole('button',{name:'Use setup 1',exact:true})).toBeEnabled();await pregame.getByRole('button',{name:'4-4-2',exact:true}).click();await pregame.getByRole('button',{name:'Use setup 1',exact:true}).click();await expect(pregame.getByRole('button',{name:'4-3-3',exact:true})).toHaveAttribute('aria-pressed','true');await pregame.getByRole('button',{name:'Apply tactics',exact:true}).click();await expect(page.getByRole('checkbox',{checked:true})).toHaveCount(10);await click('Suggest lineup');await click('Confirm lineup');await click('Choose bench');const bench=page.getByRole('dialog',{name:'Choose bench',exact:true});await bench.getByRole('button',{pressed:true}).last().click();await expect(bench.getByRole('button',{name:'Confirm bench',exact:true})).toBeDisabled();await bench.getByRole('button',{pressed:false}).filter({hasText:'DEF'}).first().click();await click('Confirm bench');await click('Tactics');await page.keyboard.press('ArrowDown');await expect(page.getByRole('dialog')).toContainText('Saved tactical setups');await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('button',{name:'Tactics',exact:true})).toBeFocused();await page.getByRole('button',{name:'Clubhouse'}).click();await page.getByRole('button',{name:'Kick off'}).click();
+    await click('Tactics');const pregame=page.getByRole('dialog',{name:'Tactics',exact:true});await pregame.getByRole('button',{name:'4-3-3',exact:true}).click();await pregame.getByRole('button',{name:'Save setup 1',exact:true}).click();await expect(pregame.getByRole('button',{name:'Use setup 1',exact:true})).toBeEnabled();await pregame.getByRole('button',{name:'4-4-2',exact:true}).click();await pregame.getByRole('button',{name:'Use setup 1',exact:true}).click();await expect(pregame.getByRole('button',{name:'4-3-3',exact:true})).toHaveAttribute('aria-pressed','true');await pregame.getByRole('button',{name:'Apply tactics',exact:true}).click();await expect(page.getByRole('checkbox',{checked:true})).toHaveCount(10);await click('Suggest lineup');await click('Confirm lineup');await click('Choose bench');const bench=page.getByRole('dialog',{name:'Choose bench',exact:true});await bench.getByRole('button',{pressed:true}).last().click();await expect(bench.getByRole('button',{name:'Confirm bench',exact:true})).toBeEnabled();await bench.getByRole('button',{pressed:false}).filter({hasText:'DEF'}).first().click();await click('Confirm bench');await click('Tactics');await page.keyboard.press('ArrowDown');await expect(page.getByRole('dialog')).toContainText('Saved tactical setups');await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('button',{name:'Tactics',exact:true})).toBeFocused();await page.getByRole('button',{name:'Clubhouse'}).click();await page.getByRole('button',{name:'Kick off'}).click();
     await expect(page.locator('canvas')).toHaveCount(1);await expect(page.getByRole('group',{name:'Speed',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Pixel art',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Text',exact:true})).toHaveCount(0);await page.locator('summary').click();await save();const initialEntries=await entries();if(!initialEntries.ok)throw new Error();const checkpoint=initialEntries.value[0]!;
     // Finish the screen entrance animation before measuring highlight layout stability.
     await expect(page.locator('[class*=gameScreen]')).toHaveCSS('transform','none');const statistics=page.getByRole('region',{name:'Match statistics',exact:true});const statisticsBox=await statistics.boundingBox();const beforePreview=await latest();await click('Preview goal');await expect(page.getByText('Art preview - does not affect your match',{exact:true})).toBeVisible();await page.clock.runFor(3500);await page.screenshot({path:'work/match-pixel.png'});expect(await statistics.boundingBox()).toEqual(statisticsBox);await click('Skip highlight');expect(await statistics.boundingBox()).toEqual(statisticsBox);await save();const afterPreview=await latest();expect(canonical(afterPreview)).toBe(canonical(beforePreview));
     await expect(page.getByRole('button',{name:'Finish half',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Next minute',exact:true})).toHaveCount(0);await click('Play');await expect(page.getByTestId('minute')).toHaveAttribute('data-tick','1');await page.clock.runFor(200);expect(await page.getByTestId('minute').textContent()).not.toBe('01:00');await click('Pause');const pausedClock=await page.getByTestId('minute').textContent();await page.clock.fastForward(20000);await expect(page.getByTestId('minute')).toHaveText(pausedClock!);await substitute();await tactics();await playUntil(1,45);await save();await app.close();
-    await launch();await click('Load');await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await expect(page.getByTestId('minute')).toHaveText('45:00');await expect(page.getByRole('button',{name:'Skip highlight',exact:true})).toHaveCount(0);
+    await launch();await click('Load');await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await expect(page.getByTestId('minute')).toHaveAttribute('data-phase','interval');await expect(page.getByRole('button',{name:'Skip highlight',exact:true})).toHaveCount(0);
     await playUntil(45,90);await save();const pixelState=await latest();expect(pixelState.presets[0]?.formation).toBe('4-3-3');expect(pixelState.match!.homeBench).toEqual(pixelState.bench);await click('Match report');const report=page.getByRole('dialog',{name:'Match report',exact:true});await expect(report).toContainText('Points earned');await expect(report).toContainText('League position');await page.screenshot({path:'work/result-report.png'});await page.keyboard.press('Escape');await expect(report).toHaveCount(0);
     await click('Load');
     // Pick the exact immutable checkpoint through the same public load operation, then its visible row.
@@ -67,6 +79,7 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
     await page.getByRole('button',{name:'Continue',exact:false}).click();
     // One bounded full-season user journey, 13 remaining fixtures.
     for(let round=1;round<14;round++){
+      await click('Squad');await click('Suggest lineup');await click('Confirm lineup');await click('Clubhouse');
       await page.getByRole('button',{name:'Kick off'}).click();if(round===1){await page.getByRole('checkbox',{name:'Continue through half-time'}).check();await playUntil(0,90);await page.getByRole('button',{name:'Continue',exact:false}).click();continue;}await page.getByRole('checkbox',{name:'Continue through half-time'}).uncheck();await playUntil(0,45);await playUntil(45,90);await page.getByRole('button',{name:'Continue',exact:false}).click();
     }
     await expect(page.getByText('Season complete',{exact:true})).toBeVisible();await page.getByRole('button',{name:'League table',exact:true}).click();await expect(page.locator('tbody tr')).toHaveCount(8);expect((await latest()).round).toBe(14);expect(errors).toEqual([]);

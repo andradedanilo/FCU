@@ -73,7 +73,7 @@ export function App() {
       if(action.type==='Substitute')setNotice(t.subConfirmed);
       if(action.type==='SetTactics')setNotice(t.tacticsConfirmed);
       if(result.value.match&&needsDecision(result.value.match))stop();
-      if((result.value.match?.tick===45&&!continuousRef.current)||result.value.match?.tick===90)stop();
+      if((result.value.match?.phase==='interval'&&!continuousRef.current)||result.value.match?.phase==='finished')stop();
     } else {setNotice(t.errors[result.error]);stop();}
     occupied.current=false;setBusy(false);return result.ok;
   }
@@ -112,7 +112,7 @@ export function App() {
       <main data-input-section className={s.gameScreen} key={screen}>
         {screen==='title'&&<TitleScreen start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
         {screen==='setup'&&<ClubSelect club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
-        {state&&screen==='home'&&<Clubhouse report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.tick<90?navigate('match'):void command({type:'StartMatch'})}/>}
+        {state&&screen==='home'&&<Clubhouse report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
         {state?.match&&screen==='match'&&<MatchScreen acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}

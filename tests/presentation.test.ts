@@ -35,7 +35,7 @@ it('curates misses without changing or dropping recorded match outcomes',()=>{
 });
 
 it('keeps the visual clock inside its committed minute and draws attacks toward the top',()=>{
- expect(clockLabel(12,300,600)).toBe('12:30');expect(clockLabel(12,900,600)).toBe('12:59');expect(clockLabel(45,300,600)).toBe('45:00');expect(clockLabel(90,999,600)).toBe('90:00');expect(minuteDuration([],0)).toBe(600);
+ expect(clockLabel(12,300,600)).toBe('12:30');expect(clockLabel(12,900,600)).toBe('12:59');expect(clockLabel(45,300,600)).toBe('45:00');expect(clockLabel(90,999,600)).toBe('90:00');expect(clockLabel(47,300,600,{phase:'first',addedTime:[3,null]})).toBe('45+2:30');expect(clockLabel(94,300,600,{phase:'finished',addedTime:[3,1]})).toBe('90+1:00');expect(minuteDuration([],0)).toBe(600);
  expect(sampleHighlight('goal',.25).runnerY).toBeLessThan(sampleHighlight('goal',0).runnerY);expect(sampleHighlight('goal',.58).ballY).toBeLessThan(sampleHighlight('goal',.3).ballY);
 });
 
@@ -46,8 +46,8 @@ it('uses common keyboard and controller actions with a neutral stick dead zone',
 });
 it('reports the managed side result and table consequences without changing career state',()=>{
  let s=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);expect(matchReport(s)).toBeNull();
- const act=(action:{type:'StartMatch'}|{type:'AdvanceMatch';minutes:number})=>{const result=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:crypto.randomUUID()});if(!result.ok)throw Error();s=result.value;};
- act({type:'StartMatch'});act({type:'AdvanceMatch',minutes:90});expect(matchReport(s)).toBeNull();act({type:'AdvanceMatch',minutes:90});const before=canonical(s);const report=matchReport(s)!;
+ const act=(action:{type:'StartMatch'}|{type:'AdvanceMatch';minutes:number}|{type:'AcknowledgeMatch'})=>{const result=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:crypto.randomUUID()});if(!result.ok)throw Error();s=result.value;};
+ act({type:'StartMatch'});act({type:'AdvanceMatch',minutes:90});expect(matchReport(s)).toBeNull();while(s.match!.phase!=='finished'){if(s.match!.pendingDismissal||s.match!.pendingInjuries.length)act({type:'AcknowledgeMatch'});act({type:'AdvanceMatch',minutes:90});}const before=canonical(s);const report=matchReport(s)!;
  expect(report.scorers.length).toBe(s.match!.homeGoals+s.match!.awayGoals);expect(report.points).toBe(report.earned);expect(report.own).toEqual(s.match!.homeStats);expect(report.position).toBe(standings(s).findIndex(r=>r.clubId===s.clubId)+1);expect(canonical(s)).toBe(before);
  const away={...s,clubId:s.match!.away};expect(matchReport(away)!.own).toEqual(s.match!.awayStats);expect(matchReport(away)!.earned+report.earned).toBe(report.outcome==='draw'?2:3);
 });

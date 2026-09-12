@@ -1,6 +1,7 @@
+import {completeMinute} from '../packages/simulation/src/matchTime.ts';
 import {needsDecision} from '../packages/simulation/src/availability.ts';
 import { describe, it, expect } from 'vitest';
-import { createCareer, applyCommand, advanceMatch, startMatch, standings, validateCareer, autoPick, arrangeLineup, chanceProbability, pickBench } from '../packages/simulation/src/engine.ts';
+import { createCareer, applyCommand, advanceMatch, startMatch, standings, validateCareer, autoPick, arrangeLineup, chanceProbability, pickBench, substitutionWindows } from '../packages/simulation/src/engine.ts';
 import { clubs } from '../packages/contracts/src/identity.ts';
 import { defaultTactics, canonical, type Career, type Command, type PlayerId, type Tactics, type Match, type Player } from '../packages/contracts/src/index.ts';
 import { draw } from '../packages/simulation/src/rng.ts';
@@ -12,15 +13,16 @@ function run(s:Career, action: {type:'StartMatch'}|{type:'AdvanceMatch';minutes:
   };
   // This test manager acknowledges removals and selects eligible players between fixtures.
   if(action.type==='StartMatch'&&s.round>0){const lineup=autoPick(s.players,s.clubId,s.tactics.formation,s.date);s={...s,lineup,bench:pickBench(s.players,s.clubId,lineup,s.date)};}
-  const end=action.type==='AdvanceMatch'?Math.min(90,s.match!.tick+action.minutes,s.match!.tick<45?45:90):null;
+  const first=s.match?.phase==='first';
+  const end=action.type==='AdvanceMatch'?s.match!.tick+action.minutes:null;
   send(action);
-  if(end!==null)while(s.match!.tick<end){if(needsDecision(s.match!))send({type:'AcknowledgeMatch'});send({type:'AdvanceMatch',minutes:end-s.match!.tick} as Omit<Command,'careerId'|'commandId'|'expectedRevision'>);}
+  if(end!==null)while(s.match!.tick<end&&s.match!.phase!=='finished'&&!(first&&s.match!.phase==='interval')){if(needsDecision(s.match!))send({type:'AcknowledgeMatch'});send({type:'AdvanceMatch',minutes:end-s.match!.tick} as Omit<Command,'careerId'|'commandId'|'expectedRevision'>);}
   return s;
 }
 
 function continueMatch(previous:Match,players:Player[],minutes:number):Match{
- const end=Math.min(90,previous.tick+minutes,previous.tick<45?45:90);let match=structuredClone(previous);
- while(match.tick<end){match.pendingDismissal=false;match.pendingInjuries=[];match=advanceMatch(match,players,end-match.tick);}return match;
+ const first=previous.phase==='first';const end=previous.tick+minutes;let match=structuredClone(previous);
+ while(match.tick<end&&match.phase!=='finished'&&!(first&&match.phase==='interval')){match.pendingDismissal=false;match.pendingInjuries=[];match=advanceMatch(match,players,end-match.tick);}return match;
 }
 describe('exhibition domain',()=>{
   it('pins the PRNG vector and creates a balanced complete home-away schedule',()=>{
@@ -42,10 +44,10 @@ describe('exhibition domain',()=>{
   });
   it('resumes the exact match stream and stops at half-time without a presenter dependency',()=>{
     const s=initial();const m=startMatch(s,s.fixtures[0]!);
-    const half=advanceMatch(m,s.players,90);expect(half.tick).toBe(45);
-    const split=advanceMatch(JSON.parse(JSON.stringify(advanceMatch(m,s.players,17))),s.players,28);
+    const half=continueMatch(m,s.players,90);expect(half.phase).toBe('interval');
+    const split=continueMatch(JSON.parse(JSON.stringify(continueMatch(m,s.players,17))),s.players,90);
     expect(canonical(split)).toBe(canonical(half));
-    const final=continueMatch(half,s.players,90);expect(final.tick).toBe(90);
+    const final=continueMatch(half,s.players,90);expect(final.phase).toBe('finished');expect(final.tick).toBe(90+final.addedTime[0]!+final.addedTime[1]!);
     expect(final.homeStats.onTarget).toBeGreaterThanOrEqual(final.homeGoals);
     expect(final.events.filter(e=>e.type==='goal')).toHaveLength(final.homeGoals+final.awayGoals);
   });
@@ -118,7 +120,7 @@ it('freezes a selected bench and saves three setups without applying them',()=>{
  const malformed=structuredClone(saved.value);malformed.bench[0]=malformed.lineup[0]!;expect(()=>validateCareer(malformed)).toThrow();
 });
 it('changes only AI mentality at minute 60 with identical chunked and saved continuation',()=>{
- const s=initial();let m=continueMatch(startMatch(s,s.fixtures[0]!),s.players,45);m=continueMatch(m,s.players,15);m.homeGoals=1;m.awayGoals=0;
+ const s=initial();let m=continueMatch(startMatch(s,s.fixtures[0]!),s.players,90);m=continueMatch(m,s.players,15);m.homeGoals=1;m.awayGoals=0;
  const human={...m.homeTactics,mentality:'cautious' as const};m.homeTactics=human;
  const next=advanceMatch(m,s.players,1);expect(m.awayTactics.mentality).toBe('balanced');expect(next.awayTactics.mentality).toBe('attacking');expect(next.homeTactics).toEqual(human);expect(next.events.slice(0,m.events.length)).toEqual(m.events);
  const both=structuredClone(m);both.managedClubId=null;expect(advanceMatch(both,s.players,1).homeTactics.mentality).toBe('cautious');both.awayGoals=1;expect(advanceMatch(both,s.players,1).homeTactics.mentality).toBe('balanced');
@@ -132,4 +134,14 @@ it('retains fractional fatigue across ticks, substitutes and saved continuations
  const changed=run({...s,match:whole},{type:'Substitute',out:whole.homeLineup[1]!,in:whole.homeBench.find(id=>s.players.find(p=>p.id===id)!.role!=='GK')!});const after=advanceMatch(changed.match!,s.players,1);expect(after.condition[whole.homeLineup[1]!]).toBe(whole.condition[whole.homeLineup[1]!]);
  const tired=initial();tired.players=tired.players.map(p=>({...p,condition:10000}));tired.training='intense';let career=run(tired,{type:'StartMatch'});career=run(career,{type:'AdvanceMatch',minutes:90});career=run(career,{type:'AdvanceMatch',minutes:90});
  expect(career.players.find(p=>p.id===tired.lineup[0])!.condition).toBe(28000);expect(career.players.find(p=>p.id===tired.bench[0])!.condition).toBe(38000);expect(career.players.every(p=>p.condition>=0&&p.condition<=100000&&p.morale>=0&&p.morale<=100)).toBe(true);
+});
+
+it('freezes bounded stoppage time and preserves its half-time substitution boundary',()=>{
+ const s=initial();const m=startMatch(s,s.fixtures[0]!);m.tick=45;
+ const event={tick:20,order:0,clubId:m.home,playerId:m.homeLineup[1]!,assistId:null,type:'goal' as const,homeGoals:1,awayGoals:0};
+ m.events=[event,{...event,order:1,tick:40}];expect(completeMinute(m)).toBe(false);expect(m.addedTime).toEqual([1,null]);
+ m.tick=46;expect(completeMinute(m)).toBe(true);expect(m.phase).toBe('interval');
+ const state=run({...s,match:m},{type:'Substitute',out:m.homeLineup[1]!,in:m.homeBench[1]!});expect(state.match!.substitutions[0]!.tick).toBe(46);
+ expect(substitutionWindows(state.match!,m.home)).toBe(0);
+ const next=structuredClone(state.match!);next.phase='second';next.tick=91;next.events.push({...event,tick:80,order:2},{...event,tick:90,order:3});expect(completeMinute(next)).toBe(false);expect(next.addedTime).toEqual([1,1]);next.tick=92;expect(completeMinute(next)).toBe(true);expect(next.phase).toBe('finished');
 });

@@ -13,7 +13,7 @@ export function Substitutions({state,busy,confirm,close}:{state:Career;busy:bool
  const changes=match.substitutions.filter(c=>c.clubId===state.clubId);
  const available=bench.filter(id=>!lineup.includes(id)&&!changes.some(c=>c.out===id)&&!match.injuries.some(i=>i.playerId===id));
  const usedWindows=substitutionWindows(match,state.clubId);
- const allowed=changes.length<5&&(match.tick===45||changes.some(c=>c.tick===match.tick)||usedWindows<3);
+ const allowed=changes.length<5&&(match.phase==='interval'||changes.some(c=>c.tick===match.tick)||usedWindows<3);
  const outgoing=state.players.find(p=>p.id===out);
  async function submit(){if(out&&incoming&&await confirm(out,incoming)){setOut(null);setIncoming(null);}}
  return <dialog ref={dialog} className={s.dialog} onCancel={event=>{if(busy)event.preventDefault();else close();}} aria-label={t.substitutions}>
