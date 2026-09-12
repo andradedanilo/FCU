@@ -124,3 +124,7 @@ When integrating a provider, verify all current senior registrants including unu
 For request sizing estimate `season/team discovery + all squad pages + all player-detail pages + retries`; do not assume one request per player when batch/includes exist. Run a quota forecast before sync. Expected operation is owner-triggered preseason and optional post-window update, not continuous polling.
 
 v0.6 delivers the adapter, sync workflow and versioned data checks. Use controlled fixtures while live access is unavailable and do not claim that as a live API pass. v0.9/v1.0 require working game content and packaging, not a procurement or legal approval gate. Do not manufacture fetched rosters or successful provider responses.
+
+### Development world expansion
+
+v0.5.1 adds the fictional-world-2026-v1 development snapshot: 176 club identities, ten divisions and 3,884 generated players including twelve free agents. packages/contracts/src/world.ts centralizes city profiles and starting membership; original eight-club saves retain fictional-2026-v1 and the exhibition schedule. Identity profile version 2 adds countries without changing the approved starter IDs. This generated world is offline fixture content, not a provider integration or an authentic roster claim.

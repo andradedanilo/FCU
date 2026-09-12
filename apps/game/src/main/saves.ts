@@ -4,9 +4,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { z } from 'zod';
 import { canonical, type SaveEntry } from '../../../../packages/contracts/src/index.ts';
-import { validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer, migrateExhibitionCareer } from '../../../../packages/simulation/src/engine.ts';
+import { validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer, migrateExhibitionCareer, migrateRepeatingCareer } from '../../../../packages/simulation/src/engine.ts';
 
-const MAX_BYTES=4*1024*1024;
+const MAX_BYTES=32*1024*1024;
 export const checksum=(value:unknown)=>createHash('sha256').update(canonical(value)).digest('hex');
 const formats=[
  {app:'0.1.0',rules:'exhibition-1',read:migrateLegacyCareer},
@@ -22,9 +22,10 @@ const formats=[
  {app:'0.4.3',rules:'exhibition-10',read:migrateTransferCareer},
  {app:'0.4.4',rules:'exhibition-11',read:migrateRecruitingCareer},
  {app:'0.4.5',rules:'exhibition-12',read:migrateExhibitionCareer},
- {app:'0.5.0',rules:'exhibition-13',read:validateCareer}
+ {app:'0.5.0',rules:'exhibition-13',read:migrateRepeatingCareer},
+ {app:'0.5.1',rules:'world-1',read:validateCareer}
 ] as const;
-const envelopeSchema=z.object({schema:z.number().int().min(1).max(formats.length),appVersion:z.string().max(20),engineVersion:z.string().max(20),rulesetVersion:z.string().max(40),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.literal('fictional-2026-v1'),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
+const envelopeSchema=z.object({schema:z.number().int().min(1).max(formats.length),appVersion:z.string().max(20),engineVersion:z.string().max(20),rulesetVersion:z.string().max(40),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.enum(['fictional-2026-v1','fictional-world-2026-v1']),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decode(bytes:Uint8Array) {
   if(bytes.length>MAX_BYTES)throw new Error('INVALID_SAVE');
   const raw:unknown=JSON.parse(gunzipSync(bytes,{maxOutputLength:MAX_BYTES}).toString('utf8'));
@@ -34,7 +35,7 @@ export function decode(bytes:Uint8Array) {
   const format=formats[e.schema-1]!;
   if(e.engineVersion!==format.app||e.appVersion!==format.app||e.rulesetVersion!==format.rules)throw new Error('INVALID_SAVE');
   const state=format.read(e.payload);
-  if(state.careerId!==e.careerId||state.revision!==e.stateRevision)throw new Error('INVALID_SAVE');
+  if(state.careerId!==e.careerId||state.revision!==e.stateRevision||state.snapshotId!==e.snapshotId)throw new Error('INVALID_SAVE');
   return {envelope:e,state};
 }
 export function createSaveStore(root:string) {

@@ -5,7 +5,7 @@ self.onmessage=(event:MessageEvent<unknown>)=>{
   let result:Result<Career>;
   try {
     const request=requestSchema.parse(event.data);
-    if(request.type==='NewCareer')result={ok:true,value:createCareer(request.careerId,request.seed,request.clubId)};
+    if(request.type==='NewCareer')result={ok:true,value:createCareer(request.careerId,request.seed,request.clubId,request.world)};
     else if(request.type==='LoadCareer')result={ok:true,value:validateCareer(request.state)};
     else result=state?applyCommand(state,request.command):{ok:false,error:'INVALID_COMMAND'};
     if(result.ok)state=result.value;
