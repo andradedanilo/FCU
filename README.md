@@ -8,13 +8,17 @@ A fast, offline football management prototype for Windows and native Linux.
 
 Choose one of eight city-based clubs, select your starting eleven and play a 14-round home-and-away exhibition season. Every club has 22 fictional test players with generated abilities. This cross-country development league is not an actual national competition.
 
-Matches run minute by minute in a deterministic worker. A larger permanent highlight screen fills the left panel. Live commentary sits above compact statistics in the right column; both stay visible during highlights. Use Play/Pause at the fixed 2x pace. The running MM:SS clock freezes on pause. After kickoff, open Substitutions to pause and replace players. You have five changes across three stoppages; multiple changes at the same paused minute share a stoppage, and half-time changes use none. No re-entry. The nine-player bench is selected automatically at kickoff. Changes affect future minutes; close the panel and press Play to resume. Half-time pauses by default; enable Continue through half-time to play on automatically. Canvas initialization failure leaves commentary available without losing the career.
+Matches run minute by minute in a deterministic worker. A larger permanent highlight screen fills the left panel. Live commentary sits above compact statistics in the right column; both stay visible during highlights. Use Play/Pause at the fixed 2x pace. The running MM:SS clock freezes on pause. After kickoff, open Substitutions to pause and replace players. You have five changes across three stoppages; multiple changes at the same paused minute share a stoppage, and half-time changes use none. No re-entry. Choose nine reserves, including one goalkeeper, in Squad before kickoff; the match freezes that bench. Changes affect future minutes; close the panel and press Play to resume. Half-time pauses by default; enable Continue through half-time to play on automatically. Canvas initialization failure leaves commentary available without losing the career.
 
-Tactics is available from Squad before kickoff and during a match. Choose 4-4-2, 4-3-3 or 4-2-3-1, plus mentality, tempo and pressing. Formation changes rearrange your current eleven; Suggest lineup picks natural roles before kickoff. Out-of-position assignments reduce role strength to 80%. Live changes apply from the next minute and carry into the next fixture. Pressing fatigue costs are not implemented yet. Manual bench selection and the remaining v0.2 features are still pending.
+Tactics is available from Squad before kickoff and during a match. Choose 4-4-2, 4-3-3 or 4-2-3-1, plus mentality, tempo and pressing. Formation changes rearrange your current eleven; Suggest lineup picks natural roles before kickoff. Out-of-position assignments reduce role strength to 80%. Live changes apply from the next minute and carry into the next fixture. Pressing fatigue costs are not implemented yet. Save up to three tactical setups. Use setup previews the saved controls; Apply tactics commits them. Opponents make one score-based mentality change after minute 60.
 
 The game starts fullscreen; **F11** toggles window mode. The layout fills the available display. The retro title screen leads to club selection and a clubhouse with large action tiles. Squad selection uses a lineup board, and the match broadcast pairs commentary with large statistical comparisons and a prominent scoreboard. Original 320x180 pixel scenes show a close attacker-versus-keeper approach, shot and on-pitch celebration or disappointment. The same renderer draws the goal, net, crowd and pitch between chances, without idle animation. Goals and saves take priority; every third off-target attempt is eligible for a cutaway. All attempts still appear in the commentary and statistics. While paused, expand Art preview and use Preview goal, Preview save or Preview miss to audition the art without changing your career. Skip highlight returns to the board without advancing time. Original synthesized music is optional; Music and SFX have independent toggles and pause while the game is hidden. Sound settings currently last for the session. Clubhouse, Squad, Match centre and League table are playable. Manual Save and Load retain mid-match substitutions. Existing v0.1 and v0.2.0 checkpoints load with balanced tactics and preserved benches/substitution history where present. Future play uses the new tactical rules; a notice explains the change. Original files stay untouched, and the next save creates a v0.2.2 checkpoint. Older builds cannot open these newer saves. Manual Save and Load support checkpoints during matches; completed rounds save automatically. Load lists previous checkpoints and identifies unreadable ones for recovery. Saves stay outside the installation folder, under Electron user data (`%APPDATA%\fcu\saves` on Windows, normally `~/.config/fcu/saves` on Linux). Save before closing to retain progress since the latest automatic checkpoint.
 
 The prototype stops after one small season. Transfers, injuries, cards, roster sync and Dream Club are not implemented.
+
+At full time, Match report shows points earned, league position, scorers and chance figures. Reopen the last result from the clubhouse.
+
+Keyboard: arrows or Tab move focus, Enter confirms, Esc goes back, P plays/pauses, and Q/E change sections. Standard gamepads use D-pad/left stick, south button to confirm, east button to go back, shoulders for sections and Start for Play/Pause. Steam Input text entry and polish remain future work.
 
 ## Run from source
 
@@ -62,15 +66,13 @@ npm run test:e2e
 npm run check:docs
 ```
 
-The suite registers 14 unit/integration cases plus one Electron journey in four files. The E2E journey covers offline play, lineup rejection, save/restart, normal/fallback match equivalence, Canvas failure recovery and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
+The suite registers 27 unit/integration cases plus one Electron journey in four files. The E2E journey covers offline play, lineup rejection, save/restart, normal/fallback match equivalence, Canvas failure recovery and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
 
 ## Prototype limits
 
 - Pixel art is the chosen direction; the original goal/save/miss audition is ready for feedback. Three.js and the old stadium renderer have been removed. The scenes illustrate resolved events; they do not physically simulate football.
-- The fixed 500-match probe produced 1.73 goals per match, below the later balance target. No artificial score correction is applied.
+- The fixed 500-match probe produced 1.724 goals per match, below the later balance target. No artificial score correction is applied.
 - All immutable saves are retained in this prototype, including autosaves. Automatic pruning is not implemented yet.
-- Linux, low-end graphics, controllers and Steam Deck remain unverified. Reduced-motion preference keeps commentary visible without animated highlights.
+- Linux, low-end graphics, physical controllers and Steam Deck remain unverified. Standard gamepad mapping has a synthetic Electron check. Reduced-motion preference keeps commentary visible without animated highlights.
 
 FCU is an independent project and does not claim affiliation with existing football games, clubs or leagues.
-
-Before kickoff, choose nine reserves in Squad and save up to three setups in Tactics. Using a saved setup previews it before you apply it. Opponents adjust their mentality once after minute 60 according to the score. Existing checkpoints migrate without replacing the original files.

@@ -1,4 +1,5 @@
-import {useEffect,useRef,useState} from 'react';
+import {useModal} from './input.ts';
+import {useRef,useState} from 'react';
 import type {Career,PlayerId} from '../../../../packages/contracts/src/index.ts';
 import {overall,substitutionWindows} from '../../../../packages/simulation/src/engine.ts';
 import {text as t} from '../../../../packages/presentation/src/text.ts';
@@ -6,7 +7,7 @@ import s from './Substitutions.module.css';
 export function Substitutions({state,busy,confirm,close}:{state:Career;busy:boolean;confirm:(out:PlayerId,incoming:PlayerId)=>Promise<boolean>;close:()=>void}) {
  const dialog=useRef<HTMLDialogElement>(null);
  const [out,setOut]=useState<PlayerId|null>(null);const [incoming,setIncoming]=useState<PlayerId|null>(null);
- useEffect(()=>{dialog.current?.showModal();},[]);
+ useModal(dialog);
  const match=state.match!;const home=match.home===state.clubId;
  const lineup=home?match.homeLineup:match.awayLineup;const bench=home?match.homeBench:match.awayBench;
  const changes=match.substitutions.filter(c=>c.clubId===state.clubId);

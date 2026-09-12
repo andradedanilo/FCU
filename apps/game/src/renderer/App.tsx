@@ -7,6 +7,8 @@ import { text as t } from '../../../../packages/presentation/src/text.ts';
 import { request, resetWorker } from './client.ts';
 import { createGameAudio } from './audio.ts';
 import { TitleScreen, ClubSelect, Clubhouse, SquadScreen, TableScreen } from './Screens.tsx';
+import { useGameInput } from './input.ts';
+import { MatchReport } from './MatchReport.tsx';
 import { BenchMenu } from './BenchMenu.tsx';
 import { TacticsMenu } from './TacticsMenu.tsx';
 import { MatchScreen } from './MatchScreen.tsx';
@@ -20,6 +22,8 @@ export function App() {
   const [benchOpen,setBenchOpen]=useState(false);
   const [tacticsOpen,setTacticsOpen]=useState(false);
   const [screen, setScreen] = useState<Screen>('title');
+  useGameInput(screen);
+  const [reportOpen,setReportOpen]=useState(false);
   const [club, setClub] = useState<ClubId>(clubs[0]!.id);
   const [seed, setSeed] = useState('2026');
   const [lineup, setLineup] = useState<PlayerId[]>([]);
@@ -42,7 +46,7 @@ export function App() {
     audio.current=createGameAudio();
     return () => {if(timer.current)clearTimeout(timer.current);resetWorker();audio.current?.dispose();};
   }, []);
-  useEffect(() => { if(saves!==null)dialog.current?.showModal(); }, [saves]);
+  useEffect(() => { if(saves===null)return;const previous=document.activeElement;const modal=dialog.current;modal?.showModal();return()=>{modal?.close();if(previous instanceof HTMLElement&&previous.isConnected)previous.focus();}; }, [saves]);
   const accept = (value:Career,keepDraft=false) => { latest.current=value;setState(value);if(!keepDraft)setLineup(value.lineup); };
   async function save(value=latest.current, kind:'manual'|'auto'='manual') {
     if(!value)return;
@@ -93,27 +97,28 @@ export function App() {
   const title=screen==='title';
   return <div className={s.app} onClickCapture={event=>{if(event.target instanceof Element&&event.target.closest('button'))audio.current?.click();}}>
     <div className={s.cabinet}>
-      <header className={s.hud}><button className={s.wordmark} disabled={busy} aria-label={t.titleMenu} onClick={()=>navigate('title')}>{brand.short}<span aria-hidden="true">★</span></button>
+      <header data-input-section className={s.hud}><button className={s.wordmark} disabled={busy} aria-label={t.titleMenu} onClick={()=>navigate('title')}>{brand.short}<span aria-hidden="true">★</span></button>
         <span className={s.hudLabel}>{t.retroMode}</span>
         <div className={s.hudActions}>
           <button aria-label={`${t.music} ${music?t.on:t.off}`} aria-pressed={music} onClick={()=>{audio.current?.music(!music);setMusic(!music);}}>{t.music}<span>{music?t.on:t.off}</span></button>
           <button aria-label={`${t.effects} ${effects?t.on:t.off}`} aria-pressed={effects} onClick={()=>{audio.current?.effects(!effects);setEffects(!effects);}}>{t.effects}<span>{effects?t.on:t.off}</span></button>
           {!title&&<button disabled={busy} onClick={()=>void showSaves()}>{t.load}</button>}
           {state&&!title&&<button disabled={busy} onClick={()=>void manualSave()}>{t.save}</button>}
-          {!title&&<button disabled={busy} onClick={()=>navigate(screen==='setup'?'title':screen==='home'?'title':'home')}>{screen==='setup'||screen==='home'?t.back:t.clubhouse}</button>}
+          {!title&&<button data-input-back disabled={busy} onClick={()=>navigate(screen==='setup'?'title':screen==='home'?'title':'home')}>{screen==='setup'||screen==='home'?t.back:t.clubhouse}</button>}
         </div>
       </header>
-      <main className={s.gameScreen} key={screen}>
+      <main data-input-section className={s.gameScreen} key={screen}>
         {screen==='title'&&<TitleScreen start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
         {screen==='setup'&&<ClubSelect club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
-        {state&&screen==='home'&&<Clubhouse state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.tick<90?navigate('match'):void command({type:'StartMatch'})}/>}
+        {state&&screen==='home'&&<Clubhouse report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.tick<90?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId,state.tactics.formation))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
-        {state?.match&&screen==='match'&&<MatchScreen tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
+        {state?.match&&screen==='match'&&<MatchScreen report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>
-      <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}</span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
+      <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}<small title={t.controllerHint}>{t.inputHint}</small></span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>
     {state&&tacticsOpen&&<TacticsMenu store={(slot,tactics)=>command({type:'StoreTacticPreset',slot,tactics})} draftLineup={screen==='squad'?lineup:state.lineup} state={state} busy={busy} close={()=>setTacticsOpen(false)} confirm={tactics=>command({type:'SetTactics',tactics})}/>}
+    {state&&reportOpen&&<MatchReport state={state} close={()=>setReportOpen(false)}/>}
     {state&&benchOpen&&<BenchMenu state={state} busy={busy} close={()=>setBenchOpen(false)} confirm={bench=>command({type:'SelectBench',bench})}/>}
     {saves!==null&&<dialog ref={dialog} className={s.dialog} onCancel={()=>setSaves(null)} aria-label={t.saves}><header><h2>{t.saves}</h2><button onClick={()=>setSaves(null)}>{t.close}</button></header><p>{t.recovery}</p><div className={s.saveList}>{saves.length===0?<p>{t.noSaves}</p>:saves.map(entry=><div className={s.saveRow} key={entry.commitId}>{entry.valid?<><span><strong>{entry.club}</strong><small>{entry.savedAtUTC.replace('T',' ').slice(0,19)} UTC / {t[entry.kind]} / {t.round} {entry.round} / {entry.tick}'</small></span><button disabled={busy} onClick={()=>void load(entry)}>{t.load}</button></>:<p>{entry.error==='FUTURE_SAVE'?t.future:t.corrupt}<small>{entry.commitId}</small></p>}</div>)}</div></dialog>}
   </div>;

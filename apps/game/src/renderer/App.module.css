@@ -30,3 +30,5 @@
 .matchStats meter::-webkit-meter-optimum-value{background:#739fb4}
 @media(max-height:800px){.matchScreen{grid-template-rows:112px minmax(0,1fr) 64px}.score>strong{font-size:48px}.score time{font-size:22px}.matchStats{padding:6px 12px}.matchStats h3{font-size:15px;margin:4px 0 8px}.matchStats header{padding-bottom:6px}.matchStats>div{padding:8px 0;gap:4px 12px}.matchStats b{font-size:22px}.matchStats span{font-size:15px}}
 @media(max-width:750px){.scoreboard{grid-template-columns:1fr 150px 1fr;gap:10px}.score>strong{font-size:36px}.teamName{flex-direction:column;gap:6px}.teamName h2{font-size:15px;text-align:center!important}.teamName .badge{display:none}.matchScreen{padding:0 10px;grid-template-rows:115px minmax(0,1fr) 110px}.matchControls{flex-wrap:wrap}}
+
+.footer>span>small{display:block;font:10px monospace;color:var(--muted);margin-top:3px}.matchControls>strong{color:var(--accent)}
