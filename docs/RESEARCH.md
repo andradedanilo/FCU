@@ -2,7 +2,7 @@
 
 Research cutoff: **11 September 2026**. Sources were accessed during preparation on 11-12 September in the working session; exclude claims about later events. Relative dates below are identified as such. This is a targeted qualitative review of public Reddit discussions and Steam community threads, plus primary technical/provider documentation. It is not a systematic survey, vote-count analysis, a claim about every player, or independent verification of reported bugs.
 
-Owner feedback after the initial research approved FCU's original 1995-era retro direction and game shell. That creative decision is recorded in GAME and ARCHITECTURE; it is owner preference, not an additional market-research finding or a change to the research cutoff.
+Owner feedback after the initial research approved FCU's original 1995-era retro direction and game shell, then selected pixel-art highlights over the moving 3D stadium. That creative decision is recorded in GAME and ARCHITECTURE; it is owner preference, not an additional market-research finding or a change to the research cutoff.
 
 ## 1. Method and limitations
 

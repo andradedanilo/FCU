@@ -1,45 +1,59 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import type { Career, MatchEvent } from '../../../../packages/contracts/src/index.ts';
-import { projectMatch } from '../../../../packages/presentation/src/projector.ts';
+import { useEffect, useRef, useState } from 'react';
+import type { Career } from '../../../../packages/contracts/src/index.ts';
+import { projectHighlight, highlightDuration, type Highlight, type HighlightKind } from '../../../../packages/presentation/src/highlights.ts';
+import { paintHighlight } from '../../../../packages/presentation/src/pixel.ts';
 import { text as t, describeEvent } from '../../../../packages/presentation/src/text.ts';
-import type { createThreePresenter } from '../../../../packages/presentation/src/three.ts';
 import s from './MatchVisual.module.css';
-type Presenter=ReturnType<typeof createThreePresenter>;
-export function MatchVisual({state,playing,speed,onGoal}:{state:Career;playing:boolean;speed:number;onGoal:()=>void}) {
-  const [mode,setMode]=useState<'three'|'text'>(()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'text':'three');
+export function MatchVisual({state,playing,speed,onGoal}:{state:Career;playing:boolean;speed:number;onGoal:(kind:HighlightKind)=>void}) {
+  const [mode,setMode]=useState<'pixel'|'text'>(()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'text':'pixel');
   const [failed,setFailed]=useState(false);
-  const [shadows,setShadows]=useState(false);
-  const [fps,setFps]=useState(30);
-  const [celebration,setCelebration]=useState<MatchEvent|null>(null);
-  const host=useRef<HTMLDivElement>(null);
-  const presenter=useRef<Presenter|null>(null);
-  const latest=useRef({state,playing,speed,shadows,fps});latest.current={state,playing,speed,shadows,fps};
-  const goalCallback=useRef(onGoal);goalCallback.current=onGoal;
-  const seen=useRef({fixture:state.match!.fixtureId,order:state.match!.events.at(-1)?.order??-1});
-  const celebrationTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const [clip,setClip]=useState<{highlight:Highlight;preview:boolean}|null>(null);
+  const canvas=useRef<HTMLCanvasElement>(null);
+  const elapsed=useRef(0);const sounded=useRef(false);
+  const current=useRef({playing,speed,onGoal});current.current={playing,speed,onGoal};
+  const seen=useRef(state.match!.events.at(-1)?.order??-1);
+  const match=state.match!;const event=match.events.at(-1);
   useEffect(()=>{
-    const match=state.match!;
-    if(seen.current.fixture!==match.fixtureId)seen.current={fixture:match.fixtureId,order:-1};
-    const goal=match.events.find(e=>e.order>seen.current.order&&e.type==='goal');
-    seen.current.order=match.events.at(-1)?.order??-1;
-    if(goal){setCelebration(goal);goalCallback.current();if(celebrationTimer.current)clearTimeout(celebrationTimer.current);celebrationTimer.current=setTimeout(()=>setCelebration(null),2400);}
-  },[state.match]);
-  useEffect(()=>()=>{if(celebrationTimer.current)clearTimeout(celebrationTimer.current);},[]);
+    const fresh=match.events.filter(e=>e.order>seen.current&&e.type!=='pass');
+    seen.current=match.events.at(-1)?.order??-1;
+    const next=fresh.find(e=>e.type==='goal')??fresh.at(-1);
+    if(!next||!current.current.playing)return;
+    const highlight=projectHighlight(state,next);
+    elapsed.current=0;sounded.current=false;
+    if(mode==='pixel'&&highlight)setClip({highlight,preview:false});
+    else if(highlight)current.current.onGoal(highlight.kind);
+  },[match,state,mode]);
   useEffect(()=>{
-    if(mode!=='three'||!host.current)return;let disposed=false;
-    void import('../../../../packages/presentation/src/three.ts').then(({createThreePresenter})=>{
-      if(disposed||!host.current)return;
-      const p=createThreePresenter(()=>{setFailed(true);setMode('text');});presenter.current=p;p.mount(host.current);
-      const current=latest.current;p.setSpeed(current.speed);p.shadows(current.shadows);p.fps(current.fps);p.render(projectMatch(current.state),current.state.match!.events);if(!current.playing)p.pause();
-    }).catch(()=>{if(!disposed){setFailed(true);setMode('text');}});
-    return()=>{disposed=true;presenter.current?.dispose();presenter.current=null;};
-  },[mode,state.match?.fixtureId]);
-  useEffect(()=>{const p=presenter.current;if(p){p.setSpeed(speed);p.shadows(shadows);p.fps(fps);p.render(projectMatch(state),state.match!.events);if(!playing)p.pause();}},[state,playing,speed,shadows,fps]);
-  const event=state.match!.events.at(-1);
+    if(mode!=='pixel'||!canvas.current)return;
+    const context=canvas.current.getContext('2d');
+    if(!context){setFailed(true);setMode('text');return;}
+    const c=context;
+    let frame=0,last=0;
+    function draw(time:number){
+      const moving=clip&&(clip.preview||current.current.playing)&&!document.hidden;
+      if(last&&moving)elapsed.current+=Math.min(100,time-last)*(clip.preview?1:current.current.speed);
+      last=time;
+      const progress=Math.min(1,elapsed.current/highlightDuration);
+      paintHighlight(c,clip?.highlight??null,progress,elapsed.current/1000);
+      if(clip&&progress>=.6&&!sounded.current){sounded.current=true;current.current.onGoal(clip.highlight.kind);}
+      if(clip&&progress===1){setClip(null);return;}
+      if(moving)frame=requestAnimationFrame(draw);
+    }
+    function visibility(){cancelAnimationFrame(frame);last=0;if(!document.hidden)frame=requestAnimationFrame(draw);}
+    frame=requestAnimationFrame(draw);document.addEventListener('visibilitychange',visibility);
+    return()=>{cancelAnimationFrame(frame);document.removeEventListener('visibilitychange',visibility);};
+  },[clip,mode,playing]);
+  function preview(kind:HighlightKind){
+    const player=state.players.find(p=>p.clubId===state.clubId&&p.role==='FWD')!;
+    elapsed.current=0;sounded.current=false;
+    setClip({preview:true,highlight:{kind,player:player.name,color:state.clubs.find(c=>c.id===state.clubId)!.color,opponentColor:state.clubs.find(c=>c.id!==state.clubId)!.color,tick:0,score:''}});
+  }
   return <section className={s.visual}>
-    <div className={s.toolbar}><strong>{t.highlights}</strong><div><button aria-pressed={mode==='three'} disabled={failed} onClick={()=>setMode('three')}>{t.threeMode}</button><button aria-pressed={mode==='text'} onClick={()=>setMode('text')}>{t.textMode}</button>{mode==='three'&&<><button disabled={playing||!event} onClick={()=>presenter.current?.replay()}>{t.replayPlay}</button><button aria-pressed={shadows} onClick={()=>setShadows(!shadows)}>{t.shadows}</button><button aria-label={t.fps} onClick={()=>setFps(fps===30?60:30)}>{fps} fps</button></>}</div></div>
-    <div className={s.stage}>{mode==='three'?<div className={s.pitch} ref={host} data-testid="pitch"/>:<div className={s.text}><span>{state.match!.tick}'</span><p>{event?describeEvent(state,event):t.noEvents}</p></div>}
-      {celebration&&<div className={s.celebration} aria-label={t.replayLabel}><div className={s.sparkles} aria-hidden="true">★ ★ ★</div><strong>{t.goalBanner}</strong><div className={s.celebratingPlayer} aria-hidden="true" style={{'--kit':state.clubs.find(c=>c.id===celebration.clubId)!.color} as CSSProperties}><i/><b/><span/><em/><small/></div><p>{state.players.find(p=>p.id===celebration.playerId)!.name}</p><small>{celebration.tick}' / {celebration.homeGoals} - {celebration.awayGoals}</small><button onClick={()=>setCelebration(null)}>{t.skip}</button></div>}
-    </div><div className={s.caption}>{failed?t.graphicsFailed:event?describeEvent(state,event):t.visualNote}</div>
+    <div className={s.toolbar}><strong>{t.highlights}</strong><div><button disabled={failed} aria-pressed={mode==='pixel'} onClick={()=>{setClip(null);setMode('pixel');}}>{t.pixelMode}</button><button aria-pressed={mode==='text'} onClick={()=>{setClip(null);setMode('text');}}>{t.textMode}</button></div></div>
+    <div className={s.stage}>{mode==='pixel'?<canvas ref={canvas} width={320} height={180} aria-label={clip?.preview?t.previewNote:t.highlights}/>:<div className={s.text}><strong>{match.tick}'</strong><p>{event?describeEvent(state,event):t.noEvents}</p></div>}
+      {clip&&mode==='pixel'&&<div className={s.clipLabel}><span>{clip.preview?t.previewNote:`${clip.highlight.tick}' / ${clip.highlight.player}`}</span><button onClick={()=>setClip(null)}>{t.skipHighlight}</button></div>}
+    </div>
+    <div className={s.caption}>{failed?t.canvasFailed:event?describeEvent(state,event):t.visualNote}</div>
+    {mode==='pixel'&&<div className={s.previews} role="group" aria-label={t.artPreview}><span>{t.artPreview}</span><button disabled={playing} onClick={()=>preview('goal')}>{t.previewGoal}</button><button disabled={playing} onClick={()=>preview('save')}>{t.previewSave}</button><button disabled={playing} onClick={()=>preview('shot')}>{t.previewMiss}</button></div>}
   </section>;
 }

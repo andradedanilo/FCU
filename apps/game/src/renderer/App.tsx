@@ -103,7 +103,7 @@ export function App() {
         {state&&screen==='home'&&<Clubhouse state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.tick<90?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
-        {state?.match&&screen==='match'&&<MatchScreen state={state} busy={busy} playing={playing} speed={speed} play={play} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} changeSpeed={value=>{setSpeed(value);speedRef.current=value;}} done={()=>navigate('home')} goal={()=>audio.current?.goal()}/>}
+        {state?.match&&screen==='match'&&<MatchScreen state={state} busy={busy} playing={playing} speed={speed} play={play} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} changeSpeed={value=>{setSpeed(value);speedRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>
       <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}</span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>

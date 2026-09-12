@@ -3,7 +3,7 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { canonical } from '../packages/contracts/src/index.ts';
-test('offline career, lineup, text/3D equivalence, WebGL recovery and full exhibition season',async()=>{
+test('offline career, lineup, pixel/text equivalence, canvas recovery and full exhibition season',async()=>{
   const data=await mkdtemp(join(tmpdir(),'fcu-e2e-'));
   let app!:ElectronApplication;
   let page!:Page;
@@ -29,19 +29,20 @@ test('offline career, lineup, text/3D equivalence, WebGL recovery and full exhib
     const first=await selected.evaluateAll(nodes=>nodes.findIndex(n=>(n as HTMLInputElement).checked));await selected.nth(first).uncheck();await click('Confirm lineup');await expect(page.getByRole('status')).toContainText('eleven distinct');
     await click('Suggest 4-4-2');await click('Confirm lineup');await page.getByRole('button',{name:'Clubhouse'}).click();await page.getByRole('button',{name:'Kick off'}).click();
     await expect(page.locator('canvas')).toHaveCount(1);await page.getByRole('group',{name:'Speed',exact:true}).getByRole('button',{name:'2x Brisk'}).click();await expect(page.getByRole('button',{name:'2x Brisk'})).toHaveAttribute('aria-pressed','true');await page.getByRole('button',{name:'1x Matchday'}).click();await save();const initialEntries=await entries();if(!initialEntries.ok)throw new Error();const checkpoint=initialEntries.value[0]!;
-    await page.screenshot({path:'work/match-3d.png'});
+    const beforePreview=await latest();await click('Preview goal');await expect(page.getByText('Art preview - does not affect your match',{exact:true})).toBeVisible();await page.clock.runFor(3500);await page.screenshot({path:'work/match-pixel.png'});await click('Skip highlight');await save();const afterPreview=await latest();expect(canonical(afterPreview)).toBe(canonical(beforePreview));
     await expect(page.getByRole('button',{name:'Finish half',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Next minute',exact:true})).toHaveCount(0);await click('Play');await expect(page.getByTestId('minute')).toHaveText("1'");await click('Pause');await page.clock.fastForward(20000);await expect(page.getByTestId('minute')).toHaveText("1'");await playUntil(1,45);await save();await app.close();
-    await launch();await click('Load');await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await expect(page.getByTestId('minute')).toHaveText('Half-time');await expect(page.getByLabel('Event celebration')).toHaveCount(0);
-    await playUntil(45,90);await save();const threeState=await latest();
+    await launch();await click('Load');await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await expect(page.getByTestId('minute')).toHaveText('Half-time');await expect(page.getByRole('button',{name:'Skip highlight',exact:true})).toHaveCount(0);
+    await playUntil(45,90);await save();const pixelState=await latest();
     await click('Load');
     // Pick the exact immutable checkpoint through the same public load operation, then its visible row.
     const saveList=await entries();if(!saveList.ok)throw new Error();const index=saveList.value.findIndex(e=>e.commitId===checkpoint.commitId);
     await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).nth(index).click();await expect(page.getByTestId('minute')).toHaveText("0'");
     await click('Text');await playUntil(0,45);await playUntil(45,90);await save();const textState=await latest();
-    expect(canonical(textState.match)).toBe(canonical(threeState.match));expect(canonical(textState.fixtures)).toBe(canonical(threeState.fixtures));
-    await click('3D');await expect(page.locator('canvas')).toHaveCount(1);
-    await page.locator('canvas').evaluate(canvas=>{const context=(canvas as HTMLCanvasElement).getContext('webgl2');const extension=context?.getExtension('WEBGL_lose_context');if(!extension)throw new Error('No real context-loss extension');extension.loseContext();});
-    await expect(page.getByText('3D is unavailable. Text play remains available and your career is unchanged.')).toBeVisible();await expect(page.locator('canvas')).toHaveCount(0);
+    expect(canonical(textState.match)).toBe(canonical(pixelState.match));expect(canonical(textState.fixtures)).toBe(canonical(pixelState.fixtures));
+    await click('Pixel art');await expect(page.locator('canvas')).toHaveCount(1);
+    // A Canvas initialization failure must preserve the same text-only career flow.
+    await click('Text');await page.evaluate(()=>{HTMLCanvasElement.prototype.getContext=()=>null;});await click('Pixel art');
+    await expect(page.getByText('Pixel art is unavailable. Text play remains available.')).toBeVisible();await expect(page.locator('canvas')).toHaveCount(0);
     await page.getByRole('button',{name:'Continue',exact:false}).click();
     // One bounded full-season user journey, 13 remaining fixtures.
     for(let round=1;round<14;round++){

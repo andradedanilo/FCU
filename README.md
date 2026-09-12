@@ -8,11 +8,11 @@ A fast, offline football management prototype for Windows and native Linux.
 
 Choose one of eight city-based clubs, select your starting eleven and play a 14-round home-and-away exhibition season. Every club has 22 fictional test players with generated abilities. This cross-country development league is not an actual national competition.
 
-Matches run minute by minute in a deterministic worker. Watch stylized Three.js highlights or switch to text; both use the same match events and results. Use Play/Pause and 1x/2x/3x speed. Half-time pauses by default; enable Continue through half-time to play on automatically. WebGL failure falls back to text without losing the career.
+Matches run minute by minute in a deterministic worker. Watch original pixel-art highlights or switch to text; both use the same match events and results. Use Play/Pause and 1x/2x/3x speed. Half-time pauses by default; enable Continue through half-time to play on automatically. Canvas initialization failure falls back to text without losing the career.
 
-The game starts fullscreen; **F11** toggles window mode. The layout fills the available display. The retro title screen leads to club selection and a clubhouse with large action tiles. Squad selection uses a lineup board, and the match broadcast has 1x/2x/3x speed buttons. The horizontal camera keeps the complete pitch visible, surrounded by tiered stands, club-colored supporters, waving flags and fictional advertising boards. Articulated block players carry positions between slower pass/run/shot sequences. Deeper stands and waving crowds surround the enlarged pitch view. Pause and choose Replay play to watch the latest sequence for six seconds without advancing the match. Goals trigger a short, skippable pixel celebration. Original synthesized music is optional; Music and SFX have independent toggles and pause while the game is hidden. Sound settings currently last for the session. Clubhouse, Squad, Match centre and League table are playable. Manual Save and Load support checkpoints during matches; completed rounds save automatically. Load lists previous checkpoints and identifies unreadable ones for recovery. Saves stay outside the installation folder, under Electron user data (`%APPDATA%\fcu\saves` on Windows, normally `~/.config/fcu/saves` on Linux). Save before closing to retain progress since the latest automatic checkpoint.
+The game starts fullscreen; **F11** toggles window mode. The layout fills the available display. The retro title screen leads to club selection and a clubhouse with large action tiles. Squad selection uses a lineup board, and the match broadcast has 1x/2x/3x speed buttons. Quiet minutes show a match board. Short original 320x180 pixel scenes illustrate goals, saves and misses with distinct reactions and sound cues. While paused, use Preview goal, Preview save or Preview miss to audition the art without changing your career. Skip highlight returns to the board without advancing time. Original synthesized music is optional; Music and SFX have independent toggles and pause while the game is hidden. Sound settings currently last for the session. Clubhouse, Squad, Match centre and League table are playable. Manual Save and Load support checkpoints during matches; completed rounds save automatically. Load lists previous checkpoints and identifies unreadable ones for recovery. Saves stay outside the installation folder, under Electron user data (`%APPDATA%\fcu\saves` on Windows, normally `~/.config/fcu/saves` on Linux). Save before closing to retain progress since the latest automatic checkpoint.
 
-The prototype stops after one small season. Transfers, tactics, injuries, cards, roster sync, Dream Club and advanced 3D are not implemented.
+The prototype stops after one small season. Transfers, tactics, injuries, cards, roster sync, Dream Club and substitutions are not implemented.
 
 ## Run from source
 
@@ -60,11 +60,11 @@ npm run test:e2e
 npm run check:docs
 ```
 
-The suite registers 12 unit/integration cases plus one Electron journey in four files. The E2E journey covers offline play, lineup rejection, save/restart, text/3D equivalence, actual WebGL context loss and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
+The suite registers 12 unit/integration cases plus one Electron journey in four files. The E2E journey covers offline play, lineup rejection, save/restart, pixel/text equivalence, Canvas failure recovery and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
 
 ## Prototype limits
 
-- Three.js is retained for the retro direction. The retro layout is approved; the stadium scale and fluid-play refinement is ready for feedback. It illustrates events rather than physically reconstructing football.
+- Pixel art is the chosen direction; the original goal/save/miss audition is ready for feedback. Three.js and the old stadium renderer have been removed. The scenes illustrate resolved events; they do not physically simulate football.
 - The fixed 500-match probe produced 1.73 goals per match, below the later balance target. No artificial score correction is applied.
 - All immutable saves are retained in v0.1, including autosaves. Automatic pruning is not implemented yet.
 - Linux, low-end graphics, controllers and Steam Deck remain unverified. Reduced-motion preference starts in text mode.

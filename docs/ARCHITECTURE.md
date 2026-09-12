@@ -6,7 +6,7 @@ Use Electron + React + TypeScript + Vite, npm workspaces, Vitest for domain/inte
 
 This is a design choice for a table-heavy management game and a TypeScript workflow. Electron carries a larger runtime and requires active security/native-module maintenance. Godot becomes attractive if interactive 3D football becomes the product, but that is outside this design. Tauri adds a Rust boundary and differing system webviews; there is no demonstrated need to trade Electron's shared Chromium behavior for it here. The choice is reasoned, not a benchmark claim.
 
-Select exact compatible stable package releases at project initialization and commit a lockfile. Do not bake an unverified React release from the prior conversation into the project. Record Electron/Chromium/Node, React, Vite, TypeScript, Three.js, builders, test runners and native Steam binding versions in the decision log. Use official documentation for their selected releases. Supported version selection is a v0.1 task, not an assumption that package versions never change. Sources: [Electron security](https://www.electronjs.org/docs/latest/tutorial/security), [React](https://react.dev/learn), [Vite](https://vite.dev/guide/), [Electron Packager](https://packages.electronjs.org/packager/).
+Select exact compatible stable package releases at project initialization and commit a lockfile. Do not bake an unverified React release from the prior conversation into the project. Record Electron/Chromium/Node, React, Vite, TypeScript, builders, test runners and native Steam binding versions in the decision log. Use official documentation for their selected releases. Supported version selection is a v0.1 task, not an assumption that package versions never change. Sources: [Electron security](https://www.electronjs.org/docs/latest/tutorial/security), [React](https://react.dev/learn), [Vite](https://vite.dev/guide/), [Electron Packager](https://packages.electronjs.org/packager/).
 
 ## 2. Repository layout
 
@@ -21,7 +21,7 @@ apps/game/src/worker/                     # serial simulation host, no Node acce
 apps/roster-tool/                         # separate developer-only local tool, v0.6
 packages/simulation/src/                  # pure game functions and deterministic RNG
 packages/contracts/src/                   # schema validation, IDs, DTOs, versions
-packages/presentation/src/                # event projection; text/2D and lazy Three.js
+packages/presentation/src/                # event projection; pixel-art event highlights and text
 packages/roster-pipeline/src/             # normalization, adapters, data quality checks and provenance
 assets/original/                         # original art/audio with provenance
 data/fictional/                           # small committed development fixtures
@@ -37,7 +37,7 @@ Tests may instead be colocated when clearer, but never duplicate shared risk sce
 React screen -> typed preload request -> main validation/router -> simulation worker
                                                             <- result/view model
 worker stable checkpoint -> main save writer -> local filesystem
-worker events -> presentation projector -> text / 2D / Three.js
+worker events -> presentation projector -> pixel art / text
 main -> optional Steam adapter
 publisher roster tool -> provider adapters -> staging/review -> cleared pack
 cleared pack -> main validates -> worker creates NEW career
@@ -84,11 +84,11 @@ Steam Auto-Cloud syncs complete save files only; exclude `.tmp`, settings, cache
 
 ## 6. Presentation contract
 
-Define `MatchPresenter.mount(container)`, `render(view, events)`, `setSpeed(speed)`, `pause()` and `dispose()`. MatchView contains only committed data: elapsed tick, figures/teams, scoreboard and events; it contains no callable domain state. Share an event projector for commentary and animation labels. React wraps a presenter once, outside per-frame component rendering. Use plain Three.js initially, not another declarative 3D dependency unless an actual need is recorded.
+Pure projectHighlight maps a committed event to a small display value: outcome, player, club colors, tick and score. sampleHighlight supplies bounded phase/ball positions; neither imports DOM or alters the career. Canvas paintHighlight draws original 320x180 sprites and scenery. React owns clip selection and a cancellable animation loop, not per-frame domain updates.
 
-Lazy-load the Three.js bundle. Cap active animation at 60 fps with a 30 fps option; stop animation while hidden/paused except necessary redraws. Dispose geometry, materials, textures, render targets, event listeners and animation loops on unmount. Honor reduced-motion and context-loss events. On renderer initialization or WebGL failure, preserve career and switch to text/2D with a clear notice. The game must remain playable without a graphics context. No GPU computation drives simulation. See the official [Three.js cleanup guide](https://threejs.org/manual/en/cleanup.html).
+No Three.js or WebGL runtime is retained. Pixel art is the default; reduced-motion preference starts in text. Canvas initialization failure switches to text with a notice. Stop animation on hidden/unmount and freeze actual clips on pause. Explicit art previews are presentation-only, run for 4.8 seconds and never write to the worker or save store. End or dismiss a clip by returning to the match board. Do not autoplay old events on load.
 
-At v0.1 compare one seeded match in 3D and text; at v0.2 include 2D. The scores, cards, injuries and event order must match for identical commands. Owner can choose text/2D as default without deleting the experiment or changing saves. No further 3D scope before this evaluation.
+Compare seeded pixel/text matches and saved state. Keep one Electron journey within the test budget, replacing obsolete 3D geometry/context-loss assertions with Canvas failure recovery, preview isolation and pixel/text equivalence. Historical decisions below document the superseded experiments; current code and contracts use pixel art only.
 
 ## 7. Security and distribution
 
@@ -104,7 +104,7 @@ Use Steam for application/roster-pack updates, not an independent Electron auto-
 
 Reference baseline to obtain by v0.1: Windows 11 and Ubuntu 26.04 on a four-core x64 machine with 8 GB RAM, SSD and integrated graphics; record actual CPU/GPU/driver/OS versions in ROADMAP. This is a development target, not a published minimum spec yet.
 
-Warm menu actions p95 <100 ms; first launch to menu <5 seconds excluding Steam startup; 10-division ordinary day <500 ms and matchday <2 seconds with presentation disabled; new season <5 seconds; stable save/load <2 seconds each; game memory <800 MB without 3D, <1.2 GB with 3D; ten-season compressed career <25 MB. Idle menus must not run a free animation loop. v0.8 3D target >=30 fps at 1280*720 low settings; use original low-poly assets and reduce visual detail before raising system requirements.
+Warm menu actions p95 <100 ms; first launch to menu <5 seconds excluding Steam startup; 10-division ordinary day <500 ms and matchday <2 seconds with presentation disabled; new season <5 seconds; stable save/load <2 seconds each; game memory <800 MB; ten-season compressed career <25 MB. Idle menus must not run a free animation loop. v0.8 pixel-art target >=30 fps at 1280*720; use original sprites and reduce visual detail before raising system requirements.
 
 Measure five warm repetitions for ordinary performance checks; report machine, medians/p95 and dataset. Long-career runs follow AGENTS fixed workload, not continuous benchmarking. Diagnostics opt-in export includes versions, error codes, timings and checksums; save content only with player consent. No telemetry server at launch. Rotate logs at 5 MB *3 and redact credentials/provider URLs with tokens. Retain coarse season records while pruning old detailed events; verify no retained scene growth after ten match-screen mount/unmount cycles.
 
@@ -116,7 +116,7 @@ Target Ubuntu 26.04 desktop separately from SteamOS on actual Steam Deck hardwar
 
 Controller actions: move focus, confirm, back, next/previous section, open contextual actions, continue, pause match and adjust playback speed. Centralize them in one input adapter. Use Steam Input mappings and appropriate controller glyphs; all features must be reachable without an external keyboard/mouse. Deck trackpads are supplementary, not the sole solution for inaccessible controls. Use Steam text input/onscreen keyboard for names and search; restore focus when it closes. Never require a desktop launcher to choose a mode.
 
-Provide a 1280x800 handheld layout: essential text >=16 physical pixels as an internal design target, single-column player panels, readable table summaries with detail views, generous focus targets and all primary actions onscreen. Prefer 1280x800; 1280x720 remains supported. Verify text legibility on the actual screen, not only screenshots. Aim for stable 30 fps in Three.js at low preset; text/2D fallback remains available. Pause and checkpoint on suspend when possible, and always support interruption recovery because suspension may arrive without time to save. On resume restore audio, graphics context, controller focus and pending pack choices.
+Provide a 1280x800 handheld layout: essential text >=16 physical pixels as an internal design target, single-column player panels, readable table summaries with detail views, generous focus targets and all primary actions onscreen. Prefer 1280x800; 1280x720 remains supported. Verify text legibility on the actual screen, not only screenshots. Aim for stable 30 fps in Canvas highlights; text fallback remains available. Pause and checkpoint on suspend when possible, and always support interruption recovery because suspension may arrive without time to save. On resume restore audio, graphics context, controller focus and pending pack choices.
 
 v0.8 manual pass: title-to-match, transfer, search/name entry, save/load, Dream Club pack choice, suspend/resume and offline play on real Deck. v0.9 submit the compatible build for Valve review and record outcome/actions. Deck Verified is the desired external result, not a badge the project can self-certify. Unless the owner changes this requirement, waiting for the external badge alone does not block the Windows/Linux release; fix demonstrated compatibility defects and describe tested support accurately. Official references: [compatibility guidance](https://partner.steamgames.com/doc/steamhardware/compat?l=english) and [controller recommendations](https://partner.steamgames.com/doc/steamhardware/recommendations?language=english).
 
@@ -158,5 +158,7 @@ At fixture completion atomically commit result, reward progress and new pack ent
 | A22 | 2026-09-12: owner approved the retro shell and requested continuously maintained reference documents; stadium batch follows | Pure samplePlay projects committed events into positions; Three.js owns rendering only. Instanced supporters, flag pivots and local canvas boards share resources with explicit disposal. Animation runs only during playback or bounded three-second replay, pauses when hidden, and never sends simulation commands. No engine/save version change. |
 
 | A23 | 2026-09-12: owner requests fullscreen, larger stadium scale and fluent match pacing; removes skip controls | Fullscreen default with native F11 toggle and fluid shell; full-pitch camera may crop outer decks. Pure choreography accepts previous visual positions; articulated block figures and instanced crowd arms stay presentation-only. Six-second highlights and 1.2-second quiet ticks at 1x, capped 3x; optional half-time continuation. Engine/rules/save versions unchanged. Supersedes A22 replay duration (now six seconds). |
+
+| A24 | 2026-09-12: owner selects pixel-art highlights and requests removal of unused tools | Supersedes A03/A18/A20/A22/A23 presentation experiments. Remove Three.js, its types, stadium, figure projector, choreography, GPU controls and build split. Original Canvas 2D goal/save/miss audition plus text; labeled previews never affect careers. Engine/rules/save versions unchanged. |
 
 Append a dated row only for consequential changes: reason, alternatives rejected, affected gate and migration impact. Routine implementation details belong in code.

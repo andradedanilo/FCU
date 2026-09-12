@@ -40,7 +40,7 @@ export function createGameAudio() {
     music(value: boolean) { music = value; stopNotes(); if (music) loop(); },
     effects(value: boolean) { effects = value; },
     click() { if (effects) tone(72, 0.055, 0.025, 'triangle'); },
-    goal() { if (effects) [60, 64, 67, 72].forEach((note, i) => tone(note, 0.22, 0.035, 'square', i * 0.11)); },
+    highlight(kind:'goal'|'save'|'shot') { if (effects) (kind==='goal'?[60,64,67,72]:kind==='save'?[67,72,79]:[64,60,55]).forEach((note,i)=>tone(note,.22,.035,kind==='shot'?'triangle':'square',i*.11)); },
     dispose() { music = false; stopNotes(); document.removeEventListener('visibilitychange', visibility); void context?.close(); }
   };
 }

@@ -3,7 +3,7 @@ import { text as t, describeEvent } from '../../../../packages/presentation/src/
 import { ClubBadge } from './GameArt.tsx';
 import { MatchVisual } from './MatchVisual.tsx';
 import s from './App.module.css';
-export function MatchScreen({state,busy,playing,speed,play,continuousHalf,changeContinuous,changeSpeed,done,goal}:{state:Career;busy:boolean;playing:boolean;speed:number;play:()=>void;continuousHalf:boolean;changeContinuous:(value:boolean)=>void;changeSpeed:(speed:number)=>void;done:()=>void;goal:()=>void}) {
+export function MatchScreen({state,busy,playing,speed,play,continuousHalf,changeContinuous,changeSpeed,done,goal}:{state:Career;busy:boolean;playing:boolean;speed:number;play:()=>void;continuousHalf:boolean;changeContinuous:(value:boolean)=>void;changeSpeed:(speed:number)=>void;done:()=>void;goal:(kind:'goal'|'save'|'shot')=>void}) {
   const match=state.match!;const home=state.clubs.find(c=>c.id===match.home)!;const away=state.clubs.find(c=>c.id===match.away)!;
   return <section className={s.matchScreen}>
     <div className={s.scoreboard}><div className={s.teamName}><ClubBadge color={home.color} short={home.short}/><h2>{home.name}</h2></div><div className={s.score}><span className={s.broadcast}>{t.broadcast}</span><strong data-testid="score">{match.homeGoals} - {match.awayGoals}</strong><span data-testid="minute">{match.tick===90?t.fullTime:match.tick===45?t.halfTime:`${match.tick}'`}</span></div><div className={s.teamName}><h2>{away.name}</h2><ClubBadge color={away.color} short={away.short}/></div></div>
