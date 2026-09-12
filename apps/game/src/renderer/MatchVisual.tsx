@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Career } from '../../../../packages/contracts/src/index.ts';
 import { projectHighlight, selectHighlight, highlightDuration, playbackSpeed, type Highlight, type HighlightKind } from '../../../../packages/presentation/src/highlights.ts';
 import { paintHighlight } from '../../../../packages/presentation/src/pixel.ts';
 import { text as t, describeEvent } from '../../../../packages/presentation/src/text.ts';
 import s from './MatchVisual.module.css';
-export function MatchVisual({state,playing,onGoal}:{state:Career;playing:boolean;onGoal:(kind:HighlightKind)=>void}) {
+export function MatchVisual({state,playing,onGoal,statistics}:{statistics:ReactNode;state:Career;playing:boolean;onGoal:(kind:HighlightKind)=>void}) {
   const [reduced]=useState(()=>matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [failed,setFailed]=useState(false);
   const [clip,setClip]=useState<{highlight:Highlight;preview:boolean}|null>(null);
@@ -49,10 +49,10 @@ export function MatchVisual({state,playing,onGoal}:{state:Career;playing:boolean
   }
   const recent=event&&event.tick===match.tick?describeEvent(state,event):match.tick===0?t.noEvents:match.tick===90?t.fullTime:playing?t.noChance:t.paused;
   return <section className={s.visual}>
-    <header className={s.toolbar}><strong>{t.events}</strong><span>{playing?t.live:t.paused}</span></header>
     <div className={s.stage}>
-      <div className={s.commentary}><p className={s.lead} aria-live="polite"><span>{match.tick}'</span>{recent}</p><ol aria-label={t.events}>{[...match.events].filter(e=>e.type!=='pass').reverse().map(e=><li key={e.order} className={e.type==='goal'?s.goal:undefined}>{describeEvent(state,e)}</li>)}</ol></div>
-      {clip&&!failed&&!reduced&&<div className={s.highlight} role="region" aria-label={t.highlights}><canvas ref={canvas} width={320} height={180} aria-label={clip.preview?t.previewNote:t.highlights}/><div className={s.clipLabel}><span>{clip.preview?t.previewNote:clip.highlight.player}</span><button onClick={()=>setClip(null)}>{t.skipHighlight}</button></div></div>}
+      <div className={s.commentary}><header className={s.toolbar}><strong>{t.events}</strong><span>{match.tick===90?t.fullTime:playing?t.live:t.paused}</span></header><p className={s.lead} aria-live="polite">{(!event||event.tick!==match.tick)&&<span>{match.tick}'</span>}{recent}</p><ol aria-label={t.events}>{[...match.events].filter(e=>e.type!=='pass').reverse().map(e=><li key={e.order} className={e.type==='goal'?s.goal:undefined}>{describeEvent(state,e)}</li>)}</ol></div>
+      <aside className={s.analysis}>{clip&&!failed&&!reduced&&<div className={s.highlight} role="region" aria-label={t.highlights}><canvas ref={canvas} width={320} height={180} aria-label={clip.preview?t.previewNote:t.highlights}/><div className={s.clipLabel}><span>{clip.preview?t.previewNote:clip.highlight.player}</span><button onClick={()=>setClip(null)}>{t.skipHighlight}</button></div></div>}
+      {statistics}</aside>
     </div>
     {failed&&<p className={s.notice}>{t.canvasFailed}</p>}
     {!failed&&!reduced&&<details className={s.previews}><summary>{t.artPreview}</summary><div role="group" aria-label={t.artPreview}><button disabled={playing} onClick={()=>preview('goal')}>{t.previewGoal}</button><button disabled={playing} onClick={()=>preview('save')}>{t.previewSave}</button><button disabled={playing} onClick={()=>preview('shot')}>{t.previewMiss}</button></div></details>}
