@@ -4,7 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { z } from 'zod';
 import { canonical, type SaveEntry } from '../../../../packages/contracts/src/index.ts';
-import { validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer } from '../../../../packages/simulation/src/engine.ts';
+import { validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer, migrateExhibitionCareer } from '../../../../packages/simulation/src/engine.ts';
 
 const MAX_BYTES=4*1024*1024;
 export const checksum=(value:unknown)=>createHash('sha256').update(canonical(value)).digest('hex');
@@ -21,7 +21,8 @@ const formats=[
  {app:'0.4.2',rules:'exhibition-9',read:migrateScoutingCareer},
  {app:'0.4.3',rules:'exhibition-10',read:migrateTransferCareer},
  {app:'0.4.4',rules:'exhibition-11',read:migrateRecruitingCareer},
- {app:'0.4.5',rules:'exhibition-12',read:validateCareer}
+ {app:'0.4.5',rules:'exhibition-12',read:migrateExhibitionCareer},
+ {app:'0.5.0',rules:'exhibition-13',read:validateCareer}
 ] as const;
 const envelopeSchema=z.object({schema:z.number().int().min(1).max(formats.length),appVersion:z.string().max(20),engineVersion:z.string().max(20),rulesetVersion:z.string().max(40),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.literal('fictional-2026-v1'),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decode(bytes:Uint8Array) {

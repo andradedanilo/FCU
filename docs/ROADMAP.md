@@ -2,7 +2,7 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.4 transfer/loan/finance software implemented and accepted on Windows. Continue through authorized milestones without routine approval pauses.
+- Current milestone: v0.5 repeatable seasons implemented; national divisions and cups are next. Continue through authorized milestones without routine approval pauses.
 - Last completed gate: v0.1 Windows prototype and owner layout review. Native Linux remains unverified; v0.2 is not marked complete.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
@@ -12,10 +12,10 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 46 registered cases in nine files (45 Vitest, one Electron journey). Two loan milestone scenarios cover ownership, split wages, dated return, lineup repair, malformed ownership and duplicate registration. Full unit/integration suite passed 45 cases in 2.86 seconds; typecheck/lint pass. The old-economy migration fixture was corrected to exclude free agents that did not exist in schema 7. The return scenario now honors an earlier queued January registration event before June. After the endpoint guard, eight relevant cases passed in 1.03 seconds and the affected full Electron journey passed again in 33.8 seconds; no second successful full unit run.
-- Evidence from latest change: offline 1280x720 100% loan review, registration, squad availability and Save passed. Manual helper corrected its checkbox label from Starting to Start; application behavior was valid. Screenshot work/loan-review-720.png. Full Windows journey passed in 33.8 seconds after fixing a test race by waiting for the displayed calendar date. Packaged Windows offline fullscreen launch, worker match, Save and process restart/Load passed. Smoke cleanup accounted for Windows packaged-app filesystem virtualization and removed only the verified generated career; pre-existing saves were preserved.
-- Open issues/next action: v0.5 scheduling/season world. The exhibition calendar ends June 30, 2027; future versions will replace that boundary with rollover. Match probability formulas unchanged. Native Linux, low-end and physical-controller evidence remain unverified.
-- Build identity: app/engine 0.4.5, schema 13, exhibition-12. Renderer gate build .184 seconds. Windows package release/build-IWb5sy; native Linux unavailable. Commit subject: Add shared-wage loans and automatic player returns.
+- Test inventory/runtime: 48 registered cases in ten files (47 Vitest, one Electron journey). Two season scenarios cover atomic prize/expiry/history, saved continuation, next-year kickoff and two-season fixture identity. Relevant simulation/save/market 28 cases passed in 1.82 seconds; season scenarios two cases in 1.51 seconds. Typecheck/lint pass. No full suite run for this ordinary slice.
+- Evidence from latest change: offline 1280x720 June-30 closing, next preseason date, eight-row history and Save passed. Screenshots work/season-history-720.png and work/next-season-720.png. Previous v0.4 Windows full-season transfer/loan journey passed in 33.8 seconds and packaged offline Save/restart passed.
+- Open issues/next action: v0.5 ten-division world, promotion/relegation and national/continental cups. The current playable world remains the eight-club exhibition. Native Linux, low-end and physical-controller evidence remain unverified.
+- Build identity: app/engine 0.5.0, schema 14, exhibition-13. Renderer build .175 seconds. Packaged baseline remains v0.4.5 at release/build-IWb5sy. Commit subject: Add repeatable seasons and preserved league history.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
@@ -28,6 +28,8 @@ After each task replace the latest-evidence entry with build/commit identity, co
 | v0.3 (software implemented) | Condition, morale, training, injuries, discipline, eligibility, academy cover, added time and migrations | Windows: 33 cases in five files, full-season offline Electron journey, fixed 500-match calibration and manual half-time/injury UI | Native Linux and packaged save smoke for this build |
 
 | v0.4 (software implemented) | Wage estimates, budgets, operating ledger, Club finances, renewals, scouting, calendar, transfers, free agents, AI recruitment, loans, returns and news | Windows 46 registered cases, full exhibition journey with transfer and loan, packaged offline launch/Save/restart | Native Linux |
+
+| v0.5 (in progress) | Dated fixtures, season closing, prizes, expiry, preseason and history | Targeted domain/save checks and offline manual UI | Country divisions, movement, cups and milestone journey |
 
 ## Gates and scope discipline
 

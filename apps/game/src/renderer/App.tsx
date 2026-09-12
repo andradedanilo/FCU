@@ -1,3 +1,4 @@
+import {SeasonHistory} from './SeasonHistory.tsx';
 import {ScoutingMenu} from './ScoutingMenu.tsx';
 import {ContractsMenu} from './ContractsMenu.tsx';
 import {FinanceMenu} from './FinanceMenu.tsx';
@@ -28,6 +29,7 @@ export function App() {
   const [tacticsOpen,setTacticsOpen]=useState(false);
   const [screen, setScreen] = useState<Screen>('title');
   useGameInput(screen);
+  const [historyOpen,setHistoryOpen]=useState(false);
   const [newsPlayer,setNewsPlayer]=useState<PlayerId|null>(null);
   const [scoutingOpen,setScoutingOpen]=useState(false);
   const [contractsOpen,setContractsOpen]=useState(false);
@@ -74,7 +76,8 @@ export function App() {
     const result=await request({type:'Command',command:{...action,careerId:current.careerId,expectedRevision:current.revision,commandId:crypto.randomUUID()} as Command});
     if(result.ok) {
       accept(result.value,action.type==='SetTactics'||action.type==='StoreTacticPreset'||action.type==='SelectBench'||action.type==='SetTraining'||action.type==='RenewContract'||action.type==='ScoutPlayer'||action.type==='SetShortlist');setDirty(true);
-      if(result.value.round>current.round)await save(result.value,'auto');
+      if(result.value.round>current.round||result.value.season>current.season)await save(result.value,'auto');
+      if(action.type==='CloseSeason')setNotice(t.seasonStarted);
       if(action.type==='StartMatch')setScreen('match');
       if(action.type==='SelectLineup')setNotice(t.confirmed);
       if(action.type==='SelectBench')setNotice(t.benchConfirmed);
@@ -124,7 +127,7 @@ export function App() {
       <main data-input-section className={s.gameScreen} key={screen}>
         {screen==='title'&&<TitleScreen start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
         {screen==='setup'&&<ClubSelect club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
-        {state&&screen==='home'&&<Clubhouse news={id=>{setNewsPlayer(id);setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
+        {state&&screen==='home'&&<Clubhouse closeSeason={()=>void command({type:'CloseSeason'})} history={()=>setHistoryOpen(true)} news={id=>{setNewsPlayer(id);setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
         {state?.match&&screen==='match'&&<MatchScreen acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
@@ -132,6 +135,7 @@ export function App() {
       <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}<small title={t.controllerHint}>{t.inputHint}</small></span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>
     {state&&tacticsOpen&&<TacticsMenu store={(slot,tactics)=>command({type:'StoreTacticPreset',slot,tactics})} draftLineup={screen==='squad'?lineup:state.lineup} state={state} busy={busy} close={()=>setTacticsOpen(false)} confirm={tactics=>command({type:'SetTactics',tactics})}/>}
+    {state&&historyOpen&&<SeasonHistory state={state} close={()=>setHistoryOpen(false)}/>}
     {state&&scoutingOpen&&<ScoutingMenu initialPlayer={newsPlayer} state={state} busy={busy} command={command} close={()=>setScoutingOpen(false)}/>}
     {state&&contractsOpen&&<ContractsMenu state={state} busy={busy} confirm={command} close={()=>setContractsOpen(false)}/>}
     {state&&financeOpen&&<FinanceMenu state={state} close={()=>setFinanceOpen(false)}/>}

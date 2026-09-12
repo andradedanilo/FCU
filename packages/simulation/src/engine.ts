@@ -1,16 +1,21 @@
+import {closeSeason,validateSeasons} from './season.ts';
+import {callUp} from './academy.ts';
+export {requiresCallUp} from './academy.ts';
+import {schedule} from './competition.ts';
+export {schedule,standings} from './competition.ts';
 import {validateLoans} from './loans.ts';
 import {autoPick,validLineup,pickBench} from './selection.ts';
 export {autoPick,validLineup,pickBench} from './selection.ts';
 import {marketCommand,validateMarket,freePlayers} from './market.ts';
 import {nextFixtureDate,advanceCalendar} from './calendar.ts';
 import {startScouting,validateScouting} from './scouting.ts';
-import {createContracts,initialContract,renewContract,validateContracts} from './contracts.ts';
+import {createContracts,renewContract,validateContracts} from './contracts.ts';
 import {overall,effectiveRating} from './ratings.ts';
 export {overall,effectiveRating} from './ratings.ts';
 import {createEconomy,settleDay,settleGate,validateEconomy} from './economy.ts';
 import {halfBoundary,completeMinute} from './matchTime.ts';
 import {available,activeLineup,needsDecision,incidents,settleAvailability,addDays,validDate} from './availability.ts';
-import { careerSchema, recruitingCareerSchema, transferCareerSchema, scoutingCareerSchema, renewalCareerSchema, financialCareerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
+import { careerSchema, exhibitionCareerSchema, recruitingCareerSchema, transferCareerSchema, scoutingCareerSchema, renewalCareerSchema, financialCareerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
 import { clubs } from '../../contracts/src/identity.ts';
 import { draw, stream } from './rng.ts';
 
@@ -21,25 +26,7 @@ const firstNames = ['Alex','Robin','Sam','Jamie','Morgan','Casey','Drew','Ellis'
 const surnames = ['Ashford','Bellwick','Creston','Dalehurst','Elmbridge','Fenwick','Greyford','Harrowell'];
 
 
-export function schedule(ids: ClubId[]): Fixture[] {
-  const rotation = [...ids]; const first: Fixture[] = [];
-  for (let round=0; round<7; round++) {
-    for (let i=0;i<4;i++) {
-      const a=rotation[i]!; const b=rotation[7-i]!;
-      first.push({ id:`fixture-${String(round).padStart(2,'0')}-${i}`, round, home:round%2 ? b:a, away:round%2 ? a:b, score:null });
-    }
-    rotation.splice(1,0,rotation.pop()!);
-  }
-  return [...first, ...first.map((f,i) => ({ ...f, id:`fixture-${String(f.round+7).padStart(2,'0')}-${i%4}`, round:f.round+7, home:f.away, away:f.home }))];
-}
-export function requiresCallUp(state:Career,club:ClubId=state.clubId):boolean {
- const eligible=state.players.filter(p=>p.clubId===club&&available(p,state.date));return eligible.length<11||!eligible.some(p=>p.role==='GK');
-}
-function callUp(state:Career,club:ClubId):boolean {
- const squad=state.players.filter(p=>p.clubId===club);if(squad.filter(p=>p.academy).length>=8||!requiresCallUp(state,club))return false;
- const role:Role=squad.some(p=>p.role==='GK'&&available(p,state.date))?'MID':'GK';const number=23+squad.filter(p=>p.academy).length;
- state.players.push({id:('player-'+club.slice(-2)+'-'+number) as PlayerId,clubId:club,name:'Academy '+club.slice(-2)+' '+number,role,academy:true,condition:100000,morale:70,injuryUntil:null,leagueYellows:0,leagueBan:0,goalkeeping:role==='GK'?45:15,tackling:45,passing:45,shooting:45,pace:45,stamina:45,discipline:60});state.economy.wages[state.players.at(-1)!.id]=0;state.contracts[state.players.at(-1)!.id]=initialContract(state.players.at(-1)!,state.date);return true;
-}
+
 export function createCareer(careerId: string, seed: number, club: ClubId): Career {
   const players:Player[] = clubs.flatMap((c, ci) => roles.map((role, i) => {
     let rng = stream(1, `players/${ci}/${i}`);
@@ -48,7 +35,7 @@ export function createCareer(careerId: string, seed: number, club: ClubId): Care
   }));
   players.push(...freePlayers());
   if (!clubs.some(c => c.id === club)) throw new Error('INVALID_COMMAND');
-  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.4.5',training:'balanced', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null };
+  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], season:2026,history:[],engineVersion:'0.5.0',training:'balanced', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null };
   const state=careerSchema.parse({...base,economy:createEconomy(base,overall),contracts:createContracts(base),scouting:{shortlist:[],active:null,reports:{}},offers:[],loans:[]});settleDay(state,state.date);return state;
 }
 const emptyStats = () => ({shots:0,onTarget:0,quality:0,possession:0});
@@ -98,7 +85,8 @@ export function migrateScoutingCareer(input:unknown):Career {
  return migrateTransferCareer({...old,engineVersion:'0.4.3',rulesetVersion:'exhibition-10',players:[...old.players,...free],contracts:{...old.contracts,...createContracts({players:free,date:old.date})},economy:{...old.economy,wages:{...old.economy.wages,...Object.fromEntries(free.map(p=>[p.id,0]))}},offers:[],match:old.match?{...old.match,participants:Object.fromEntries(old.players.filter(p=>p.clubId===old.match!.home||p.clubId===old.match!.away).map(p=>[p.id,p.clubId]))}:null});
 }
 export function migrateTransferCareer(input:unknown):Career {const old=transferCareerSchema.parse(input);return migrateRecruitingCareer({...old,engineVersion:'0.4.4',rulesetVersion:'exhibition-11'});}
-export function migrateRecruitingCareer(input:unknown):Career {const old=recruitingCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.4.5',rulesetVersion:rules.version,offers:old.offers.map(o=>({...o,loanShare:null})),loans:[]});}
+export function migrateRecruitingCareer(input:unknown):Career {const old=recruitingCareerSchema.parse(input);return migrateExhibitionCareer({...old,engineVersion:'0.4.5',rulesetVersion:'exhibition-12',offers:old.offers.map(o=>({...o,loanShare:null})),loans:[]});}
+export function migrateExhibitionCareer(input:unknown):Career {const old=exhibitionCareerSchema.parse(input),dates=schedule(old.clubs.map(c=>c.id));return validateCareer({...old,engineVersion:'0.5.0',rulesetVersion:rules.version,season:2026,history:[],fixtures:old.fixtures.map((f,i)=>({...f,date:dates[i]!.date}))});}
 export function validBench(players:Player[],club:ClubId,lineup:PlayerId[],bench:PlayerId[]):boolean {
  return bench.length<=9&&new Set(bench).size===bench.length&&bench.every(id=>!lineup.includes(id)&&players.some(p=>p.id===id&&p.clubId===club));
 }
@@ -213,7 +201,8 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
   if(command.careerId!==state.careerId||command.expectedRevision!==state.revision)return {ok:false,error:'STALE_STATE'};
   if(state.appliedCommands.includes(command.commandId))return {ok:false,error:'DUPLICATE_COMMAND'};
   const next=structuredClone(state);
-  if(command.type==='SubmitLoan'||command.type==='SubmitOffer'||command.type==='CounterOffer'||command.type==='AcceptOffer'||command.type==='OfferTerms'||command.type==='ConfirmDeal'||command.type==='WithdrawOffer'){
+  if(command.type==='CloseSeason'){const error=closeSeason(next);if(error)return {ok:false,error};}
+  else if(command.type==='SubmitLoan'||command.type==='SubmitOffer'||command.type==='CounterOffer'||command.type==='AcceptOffer'||command.type==='OfferTerms'||command.type==='ConfirmDeal'||command.type==='WithdrawOffer'){
     const error=marketCommand(next,command);if(error)return {ok:false,error};
   } else if(command.type==='AdvanceCalendar'){
     const error=advanceCalendar(next,command.target);if(error)return {ok:false,error};
@@ -290,32 +279,20 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
   return {ok:true,value:next};
 }
 function compare(a:string,b:string){return a<b?-1:a>b?1:0;}
-export function standings(state: Career) {
-  const rows=state.clubs.map(club=>({clubId:club.id,played:0,won:0,drawn:0,lost:0,gf:0,ga:0,points:0}));
-  for(const f of state.fixtures){if(!f.score)continue; const h=rows.find(r=>r.clubId===f.home)!;const a=rows.find(r=>r.clubId===f.away)!;const [hg,ag]=f.score;
-    h.played++;a.played++;h.gf+=hg;h.ga+=ag;a.gf+=ag;a.ga+=hg;
-    if(hg===ag){h.drawn++;a.drawn++;h.points++;a.points++;}else{const w=hg>ag?h:a;const l=hg>ag?a:h;w.won++;w.points+=3;l.lost++;}
-  }
-  const head=(id:ClubId,group:ClubId[])=>state.fixtures.reduce((n,f)=>{if(!f.score||!group.includes(f.home)||!group.includes(f.away))return n;const side=f.home===id?0:f.away===id?1:-1;if(side!==0&&side!==1)return n;const own=f.score[side]!;const other=f.score[1-side]!;return n+(own>other?3:own===other?1:0);},0);
-  return rows.sort((a,b)=>{
-    const primary=b.points-a.points||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf;if(primary)return primary;
-    const group=rows.filter(r=>r.points===a.points&&r.gf-r.ga===a.gf-a.ga&&r.gf===a.gf).map(r=>r.clubId);
-    return head(b.clubId,group)-head(a.clubId,group)||compare(a.clubId,b.clubId);
-  });
-}
+
 export function validateCareer(input: unknown): Career {
   const state=careerSchema.parse(input);
-  validateEconomy(state);validateContracts(state);validateScouting(state);validateMarket(state);validateLoans(state);
+  validateEconomy(state);validateContracts(state);validateScouting(state);validateMarket(state);validateLoans(state);validateSeasons(state);
   const nextDate=nextFixtureDate(state);if((nextDate&&state.date>nextDate)||(state.match&&state.match.date>state.date))throw new Error('INVALID_SAVE');
   if(!validDate(state.date)||state.players.some(p=>p.injuryUntil!==null&&!validDate(p.injuryUntil)))throw new Error('INVALID_SAVE');
   const ids=state.clubs.map(c=>c.id);
   if(new Set(ids).size!==8||new Set(state.players.map(p=>p.id)).size!==state.players.length||!ids.includes(state.clubId)||!validLineup(state.players,state.clubId,state.lineup))throw new Error('INVALID_SAVE');
   if(state.players.some(p=>p.clubId!==null&&!ids.includes(p.clubId))||ids.some(id=>state.players.filter(p=>p.clubId===id&&!p.academy).length>30||state.players.filter(p=>p.clubId===id&&p.academy).length>8))throw new Error('INVALID_SAVE');
   if(!validBench(state.players,state.clubId,state.lineup,state.bench))throw new Error('INVALID_SAVE');
-  const expected=schedule(ids);
-  if(state.fixtures.some((f,i)=>{const e=expected[i]!;return f.id!==e.id||f.home!==e.home||f.away!==e.away||f.round!==e.round||(f.score!==null)!==(f.round<state.round);}))throw new Error('INVALID_SAVE');
+  const expected=schedule(ids,state.season);
+  if(state.fixtures.some((f,i)=>{const e=expected[i]!;return f.id!==e.id||f.home!==e.home||f.away!==e.away||f.round!==e.round||f.date!==e.date||(f.score!==null)!==(f.round<state.round);}))throw new Error('INVALID_SAVE');
   const historical=state.match?state.players.map(p=>({...p,clubId:state.match!.participants[p.id]??p.clubId})):state.players;
-  if(state.match){const m=state.match;const f=state.fixtures.find(f=>f.id===m.fixtureId);if(!f||f.home!==m.home||f.away!==m.away||f.round!==(m.phase==='finished'?state.round-1:state.round)||(m.forfeit!==m.home&&!validLineup(historical,m.home,m.homeLineup))||(m.forfeit!==m.away&&!validLineup(historical,m.away,m.awayLineup))||m.events.some((e,i)=>e.order!==i||e.tick>m.tick||!historical.some(p=>p.id===e.playerId&&p.clubId===e.clubId)))throw new Error('INVALID_SAVE');}
+  if(state.match){const m=state.match;const f=state.fixtures.find(f=>f.id===m.fixtureId);if(!f||f.date!==m.date||f.home!==m.home||f.away!==m.away||f.round!==(m.phase==='finished'?state.round-1:state.round)||(m.forfeit!==m.home&&!validLineup(historical,m.home,m.homeLineup))||(m.forfeit!==m.away&&!validLineup(historical,m.away,m.awayLineup))||m.events.some((e,i)=>e.order!==i||e.tick>m.tick||!historical.some(p=>p.id===e.playerId&&p.clubId===e.clubId)))throw new Error('INVALID_SAVE');}
   if(state.match){
     const m=state.match;
     const half=halfBoundary(m),end=90+(m.addedTime[0]??0)+(m.addedTime[1]??0);

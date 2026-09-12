@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const brand = { title: 'Football Club Universe', short: 'FCU', career: 'FCU Career' } as const;
 export const clubId = z.string().regex(/^club-\d{2}$/).brand<'ClubId'>();
-export const playerId = z.string().regex(/^player-\d{2}-\d{2}$/).brand<'PlayerId'>();
+export const playerId = z.string().regex(/^player-\d{2}-\d{2,5}$/).brand<'PlayerId'>();
 export type ClubId = z.infer<typeof clubId>;
 export type PlayerId = z.infer<typeof playerId>;
 const integer = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
@@ -26,7 +26,7 @@ export const incidentEventSchema=eventSchema.extend({type:z.enum(['pass','shot',
 export type MatchEvent = z.infer<typeof incidentEventSchema>;
 const statsSchema = z.object({ shots: integer.max(90), onTarget: integer.max(90), quality: integer.max(900000), possession: integer.max(900000) });
 export const fixtureSchema = z.object({ id: z.string().regex(/^fixture-\d{2}-\d$/), round: integer.max(13), home: clubId, away: clubId, score: z.tuple([integer.max(90), integer.max(90)]).nullable() });
-export type Fixture = z.infer<typeof fixtureSchema>;
+export type Fixture = z.infer<typeof seasonalFixtureSchema>;
 export const substitutionSchema=z.object({tick:integer.min(1).max(89),clubId,out:playerId,in:playerId});
 export const matchSchema = z.object({ fixtureId: z.string(), home: clubId, away: clubId, tick: integer.max(90), rng: integer.max(4294967295), homeLineup: z.array(playerId).length(11), awayLineup: z.array(playerId).length(11), homeGoals: integer.max(90), awayGoals: integer.max(90), homeStats: statsSchema, awayStats: statsSchema, events: z.array(eventSchema).max(600), homeBench:z.array(playerId).length(9),awayBench:z.array(playerId).length(9),substitutions:z.array(substitutionSchema).max(10),homeTactics:tacticsSchema,awayTactics:tacticsSchema });
 
@@ -72,12 +72,18 @@ export const transferEconomySchema=contractEconomySchema.extend({ledger:z.array(
 export const transferCareerSchema=scoutingCareerSchema.extend({date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),engineVersion:z.literal('0.4.3'),rulesetVersion:z.literal('exhibition-10'),players:z.array(transferablePlayerSchema).min(176).max(300),contracts:z.record(playerId,transferableContractSchema),match:historicalMatchSchema.nullable(),economy:transferEconomySchema,offers:z.array(offerSchema).max(5000)});
 export const recruitingCareerSchema=transferCareerSchema.extend({engineVersion:z.literal('0.4.4'),rulesetVersion:z.literal('exhibition-11')});
 export const loanSchema=z.object({id:offerId,playerId,parent:clubId,borrower:clubId,ends:z.string().regex(/^\d{4}-06-30$/),share:z.union([z.literal(0),z.literal(50),z.literal(100)]),status:z.enum(['active','returned'])});
-export const careerSchema=recruitingCareerSchema.extend({engineVersion:z.literal('0.4.5'),rulesetVersion:z.literal('exhibition-12'),offers:z.array(loanOfferSchema).max(5000),loans:z.array(loanSchema).max(5000)});
+export const exhibitionCareerSchema=recruitingCareerSchema.extend({engineVersion:z.literal('0.4.5'),rulesetVersion:z.literal('exhibition-12'),offers:z.array(loanOfferSchema).max(5000),loans:z.array(loanSchema).max(5000)});
+export const seasonalFixtureSchema=fixtureSchema.extend({id:z.string().regex(/^fixture-(?:\d{4}-)?\d{2}-\d{1,2}$/),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),score:z.tuple([integer.max(100),integer.max(100)]).nullable()});
+const tableRowSchema=z.object({clubId,played:integer,won:integer,drawn:integer,lost:integer,gf:integer,ga:integer,points:integer});
+export const seasonHistorySchema=z.object({year:integer.min(2026).max(2100),fixtures:z.array(seasonalFixtureSchema).length(56),table:z.array(tableRowSchema).length(8)});
+const seasonEconomySchema=transferEconomySchema.extend({ledger:z.array(transferEconomySchema.shape.ledger.element.extend({kind:z.enum(['opening','sponsor','wages','overhead','gate','signingBonus','transferFee','prize'])})).max(20000)});
+export const careerSchema=exhibitionCareerSchema.extend({economy:seasonEconomySchema,engineVersion:z.literal('0.5.0'),rulesetVersion:z.literal('exhibition-13'),season:integer.min(2026).max(2100),players:z.array(transferablePlayerSchema).min(176).max(5000),fixtures:z.array(seasonalFixtureSchema).length(56),history:z.array(seasonHistorySchema).max(100)});
 export type Career = z.infer<typeof careerSchema>;
 const commandBase = { commandId: z.string().uuid(), careerId: z.string().uuid(), expectedRevision: integer };
 export const commandSchema = z.discriminatedUnion('type', [
   z.object({ ...commandBase, type: z.literal('SelectLineup'), lineup: z.array(playerId).max(22) }),
   z.object({ ...commandBase, type: z.literal('StartMatch') }),
+  z.object({...commandBase,type:z.literal('CloseSeason')}),
   z.object({...commandBase,type:z.literal('SubmitLoan'),playerId,share:z.union([z.literal(0),z.literal(50),z.literal(100)])}),
   z.object({...commandBase,type:z.literal('SubmitOffer'),playerId,fee:integer.max(1000000000000)}),
   z.object({...commandBase,type:z.literal('CounterOffer'),offerId,fee:integer.max(1000000000000)}),

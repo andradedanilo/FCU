@@ -3,7 +3,7 @@ import {validDate} from './availability.ts';
 
 export const economicRules={sponsorship:500000000,capacity:20000,ticket:2000,overhead:2000000,reputation:50} as const;
 type LedgerEntry=Career['economy']['ledger'][number];
-type World=Pick<Career,'players'|'clubs'|'fixtures'|'date'>;
+type World=Pick<Career,'players'|'clubs'|'date'>&{fixtures:Pick<Career['fixtures'][number],'home'>[]};
 export function cash(economy:Career['economy'],club:ClubId):number {
  return economy.ledger.reduce((sum,entry)=>sum+entry.postings.reduce((value,p)=>value+(p.account===club?p.amount:0),0),0);
 }

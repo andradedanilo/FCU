@@ -40,7 +40,7 @@ it('signs free agents year-round and expires unanswered negotiations without cha
 it('queues outside the window, rechecks reserves on opening and migrates match membership',()=>{
  const initialState=initial(),old={...initialState,engineVersion:'0.4.2',rulesetVersion:'exhibition-9',players:initialState.players.filter(p=>p.clubId!==null),contracts:Object.fromEntries(Object.entries(initialState.contracts).filter(([,c])=>c.ownerId!==null)),economy:{...initialState.economy,wages:Object.fromEntries(initialState.players.filter(p=>p.clubId!==null).map(p=>[p.id,initialState.economy.wages[p.id]]))}};
  expect(migrateScoutingCareer(old)).toEqual(initialState);
- let s=initialState;s.date='2026-09-01';s.round=14;s.fixtures.forEach(f=>{f.score=[0,0];});
+ let s=initialState;s.date='2026-10-01';s.round=14;s.fixtures.forEach(f=>{f.score=[0,0];});
  const player=s.players.filter(p=>p.clubId===clubs[1]!.id&&p.role!=='GK').sort((a,b)=>askingPrice(s,a)-askingPrice(s,b))[0]!;
  s=act(s,{type:'SubmitOffer',playerId:player.id,fee:askingPrice(s,player)});s=act(s,{type:'AdvanceCalendar',target:'event'});s=act(s,terms(s,s.offers[0]!));s=act(s,{type:'ConfirmDeal',offerId:s.offers[0]!.id});expect(s.offers[0]!.activation).toBe('2027-01-01');expect(s.players.find(p=>p.id===player.id)!.clubId).toBe(clubs[1]!.id);expect(validateCareer(s)).toEqual(s);
  const drained=structuredClone(s);post(drained.economy,{id:'test-cost',date:drained.date,kind:'overhead',postings:[{account:drained.clubId,amount:-cash(drained.economy,drained.clubId)},{account:'external',amount:cash(drained.economy,drained.clubId)}]});drained.date='2027-01-01';processMarket(drained);expect(drained.offers[0]!.status).toBe('rejected');expect(drained.offers[0]!.reason).toBe('funds');

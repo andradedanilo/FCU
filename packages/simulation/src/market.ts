@@ -1,3 +1,4 @@
+import {seasonEnd} from './competition.ts';
 import {occupiedPlaces,loanEnd} from './loans.ts';
 import type {Career,ClubId,Player,PlayerId,Offer,OfferId,Command,FailureCode} from '../../contracts/src/index.ts';
 import {addDays,validDate} from './availability.ts';
@@ -50,7 +51,7 @@ export function register(state:Career,offer:Offer):FailureCode|null {
 type MarketCommand=Extract<Command,{type:'SubmitLoan'|'SubmitOffer'|'CounterOffer'|'AcceptOffer'|'OfferTerms'|'ConfirmDeal'|'WithdrawOffer'}>;
 export function marketCommand(state:Career,action:MarketCommand,buyer:ClubId=state.clubId):FailureCode|null {
  if(action.type==='SubmitOffer'||action.type==='SubmitLoan'){
-  if(state.date>='2027-06-30')return 'INVALID_COMMAND';
+  if(state.date>=seasonEnd(state.season))return 'INVALID_COMMAND';
   const player=state.players.find(p=>p.id===action.playerId),fee=action.type==='SubmitLoan'?0:action.fee;
   if(!player||player.clubId===buyer||player.academy||state.loans.some(l=>l.playerId===player.id&&l.status==='active')||(action.type==='SubmitLoan'&&player.clubId===null)||state.offers.length>=5000||state.offers.some(o=>o.playerId===player.id&&o.buyerId===buyer&&activeOffer(o))||(player.clubId===null&&fee!==0))return 'INVALID_COMMAND';
   state.offers.push({id:action.commandId as OfferId,playerId:player.id,buyerId:buyer,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee,loanShare:action.type==='SubmitLoan'?action.share:null,date:state.date,responseDate:addDays(state.date,1),expires:addDays(state.date,7),activation:null,buyerCounters:0,sellerCounters:0,status:player.clubId===null?'accepted':'submitted',reason:null,terms:null});return null;
