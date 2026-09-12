@@ -1,0 +1,19 @@
+import {useRef} from 'react';
+import type {Career} from '../../../../packages/contracts/src/index.ts';
+import {budgets} from '../../../../packages/simulation/src/economy.ts';
+import {text as t} from '../../../../packages/presentation/src/text.ts';
+import {useModal} from './input.ts';
+import s from './FinanceMenu.module.css';
+const money=(cents:number)=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'EUR'}).format(cents/100);
+export function FinanceMenu({state,close}:{state:Career;close:()=>void}){
+ const dialog=useRef<HTMLDialogElement>(null);useModal(dialog);
+ const bank=budgets(state,state.clubId);
+ const entries=state.economy.ledger.flatMap(entry=>{const posting=entry.postings.find(p=>p.account===state.clubId);return posting?[{...entry,amount:posting.amount}]:[];});
+ let balance=0;const history=entries.map(entry=>({...entry,balance:balance+=entry.amount})).reverse();
+ return <dialog ref={dialog} className={s.dialog} aria-label={t.finances} onCancel={close}>
+  <header><div><p>{state.clubs.find(c=>c.id===state.clubId)!.name}</p><h2>{t.finances}</h2></div><button onClick={close}>{t.close}</button></header>
+  <div className={s.metrics}>{[[t.cash,bank.cash],[t.transferBudget,bank.transfer],[t.weeklyWages,bank.weekly],[t.wageBudget,bank.wage]].map(([label,value])=><div key={label}><span>{label}</span><strong>{money(Number(value))}</strong></div>)}</div>
+  <p className={s.explanation}>{t.financeEstimate}</p><p>{t.reserveFormula}: {money(bank.cash)} - 13 x {money(bank.weekly)} - 4 x {money(bank.overhead)}.</p>
+  <section className={s.history}><h3>{t.ledger}</h3><table><thead><tr><th>{t.date}</th><th>{t.transaction}</th><th>{t.amount}</th><th>{t.balance}</th></tr></thead><tbody>{history.map(entry=><tr key={entry.id}><td>{entry.date}</td><td>{t.ledgerKind[entry.kind]}</td><td className={entry.amount<0?s.cost:s.income}>{money(entry.amount)}</td><td>{money(entry.balance)}</td></tr>)}</tbody></table></section>
+ </dialog>;
+}

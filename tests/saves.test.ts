@@ -27,7 +27,7 @@ it('lists corruption for recovery, rejects future versions and preserves origina
   const file=join(root,s.careerId,`${second}.save`);const bytes=await readFile(file);
   const envelope=JSON.parse(gunzipSync(bytes).toString()) as {schema:number;checksum:string};
   envelope.checksum='0'.repeat(64);expect(()=>decode(gzipSync(canonical(envelope)))).toThrow('INVALID_SAVE');
-  envelope.schema=8;await writeFile(file,gzipSync(canonical(envelope)));
+  envelope.schema=9;await writeFile(file,gzipSync(canonical(envelope)));
   await expect(store.load(s.careerId,second)).rejects.toThrow('FUTURE_SAVE');
   expect((await store.list()).find(e=>e.commitId===second)?.error).toBe('FUTURE_SAVE');
   expect(checksum(await store.load(s.careerId,first))).toBe(checksum(s));expect((await readdir(join(root,s.careerId)))).toHaveLength(2);
@@ -42,7 +42,7 @@ it('migrates a v0.1 checkpoint without rewriting it and refuses missing current 
  const id=await store.save(started.value,'manual');const file=join(root,s.careerId,id+'.save');const raw=JSON.parse(gunzipSync(await readFile(file)).toString());
  const malformed=structuredClone(raw);delete malformed.payload.match.homeBench;malformed.checksum=checksum(malformed.payload);expect(()=>decode(gzipSync(canonical(malformed)))).toThrow();
  raw.schema=1;raw.rulesetVersion='exhibition-1';raw.payload.rulesetVersion='exhibition-1';delete raw.payload.tactics;delete raw.payload.match.homeTactics;delete raw.payload.match.awayTactics;raw.appVersion='0.1.0';raw.engineVersion='0.1.0';raw.payload.engineVersion='0.1.0';delete raw.payload.match.homeBench;delete raw.payload.match.awayBench;delete raw.payload.match.substitutions;raw.checksum=checksum(raw.payload);
- const legacy=gzipSync(canonical(raw));await writeFile(file,legacy);const loaded=await store.load(s.careerId,id);expect(loaded.match?.homeBench).toHaveLength(9);expect(loaded.match?.substitutions).toEqual([]);expect(loaded.engineVersion).toBe('0.3.2');expect(loaded).toEqual(started.value);
+ const legacy=gzipSync(canonical(raw));await writeFile(file,legacy);const loaded=await store.load(s.careerId,id);expect(loaded.match?.homeBench).toHaveLength(9);expect(loaded.match?.substitutions).toEqual([]);expect(loaded.engineVersion).toBe('0.4.0');expect({...loaded,economy:started.value.economy}).toEqual(started.value);expect(loaded.economy.ledger.every(e=>e.kind==='opening')).toBe(true);
  await store.save(loaded,'manual');expect(await readFile(file)).toEqual(legacy);
 });
 
@@ -55,7 +55,7 @@ it('migrates schema-2 substitution history and persists new tactical decisions',
 
 it('migrates schema-3 plans and roundtrips bench and stored setups without overwriting old files',async()=>{
  const root=await mkdtemp(join(tmpdir(),'fcu-plans-'));const store=createSaveStore(root);const s=career();const id=await store.save(s,'manual');const file=join(root,s.careerId,id+'.save');const raw=JSON.parse(gunzipSync(await readFile(file)).toString());raw.schema=3;raw.appVersion='0.2.1';raw.engineVersion='0.2.1';raw.rulesetVersion='exhibition-2';raw.payload.engineVersion='0.2.1';raw.payload.rulesetVersion='exhibition-2';delete raw.payload.bench;delete raw.payload.presets;raw.checksum=checksum(raw.payload);const old=gzipSync(canonical(raw));await writeFile(file,old);
- const migrated=await store.load(s.careerId,id);expect(migrated).toEqual(s);migrated.presets[1]={...s.tactics,formation:'4-3-3'};const spare=s.players.find(p=>p.clubId===s.clubId&&!s.lineup.includes(p.id)&&!s.bench.includes(p.id))!;migrated.bench[8]=spare.id;
+ const migrated=await store.load(s.careerId,id);expect({...migrated,economy:s.economy}).toEqual(s);expect(migrated.economy.ledger).toHaveLength(8);expect(migrated.economy.ledger.every(e=>e.kind==='opening')).toBe(true);migrated.presets[1]={...s.tactics,formation:'4-3-3'};const spare=s.players.find(p=>p.clubId===s.clubId&&!s.lineup.includes(p.id)&&!s.bench.includes(p.id))!;migrated.bench[8]=spare.id;
  const saved=await store.save(migrated,'manual');expect(await store.load(s.careerId,saved)).toEqual(migrated);expect(await readFile(file)).toEqual(old);
  const bad=JSON.parse(gunzipSync(await readFile(join(root,s.careerId,saved+'.save'))).toString());delete bad.payload.presets;bad.checksum=checksum(bad.payload);expect(()=>decode(gzipSync(canonical(bad)))).toThrow();
 });

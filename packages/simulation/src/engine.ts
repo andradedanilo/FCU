@@ -1,6 +1,7 @@
+import {createEconomy,settleDay,settleGate,validateEconomy} from './economy.ts';
 import {halfBoundary,completeMinute} from './matchTime.ts';
 import {available,activeLineup,needsDecision,incidents,settleAvailability,addDays,validDate} from './availability.ts';
-import { careerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
+import { careerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
 import { clubs } from '../../contracts/src/identity.ts';
 import { draw, stream } from './rng.ts';
 
@@ -45,7 +46,7 @@ export function requiresCallUp(state:Career,club:ClubId=state.clubId):boolean {
 function callUp(state:Career,club:ClubId):boolean {
  const squad=state.players.filter(p=>p.clubId===club);if(squad.filter(p=>p.academy).length>=8||!requiresCallUp(state,club))return false;
  const role:Role=squad.some(p=>p.role==='GK'&&available(p,state.date))?'MID':'GK';const number=23+squad.filter(p=>p.academy).length;
- state.players.push({id:('player-'+club.slice(-2)+'-'+number) as PlayerId,clubId:club,name:'Academy '+club.slice(-2)+' '+number,role,academy:true,condition:100000,morale:70,injuryUntil:null,leagueYellows:0,leagueBan:0,goalkeeping:role==='GK'?45:15,tackling:45,passing:45,shooting:45,pace:45,stamina:45,discipline:60});return true;
+ state.players.push({id:('player-'+club.slice(-2)+'-'+number) as PlayerId,clubId:club,name:'Academy '+club.slice(-2)+' '+number,role,academy:true,condition:100000,morale:70,injuryUntil:null,leagueYellows:0,leagueBan:0,goalkeeping:role==='GK'?45:15,tackling:45,passing:45,shooting:45,pace:45,stamina:45,discipline:60});state.economy.wages[state.players.at(-1)!.id]=0;return true;
 }
 export function createCareer(careerId: string, seed: number, club: ClubId): Career {
   const players = clubs.flatMap((c, ci) => roles.map((role, i) => {
@@ -54,7 +55,8 @@ export function createCareer(careerId: string, seed: number, club: ClubId): Care
     return {id:`player-${String(ci+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}` as PlayerId, clubId:c.id, name:`${firstNames[i]} ${surnames[ci]}`, role, condition:100000,morale:70,academy:false,injuryUntil:null,leagueYellows:0,leagueBan:0,goalkeeping:role==='GK'?rating():15, tackling:rating(), passing:rating(), shooting:rating(), pace:rating(), stamina:rating(), discipline:rating()};
   }));
   if (!clubs.some(c => c.id === club)) throw new Error('INVALID_COMMAND');
-  return careerSchema.parse({ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.3.2',training:'balanced', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null });
+  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.4.0',training:'balanced', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null };
+  const state=careerSchema.parse({...base,economy:createEconomy(base,overall)});settleDay(state,state.date);return state;
 }
 const emptyStats = () => ({shots:0,onTarget:0,quality:0,possession:0});
 // Reserve one goalkeeper and the eight highest-rated remaining outfield players.
@@ -87,7 +89,11 @@ export function migrateConditionCareer(input:unknown):Career {
 }
 export function migrateAvailabilityCareer(input:unknown):Career {
  const old=availabilityCareerSchema.parse(input);const m=old.match;
- return validateCareer({...old,engineVersion:'0.3.2',rulesetVersion:rules.version,match:m?{...m,phase:m.tick===90?'finished':m.tick===45?'interval':m.tick<45?'first':'second',addedTime:[m.tick>=45?0:null,m.tick===90?0:null]}:null});
+ return migrateTimedCareer({...old,engineVersion:'0.3.2',rulesetVersion:'exhibition-6',match:m?{...m,phase:m.tick===90?'finished':m.tick===45?'interval':m.tick<45?'first':'second',addedTime:[m.tick>=45?0:null,m.tick===90?0:null]}:null});
+}
+export function migrateTimedCareer(input:unknown):Career {
+ const old=timedCareerSchema.parse(input);
+ return validateCareer({...old,engineVersion:'0.4.0',rulesetVersion:rules.version,economy:createEconomy(old,overall)});
 }
 export function validBench(players:Player[],club:ClubId,lineup:PlayerId[],bench:PlayerId[]):boolean {
  return bench.length<=9&&new Set(bench).size===bench.length&&bench.every(id=>!lineup.includes(id)&&players.some(p=>p.id===id&&p.clubId===club));
@@ -252,6 +258,7 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
         for(const club of [f.home,f.away])if(club!==state.clubId)while(callUp(next,club)){ /* Bounded by eight academy places. */ }
         let m=f.id===next.match!.fixtureId?next.match!:startMatch(next,f);
         while(m.phase!=='finished')m=advanceMatch(m,next.players,90);
+        if(m.tick>0)settleGate(next,f.home,f.id,state.date);
         next.players=next.players.map(p=>{
           if(p.clubId!==m.home&&p.clubId!==m.away)return p;
           const own=p.clubId===m.home?m.homeGoals:m.awayGoals;const other=p.clubId===m.home?m.awayGoals:m.homeGoals;
@@ -260,7 +267,7 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
         return {...f,score:[m.homeGoals,m.awayGoals]};
       });
       next.round++;
-      for(let day=1;day<=7;day++){const date=addDays(state.date,day);next.players=next.players.map(p=>({...p,condition:Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced']))}));}
+      for(let day=1;day<=7;day++){const date=addDays(state.date,day);settleDay(next,date);next.players=next.players.map(p=>({...p,condition:Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced']))}));}
       // Date-only calendar arithmetic; no host timezone or wall clock.
       const day=1+next.round*7; const month=day<=31?7:day<=62?8:day<=92?9:10;
       const date=day-(month===7?0:month===8?31:month===9?62:92);
@@ -285,6 +292,7 @@ export function standings(state: Career) {
 }
 export function validateCareer(input: unknown): Career {
   const state=careerSchema.parse(input);
+  validateEconomy(state);
   if(!validDate(state.date)||state.players.some(p=>p.injuryUntil!==null&&!validDate(p.injuryUntil)))throw new Error('INVALID_SAVE');
   const ids=state.clubs.map(c=>c.id);
   if(new Set(ids).size!==8||new Set(state.players.map(p=>p.id)).size!==state.players.length||!ids.includes(state.clubId)||!validLineup(state.players,state.clubId,state.lineup))throw new Error('INVALID_SAVE');

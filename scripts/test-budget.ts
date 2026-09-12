@@ -13,6 +13,6 @@ export function checkTestBudget(){
  const suiteSchema=z.object({specs:z.array(z.object({file:z.string(),tests:z.array(z.unknown())})).default([]),suites:z.array(z.unknown()).default([])});
  function count(raw:unknown){const suite=suiteSchema.parse(raw);for(const spec of suite.specs){files.add(resolve('tests',spec.file));journeys+=spec.tests.length;}suite.suites.forEach(count);}
  desktop.suites.forEach(count);const total=units.length+journeys;
- if(!units.length||!journeys||total>45||files.size>9||journeys>2)throw Error(`v0.2 test budget exceeded or discovery empty: ${total} cases / ${files.size} files / ${journeys} Electron journeys.`);
- console.log(`Test budget: ${total}/45 registered cases, ${files.size}/9 files, ${journeys}/2 Electron journeys.`);
+ if(!units.length||!journeys||total>65||files.size>12||journeys>3)throw Error(`v0.4 test budget exceeded or discovery empty: ${total} cases / ${files.size} files / ${journeys} Electron journeys.`);
+ console.log(`Test budget: ${total}/65 registered cases, ${files.size}/12 files, ${journeys}/3 Electron journeys.`);
 }
