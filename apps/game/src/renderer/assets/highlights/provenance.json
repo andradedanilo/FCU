@@ -38,6 +38,86 @@
     {
       "file": "lineup.png",
       "prompt": "Create an original FCU MATCH START still illustration in the exact approved detailed modern-retro pixel-art style of the attached reference: intentional hard-edged pixel clusters, rich daylight, athletic believable proportions, not chibi or 3D. Wide 16:9. Two football teams aligned on the pitch before kickoff facing the viewer: BLUE jerseys with WHITE trim/shorts and BLUE socks team on the LEFT; three referees in neutral black shirts at CENTER; RED jerseys with WHITE trim/shorts and RED socks team on the RIGHT. Diverse fictional adult athletic players, full bodies, readable faces, formal pre-match lineup, no one kicking a ball. Grand packed stadium stands behind with BOTH blue/white and red/white sections and flags, rich green grass, strong sunlight and shaded planes. No text, UI, badges, sponsors or watermarks. Use reference solely for consistent pixel treatment/stadium richness. Create a new lineup composition."
+    },
+    {
+      "file": "halftime.png",
+      "prompt": "Create ONE original FCU still in the approved detailed modern-retro pixel-art style of the reference. Wide 16:9, intentional hard-edged pixel clusters, semi-realistic athletic human proportions, layered packed daylight stadium, rich saturated grass, 3-6 shade clusters per material. No smooth 3D, blur, text, logos or watermark. Blue team = royal-blue shirts with white trim, white shorts, blue socks. Red team = red shirts with white trim, white shorts, red socks. Both blue and red players walk off toward the stadium tunnel at half-time, tired and thoughtful, one carrying a water bottle. Three referees in black nearby. No celebrating, no winner, mixed red/white and blue/white crowd banners. Full body medium-wide composition."
+    },
+    {
+      "file": "blue-win.png",
+      "prompt": "Create ONE original FCU still in the approved detailed modern-retro pixel-art style of the reference. Wide 16:9, intentional hard-edged pixel clusters, semi-realistic athletic human proportions, layered packed daylight stadium, rich saturated grass, 3-6 shade clusters per material. No smooth 3D, blur, text, logos or watermark. Blue team = royal-blue shirts with white trim, white shorts, blue socks. Red team = red shirts with white trim, white shorts, red socks. Full-time: three BLUE players in the foreground embrace and raise fists in victory, while two RED opponents nearby look dejected, one hands on hips and one head down. Mixed crowd with blue/white celebration flags. No trophy (ordinary league match)."
+    },
+    {
+      "file": "red-win.png",
+      "prompt": "Create ONE original FCU still in the approved detailed modern-retro pixel-art style of the reference. Wide 16:9, intentional hard-edged pixel clusters, semi-realistic athletic human proportions, layered packed daylight stadium, rich saturated grass, 3-6 shade clusters per material. No smooth 3D, blur, text, logos or watermark. Blue team = royal-blue shirts with white trim, white shorts, blue socks. Red team = red shirts with white trim, white shorts, red socks. Full-time: three RED players in the foreground embrace and raise fists in victory, while two BLUE opponents nearby look dejected, one hands on hips and one head down. Mixed crowd with red/white celebration flags. No trophy (ordinary league match)."
+    },
+    {
+      "file": "coach.png",
+      "prompt": "Create ONE original FCU still in the approved detailed modern-retro pixel-art style of the reference. Wide 16:9, intentional hard-edged pixel clusters, semi-realistic athletic human proportions, layered packed daylight stadium, rich saturated grass, 3-6 shade clusters per material. No smooth 3D, blur, text, logos or watermark. Blue team = royal-blue shirts with white trim, white shorts, blue socks. Red team = red shirts with white trim, white shorts, red socks. Close sideline scene: one fictional middle-aged coach in a dark navy suit, white shirt and dark tie, short graying hair, shouting instructions angrily with one arm outstretched. Expressive face, believable proportions, grand stadium and both red/white and blue/white supporters behind. Neutral shared coach design, no team insignia, no speech bubble."
+    },
+    {
+      "file": "blue-foul.png",
+      "prompt": "Create one FCU incident STILL in exactly the approved detailed deliberate pixel-art style of reference. Landscape 16:9. Semi-realistic athletic fictional men, crisp pixel clusters and saturated shades, rich green pitch, packed grand stadium with mixed blue/white and red/white flags, directional daylight. No blur, no 3D, no UI or lettering/logos/watermarks. Blue kit: royal-blue shirt white trim, white shorts, blue socks. Red kit: red shirt white trim, white shorts, red socks. Neutral referee wears black. A BLUE player commits a sliding tackle on a RED player, tripping him as they challenge for a black-and-white ball. Strong readable dynamic frozen pose: blue tackler low on ground, red player stumbling forward. Referee approaching in background with whistle, NO card visible yet. No injury or blood shown."
+    },
+    {
+      "file": "blue-yellow.png",
+      "prompt": "Create one FCU incident STILL in exactly the approved detailed deliberate pixel-art style of reference. Landscape 16:9. Semi-realistic athletic fictional men, crisp pixel clusters and saturated shades, rich green pitch, packed grand stadium with mixed blue/white and red/white flags, directional daylight. No blur, no 3D, no UI or lettering/logos/watermarks. Blue kit: royal-blue shirt white trim, white shorts, blue socks. Red kit: red shirt white trim, white shorts, red socks. Neutral referee wears black. A referee in black at center raises ONE bright yellow card high to a BLUE player at left, who reacts with open hands in disbelief. A RED player at right watches. Substantial full-body figures. No tackling, no red card."
+    },
+    {
+      "file": "blue-red.png",
+      "prompt": "Create one FCU incident STILL in exactly the approved detailed deliberate pixel-art style of reference. Landscape 16:9. Semi-realistic athletic fictional men, crisp pixel clusters and saturated shades, rich green pitch, packed grand stadium with mixed blue/white and red/white flags, directional daylight. No blur, no 3D, no UI or lettering/logos/watermarks. Blue kit: royal-blue shirt white trim, white shorts, blue socks. Red kit: red shirt white trim, white shorts, red socks. Neutral referee wears black. A referee in black at center raises ONE bright RED card high to a BLUE player at left, who reacts with open hands in disbelief. A RED player at right watches. Substantial full-body figures. No tackling, no yellow card."
+    },
+    {
+      "file": "blue-warning.png",
+      "prompt": "Create one FCU incident STILL in exactly the approved detailed deliberate pixel-art style of reference. Landscape 16:9. Semi-realistic athletic fictional men, crisp pixel clusters and saturated shades, rich green pitch, packed grand stadium with mixed blue/white and red/white flags, directional daylight. No blur, no 3D, no UI or lettering/logos/watermarks. Blue kit: royal-blue shirt white trim, white shorts, blue socks. Red kit: red shirt white trim, white shorts, red socks. Neutral referee wears black. A referee in black sternly talks to a BLUE player, holding one open palm out to calm him down. The BLUE player listens with hands on hips; a RED opponent watches nearby. NO cards of any color. Full-body medium framing, readable faces."
+    },
+    {
+      "file": "blue-injury.png",
+      "prompt": "Original FCU pixel-art still, exact approved detailed modern-retro pixel clusters and athletic anatomy matching reference, wide 16:9, packed grand daylight stadium, mixed blue/white and red/white crowd banners, rich green textured pitch, crisp deliberate shades. No 3D, blur, logos or watermark. BLUE uniforms: royal blue shirt/white trim, white shorts, blue socks. RED uniforms: red shirt/white trim, white shorts, red socks. One BLUE player sits on the grass clutching his lower leg, grimacing, attended by a kneeling neutral dark-clothed physio. A blue teammate looks concerned; red opponents wait at respectful distance. NO tackle, card, blood or injury cause depicted."
+    },
+    {
+      "file": "blue-substitution.png",
+      "prompt": "Original FCU pixel-art still, exact approved detailed modern-retro pixel clusters and athletic anatomy matching reference, wide 16:9, packed grand daylight stadium, mixed blue/white and red/white crowd banners, rich green textured pitch, crisp deliberate shades. No 3D, blur, logos or watermark. BLUE uniforms: royal blue shirt/white trim, white shorts, blue socks. RED uniforms: red shirt/white trim, white shorts, red socks. Two BLUE players at the touchline high-five as one leaves the pitch and the substitute enters. Neutral black-clad fourth official nearby holding a substitution board with simple red/down and green/up arrows, NO player numbers or lettering. Blue bench behind. Full bodies clearly visible."
+    },
+    {
+      "file": "blue-penalty.png",
+      "prompt": "Original FCU penalty-shootout STILL, wide 16:9, match the approved deliberate detailed modern-retro PIXEL ART reference with athletic proportions, rich daylight stadium, textured green pitch and hard color clusters. A BLUE penalty taker in foreground waits two steps behind the black-and-white ball on the white penalty spot. The goal is large and centered at the top, a teal goalkeeper set on the line. No other players in the penalty area. Side-on three-quarter rear view gives anticipation, not kicking yet. Royal blue shirt with WHITE trim and WHITE shorts, blue socks; crowd banners predominantly blue and white. No smooth 3D, blur, text, logos, UI or watermark."
+    },
+    {
+      "file": "blue-penaltyMiss.png",
+      "prompt": "Original FCU penalty-shootout STILL, wide 16:9, match the approved deliberate detailed modern-retro PIXEL ART reference with athletic proportions, rich daylight stadium, textured green pitch and hard color clusters. A BLUE penalty taker in foreground stands head bowed, hands on head in disappointment after NOT scoring. A teal goalkeeper is near the goal. Keep the BALL OUT OF FRAME: do not specify if it was saved, wide or hit the post. Strong expressive silhouette. Royal blue shirt with WHITE trim and WHITE shorts, blue socks; crowd banners predominantly blue and white. No smooth 3D, blur, text, logos, UI or watermark."
+    },
+    {
+      "file": "red-foul.png",
+      "prompt": "Edit this original FCU pixel-art still: SWAP the teams' jersey and sock colors. The currently BLUE offending/tackling/cautioned player must become RED with white shorts and white trim. The currently RED opponent becomes BLUE with white shorts and white trim. Swap blue/red crowd supporter areas too. Preserve white parts, natural sky, skin, green pitch, black referee, all poses and all pixel-art treatment. IMPORTANT: do NOT change the referee's card color (if present); a yellow card must stay yellow and a red card must stay red. Do not introduce any card if none is present. Exact same composition. No text or logos."
+    },
+    {
+      "file": "red-yellow.png",
+      "prompt": "Edit this original FCU pixel-art still: SWAP the teams' jersey and sock colors. The currently BLUE offending/tackling/cautioned player must become RED with white shorts and white trim. The currently RED opponent becomes BLUE with white shorts and white trim. Swap blue/red crowd supporter areas too. Preserve white parts, natural sky, skin, green pitch, black referee, all poses and all pixel-art treatment. IMPORTANT: do NOT change the referee's card color (if present); a yellow card must stay yellow and a red card must stay red. Do not introduce any card if none is present. Exact same composition. No text or logos."
+    },
+    {
+      "file": "red-red.png",
+      "prompt": "Edit this original FCU pixel-art still: SWAP the teams' jersey and sock colors. The currently BLUE offending/tackling/cautioned player must become RED with white shorts and white trim. The currently RED opponent becomes BLUE with white shorts and white trim. Swap blue/red crowd supporter areas too. Preserve white parts, natural sky, skin, green pitch, black referee, all poses and all pixel-art treatment. IMPORTANT: do NOT change the referee's card color (if present); a yellow card must stay yellow and a red card must stay red. Do not introduce any card if none is present. Exact same composition. No text or logos."
+    },
+    {
+      "file": "red-warning.png",
+      "prompt": "Edit this original FCU pixel-art still: SWAP the teams' jersey and sock colors. The currently BLUE offending/tackling/cautioned player must become RED with white shorts and white trim. The currently RED opponent becomes BLUE with white shorts and white trim. Swap blue/red crowd supporter areas too. Preserve white parts, natural sky, skin, green pitch, black referee, all poses and all pixel-art treatment. IMPORTANT: do NOT change the referee's card color (if present); a yellow card must stay yellow and a red card must stay red. Do not introduce any card if none is present. Exact same composition. No text or logos."
+    },
+    {
+      "file": "red-injury.png",
+      "prompt": "Original FCU pixel-art still, exact approved detailed modern-retro pixel clusters and athletic anatomy matching reference, wide 16:9, packed grand daylight stadium, mixed blue/white and red/white crowd banners, rich green textured pitch, crisp deliberate shades. No 3D, blur, logos or watermark. BLUE uniforms: royal blue shirt/white trim, white shorts, blue socks. RED uniforms: red shirt/white trim, white shorts, red socks. One RED player sits on the grass clutching his lower leg, grimacing, attended by a kneeling neutral dark-clothed physio. A red teammate looks concerned; blue opponents wait at respectful distance. NO tackle, card, blood or injury cause depicted."
+    },
+    {
+      "file": "red-substitution.png",
+      "prompt": "Original FCU pixel-art still, exact approved detailed modern-retro pixel clusters and athletic anatomy matching reference, wide 16:9, packed grand daylight stadium, mixed blue/white and red/white crowd banners, rich green textured pitch, crisp deliberate shades. No 3D, blur, logos or watermark. BLUE uniforms: royal blue shirt/white trim, white shorts, blue socks. RED uniforms: red shirt/white trim, white shorts, red socks. Two RED players at the touchline high-five as one leaves the pitch and the substitute enters. Neutral black-clad fourth official nearby holding a substitution board with simple red/down and green/up arrows, NO player numbers or lettering. Red bench behind. Full bodies clearly visible."
+    },
+    {
+      "file": "red-penalty.png",
+      "prompt": "Original FCU penalty-shootout STILL, wide 16:9, match the approved deliberate detailed modern-retro PIXEL ART reference with athletic proportions, rich daylight stadium, textured green pitch and hard color clusters. A RED penalty taker in foreground waits two steps behind the black-and-white ball on the white penalty spot. The goal is large and centered at the top, a teal goalkeeper set on the line. No other players in the penalty area. Side-on three-quarter rear view gives anticipation, not kicking yet. Red shirt with WHITE trim and WHITE shorts, red socks; crowd banners predominantly red and white. No smooth 3D, blur, text, logos, UI or watermark."
+    },
+    {
+      "file": "red-penaltyMiss.png",
+      "prompt": "Original FCU penalty-shootout STILL, wide 16:9, match the approved deliberate detailed modern-retro PIXEL ART reference with athletic proportions, rich daylight stadium, textured green pitch and hard color clusters. A RED penalty taker in foreground stands head bowed, hands on head in disappointment after NOT scoring. A teal goalkeeper is near the goal. Keep the BALL OUT OF FRAME: do not specify if it was saved, wide or hit the post. Strong expressive silhouette. Red shirt with WHITE trim and WHITE shorts, red socks; crowd banners predominantly red and white. No smooth 3D, blur, text, logos, UI or watermark."
     }
   ]
 }

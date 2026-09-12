@@ -16,6 +16,7 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
   const latest=async()=>{const list=await entries();if(!list.ok)throw new Error(list.error);const entry=list.value[0]!;const result=await page.evaluate(e=>window.fcu.load(e.careerId,e.commitId),entry);if(!result.ok)throw new Error(result.error);return result.value;};
   async function playUntil(_from:number,to:number){
     const resume=async()=>{
+      if(await page.getByRole('button',{name:'Skip highlight',exact:true}).count())await click('Skip highlight');
       if(await page.locator('[data-decision="true"]').count())await page.getByRole('button',{name:/Continue short-handed|Acknowledge dismissal/}).click();
       const phase=await page.getByTestId('minute').getAttribute('data-phase');
       await click(phase==='interval'?'Continue':'Play');

@@ -1,6 +1,6 @@
 # Football Club Universe (FCU) - project contract
 
-Documentation edition 1.5 | Research cutoff: 11 September 2026 | Implementation status: v0.5 competition world implemented on Windows. Latest owner scope: complete v0.5, then stop before v0.6. Current task: build anticipation and scene variety using the owner-approved detailed pixel-art still style. Record unverified external checks. Linux remains unverified. See ROADMAP evidence.
+Documentation edition 1.5 | Research cutoff: 11 September 2026 | Implementation status: v0.5 competition world implemented on Windows. Latest owner scope: complete v0.5, then stop before v0.6. Approved visual revision: event-driven anticipation and 29 detailed pixel-art stills, with blue/white managed side and red/white opponent. GAME records supported scenes and requested future match rules. Record unverified external checks. Linux remains unverified. See ROADMAP evidence.
 
 Owner-selected title: **Football Club Universe**, abbreviated **FCU**. Modes are **FCU Career** and **FCU Dream Club**. Keep the title in one configuration value so future branding changes do not rename save IDs or packages. This records the creative decision, not a trademark availability check.
 

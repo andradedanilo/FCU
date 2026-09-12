@@ -94,9 +94,10 @@ export function App() {
     } else {setNotice(t.errors[result.error]);stop();}
     occupied.current=false;setBusy(false);return result.ok;
   }
+  useEffect(()=>{audio.current?.match(playing);},[playing]);
   const presentationBusy=useRef(false);
   const tick=async()=>{if(!running.current)return;if(presentationBusy.current){timer.current=setTimeout(()=>void tick(),50);return;}await command({type:'AdvanceMatch',minutes:1});const match=latest.current?.match;if(running.current&&match)timer.current=setTimeout(()=>void tick(),minuteDuration(match.events,match.tick));};
-  const play=()=>{if(running.current){stop();return;}if(latest.current?.match&&['interval','extraInterval'].includes(latest.current.match.phase))presentationBusy.current=false;running.current=true;setPlaying(true);void tick();};
+  const play=()=>{if(running.current){stop();return;}if(latest.current?.match&&(latest.current.match.tick===0||['interval','extraInterval'].includes(latest.current.match.phase)))audio.current?.highlight('whistle');if(latest.current?.match&&['interval','extraInterval'].includes(latest.current.match.phase))presentationBusy.current=false;running.current=true;setPlaying(true);void tick();};
   const navigate=(next:Screen)=>{stop();setNotice('');setScreen(next);};
   async function newCareer() {
     if(!/^\d+$/.test(seed)||Number(seed)>4294967295){setNotice(t.seedInvalid);return;}

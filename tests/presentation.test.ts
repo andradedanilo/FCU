@@ -5,6 +5,28 @@ import {createCareer,startMatch,advanceMatch,applyCommand,standings} from '../pa
 import {clubs} from '../packages/contracts/src/identity.ts';
 import {canonical} from '../packages/contracts/src/index.ts';
 import {nextHighlight,projectHighlight,highlightFrame,selectHighlight,clockLabel,minuteDuration} from '../packages/presentation/src/highlights.ts';
+import {penaltyHighlights,penaltyView,boundaryArt} from '../packages/presentation/src/highlights.ts';
+
+it('prioritizes a dismissal and reveals the referee decision after the tackle',()=>{
+ const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);state.match=startMatch(state,state.fixtures[0]!);
+ const base={tick:12,clubId:state.match.home,playerId:state.match.homeLineup[10]!,assistId:null,homeGoals:1,awayGoals:0};
+ const events=[{...base,order:0,type:'goal' as const},{...base,order:1,type:'secondYellow' as const}];
+ const event=selectHighlight(events,-1)!;expect(event.type).toBe('secondYellow');expect(projectHighlight(state,event)?.kind).toBe('red');
+ expect(highlightFrame('red',.39)).toBe('tackle');expect(highlightFrame('red',.4)).toBe('red');
+ const changed=structuredClone(state);changed.match!.homeTactics.mentality='attacking';
+ expect(nextHighlight(state,changed)?.kind).toBe('coach');expect(nextHighlight(changed,changed)).toBeNull();
+});
+
+it('reveals shootout kicks in order without exposing the final winner or changing saved results',()=>{
+ const before=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);before.match=startMatch(before,before.fixtures[0]!);
+ expect(boundaryArt(before)).toBe('lineup');
+ const after=structuredClone(before),match=after.match!;match.tick=120;match.phase='finished';
+ match.penalties=[{clubId:match.home,playerId:match.homeLineup[10]!,scored:true},{clubId:match.away,playerId:match.awayLineup[10]!,scored:false}];
+ const saved=canonical(after);expect(penaltyHighlights(before,after).map(h=>[h.kind,h.side,h.penaltyIndex])).toEqual([['penaltyGoal','blue',0],['penaltyMiss','red',1]]);
+ expect(highlightFrame('penaltyGoal',.2)).toBe('penalty');expect(highlightFrame('penaltyGoal',.5)).toBe('goal');
+ const hidden=penaltyView(after,1);expect(hidden.match!.penalties).toHaveLength(1);expect(boundaryArt(hidden)).toBeNull();
+ expect(boundaryArt(penaltyView(after,2))).toBe('blue-win');expect(boundaryArt({...after,clubId:match.away})).toBe('red-win');expect(canonical(after)).toBe(saved);
+});
 it('projects committed identity and score without changing the career or illustrating a pass',()=>{
  const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);state.match=advanceMatch(startMatch(state,state.fixtures[0]!),state.players,45);
  const before=canonical(state);const goal=state.match.events.find(e=>e.type==='goal')!;const pass=state.match.events.find(e=>e.type==='pass')!;
