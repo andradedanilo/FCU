@@ -11,9 +11,9 @@
 .commentary li:first-child{background:#2e4762}
 .commentary li.goal{color:#ffe2a0;background:#364e4c}
 .analysis{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:16px;background:#0c1a31;border:2px solid #7286a0;padding:18px}
-.highlight{position:relative;flex-shrink:0;background:#081021;animation:arrive .15s ease-out}
+.highlight{position:relative;flex-shrink:0;background:#081021;}
 .highlight canvas{display:block;width:100%;aspect-ratio:16/9;image-rendering:pixelated}
-.clipLabel{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:#091c35;color:#ffdd90}
+.clipLabel{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:8px 10px;background:#091c35;color:#ffdd90}
 .clipLabel span{font:13px monospace}
 .clipLabel button{font-size:12px;min-height:32px;padding:5px 9px;flex-shrink:0}
 .previews{padding:8px 0}
@@ -26,8 +26,10 @@
 @media(max-height:800px){.stage{gap:14px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.analysis{padding:10px;gap:10px}.highlight{width:min(100%,400px);align-self:center}.lead{padding:16px;min-height:88px}.commentary li{padding:12px 8px}.toolbar{padding:10px 16px}}
 @media(max-width:750px){.stage{grid-template-columns:1fr;overflow:auto}.commentary{min-height:320px}.analysis{overflow:visible}.highlight{width:100%;max-width:480px;align-self:center}}
 @media(prefers-reduced-motion:reduce){.highlight{animation:none}}
-.analysis:has(.highlight)>section{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;align-content:center}
-.analysis:has(.highlight)>section>div{padding:12px 0}
-.analysis:has(.highlight)>section>h3,.analysis:has(.highlight)>section>header{grid-column:1/-1}
+.analysis>section{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;align-content:center}
+.analysis>section>div{padding:12px 0}
+.analysis>section>h3,.analysis>section>header{grid-column:1/-1}
 .highlight{width:min(100%,500px);align-self:center}
-@media(max-height:800px){.highlight{width:240px}.clipLabel{padding:4px}.clipLabel span{font-size:10px}.clipLabel button{font-size:10px;min-height:26px;padding:3px 5px}.analysis:has(.highlight)>section{gap:0 16px}.analysis:has(.highlight)>section>div{padding:6px 0}.analysis:has(.highlight)>section b{font-size:19px}.analysis:has(.highlight)>section span{font-size:13px}}
+@media(max-height:800px){.highlight{width:240px}.clipLabel{height:36px;min-height:36px;padding:4px}.clipLabel span{font-size:10px}.clipLabel button{font-size:10px;min-height:26px;padding:3px 5px}.analysis>section{gap:0 16px}.analysis>section>div{padding:6px 0}.analysis>section b{font-size:19px}.analysis>section span{font-size:13px}}
+
+.picture{aspect-ratio:16/9;position:relative;overflow:hidden}.idle{height:100%;background:repeating-linear-gradient(0deg,#39704b 0 24px,#437d50 24px 48px);position:relative}.idle::before{content:'';position:absolute;inset:0 0 55%;background:repeating-linear-gradient(90deg,#859581 0 3px,#253d48 3px 8px);border-bottom:8px solid #d3c498}.idle i{position:absolute;left:12%;right:12%;top:18%;height:37%;border:3px solid #dce2ce;background:repeating-linear-gradient(0deg,transparent 0 8px,#c5d5bd88 8px 9px),repeating-linear-gradient(90deg,transparent 0 8px,#c5d5bd88 8px 9px)}

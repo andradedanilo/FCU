@@ -45,13 +45,13 @@ export function MatchVisual({state,playing,onGoal,statistics}:{statistics:ReactN
   function preview(kind:HighlightKind){
     const player=state.players.find(p=>p.clubId===state.clubId&&p.role==='FWD')!;
     elapsed.current=0;sounded.current=false;
-    setClip({preview:true,highlight:{kind,player:player.name,color:state.clubs.find(c=>c.id===state.clubId)!.color,opponentColor:state.clubs.find(c=>c.id!==state.clubId)!.color,tick:0,score:''}});
+    setClip({preview:true,highlight:{kind,player:player.name,color:state.clubs.find(c=>c.id===state.clubId)!.color,tick:0,score:''}});
   }
   const recent=event&&event.tick===match.tick?describeEvent(state,event):match.tick===0?t.noEvents:match.tick===90?t.fullTime:playing?t.noChance:t.paused;
   return <section className={s.visual}>
     <div className={s.stage}>
       <div className={s.commentary}><header className={s.toolbar}><strong>{t.events}</strong><span>{match.tick===90?t.fullTime:playing?t.live:t.paused}</span></header><p className={s.lead} aria-live="polite">{(!event||event.tick!==match.tick)&&<span>{match.tick}'</span>}{recent}</p><ol aria-label={t.events}>{[...match.events].filter(e=>e.type!=='pass').reverse().map(e=><li key={e.order} className={e.type==='goal'?s.goal:undefined}>{describeEvent(state,e)}</li>)}</ol></div>
-      <aside className={s.analysis}>{clip&&!failed&&!reduced&&<div className={s.highlight} role="region" aria-label={t.highlights}><canvas ref={canvas} width={320} height={180} aria-label={clip.preview?t.previewNote:t.highlights}/><div className={s.clipLabel}><span>{clip.preview?t.previewNote:clip.highlight.player}</span><button onClick={()=>setClip(null)}>{t.skipHighlight}</button></div></div>}
+      <aside className={s.analysis}><div className={s.highlight} role="region" aria-label={t.highlights}><div className={s.picture}>{clip&&!failed&&!reduced?<canvas ref={canvas} width={320} height={180} aria-label={clip.preview?t.previewNote:t.highlights}/>:<div className={s.idle} aria-hidden="true"><i/></div>}</div><div className={s.clipLabel}><span>{clip?clip.preview?t.previewNote:clip.highlight.player:t.highlights}</span>{clip&&<button onClick={()=>setClip(null)}>{t.skipHighlight}</button>}</div></div>
       {statistics}</aside>
     </div>
     {failed&&<p className={s.notice}>{t.canvasFailed}</p>}

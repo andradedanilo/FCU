@@ -1,6 +1,6 @@
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export type HighlightKind='goal'|'save'|'shot';
-export type Highlight={kind:HighlightKind;player:string;color:string;opponentColor:string;tick:number;score:string};
+export type Highlight={kind:HighlightKind;player:string;color:string;tick:number;score:string};
 export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEvent|undefined {
   let misses=0;
   const fresh=events.filter(event=>{
@@ -11,8 +11,7 @@ export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEven
 }
 export function projectHighlight(state:Career,event:MatchEvent):Highlight|null {
   if(event.type==='pass')return null;
-  const match=state.match!;
-  return {kind:event.type,player:state.players.find(p=>p.id===event.playerId)!.name,color:state.clubs.find(c=>c.id===event.clubId)!.color,opponentColor:state.clubs.find(c=>c.id===(event.clubId===match.home?match.away:match.home))!.color,tick:event.tick,score:`${event.homeGoals} - ${event.awayGoals}`};
+  return {kind:event.type,player:state.players.find(p=>p.id===event.playerId)!.name,color:state.clubs.find(c=>c.id===event.clubId)!.color,tick:event.tick,score:`${event.homeGoals} - ${event.awayGoals}`};
 }
 export const highlightDuration=4800;
 export const playbackSpeed=2;
@@ -27,6 +26,6 @@ export function clockLabel(tick:number,elapsed:number,duration:number):string {
 export function sampleHighlight(kind:HighlightKind,progress:number) {
   const p=Math.max(0,Math.min(1,progress));
   const flight=Math.max(0,Math.min(1,(p-.28)/.32));
-  const finish=kind==='goal'?{x:186,y:59}:kind==='save'?{x:178,y:79}:{x:235,y:38};
-  return {phase:p<.28?'approach':p<.6?'shot':'reaction',runnerX:147,runnerY:163-Math.min(1,p/.28)*38,ballX:153+(finish.x-153)*flight,ballY:117+(finish.y-117)*flight-Math.sin(flight*Math.PI)*9,keeperX:160+18*flight,keeperY:79};
+  const finish=kind==='goal'?{x:92,y:76}:kind==='save'?{x:200,y:84}:{x:305,y:82};
+  return {phase:p<.28?'approach':p<.6?'shot':'reaction',runnerX:142,runnerY:170-Math.min(1,p/.28)*20,ballX:151+(finish.x-151)*flight,ballY:140+(finish.y-140)*flight-Math.sin(flight*Math.PI)*9,keeperX:160+40*flight,keeperY:84};
 }

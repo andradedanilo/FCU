@@ -1,5 +1,5 @@
 type Point=readonly [number,number];
-type Pose='run'|'kick'|'up'|'sad'|'stand'|'dive';
+type Pose='run'|'kick'|'up'|'sad'|'stand'|'dive'|'hold';
 // Original football anatomy and six contact/recovery poses, drawn on the pixel grid.
 const gait:ReadonlyArray<readonly [Point,Point,Point,Point]>=[
   [[-7,-12],[-11,-1],[5,-12],[8,-6]],
@@ -44,6 +44,7 @@ export function paintFootballer(c:CanvasRenderingContext2D,x:number,y:number,kit
   poly([[-4,-32],[-6,-29],[-3,-26],[-3,-22],[3,-22],[4,-27],[5,-30],[1,-33]],kit);
   poly([[-4,-31],[-2,-30],[-1,-23],[-3,-22]],shade);r(1,-29,2,5,'#f3d9aa');r(-1,-32,3,2,sock);
   arm(shoulderRight,pose==='up'?[10,-37]:pose==='sad'?[9,-35]:[9,-26-swing],pose==='up'?[10,-45]:pose==='sad'?[4,-40]:[6,-22-swing]);
+  if(pose==='hold'){bone([-7,-27],[-2,-24],3,skin);bone([7,-27],[2,-24],3,skin);r(-4,-27,8,8,'#fff2cc');r(-1,-25,3,3,ink);}
   r(-1,-36,3,4,skinDark);
   poly([[-3,-43],[1,-45],[5,-42],[5,-39],[6,-38],[4,-35],[0,-35],[-3,-38]],ink);
   poly([[-2,-41],[1,-43],[4,-41],[4,-38],[5,-38],[3,-36],[0,-36],[-2,-38]],skin);

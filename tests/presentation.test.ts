@@ -9,10 +9,10 @@ it('projects committed identity and score without changing the career or illustr
  const h=projectHighlight(state,goal)!;expect(h.player).toBe(state.players.find(p=>p.id===goal.playerId)!.name);expect(h.color).toBe(state.clubs.find(c=>c.id===goal.clubId)!.color);expect(h.score).toBe(`${goal.homeGoals} - ${goal.awayGoals}`);expect(projectHighlight(state,pass)).toBeNull();expect(canonical(state)).toBe(before);
 });
 it('places a goal inside the drawn goal before its celebration',()=>{
- const shot=sampleHighlight('goal',.59);expect(shot.phase).toBe('shot');expect(shot.ballX).toBeGreaterThan(102);expect(shot.ballX).toBeLessThan(218);expect(shot.ballY).toBeGreaterThan(43);expect(shot.ballY).toBeLessThan(82);expect(sampleHighlight('goal',.7).phase).toBe('reaction');expect(sampleHighlight('goal',.59)).toEqual(shot);
+ const shot=sampleHighlight('goal',.59);expect(shot.phase).toBe('shot');expect(shot.ballX).toBeGreaterThan(43);expect(shot.ballX).toBeLessThan(277);expect(shot.ballY).toBeGreaterThan(32);expect(shot.ballY).toBeLessThan(91);expect(sampleHighlight('goal',.7).phase).toBe('reaction');expect(sampleHighlight('goal',.59)).toEqual(shot);
 });
 it('separates a held save from a miss outside the drawn posts',()=>{
- const saved=sampleHighlight('save',1);expect(saved.ballX).toBe(saved.keeperX);expect(saved.ballY).toBe(saved.keeperY);const missed=sampleHighlight('shot',1);expect(missed.ballX).toBeGreaterThan(218);expect(missed.ballY).toBeLessThan(43);
+ const saved=sampleHighlight('save',1);expect(saved.ballX).toBe(saved.keeperX);expect(saved.ballY).toBe(saved.keeperY);const missed=sampleHighlight('shot',1);expect(missed.ballX).toBeGreaterThan(281);expect(missed.ballY).toBeGreaterThan(32);expect(missed.ballY).toBeLessThan(95);
 });
 it('curates misses without changing or dropping recorded match outcomes',()=>{
  const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);
