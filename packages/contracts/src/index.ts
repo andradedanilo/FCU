@@ -86,6 +86,13 @@ const worldEconomySchema=seasonEconomySchema.extend({clubs:z.array(economySchema
 const worldHistorySchema=seasonHistorySchema.extend({fixtures:z.array(worldFixtureSchema).max(10000),table:z.array(tableRowSchema).min(8).max(176),divisions:z.array(divisionSchema).min(1).max(10),balances:z.record(clubId,z.number().int().min(-Number.MAX_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER)),prizes:z.record(clubId,integer)});
 export const careerSchema=repeatingCareerSchema.extend({engineVersion:z.literal('0.5.1'),rulesetVersion:z.literal('world-1'),snapshotId:z.enum(['fictional-2026-v1','fictional-world-2026-v1']),identityProfileVersion:z.union([z.literal(1),z.literal(2)]),world:worldSchema,clubs:z.array(clubSchema).min(8).max(176),players:z.array(transferablePlayerSchema).min(176).max(20000),round:integer.max(100),fixtures:z.array(worldFixtureSchema).max(10000),economy:worldEconomySchema,history:z.array(worldHistorySchema).max(100)});
 export type Career = z.infer<typeof careerSchema>;
+export const cupLegSchema=z.object({fixtureId:z.string().max(90),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),home:clubId,away:clubId,neutral:z.boolean()});
+export const cupTieSchema=z.object({id:z.string().max(80),legs:z.array(cupLegSchema).min(1).max(2),winner:clubId.nullable()});
+export const cupRoundSchema=z.object({number:integer.max(5),byes:z.array(clubId).max(32),ties:z.array(cupTieSchema).min(1).max(16)});
+export const cupSchema=z.object({id:z.enum(['ENG-CUP','ESP-CUP','FRA-CUP','ITA-CUP','DEU-CUP','CONTINENTAL']),kind:z.enum(['domestic','continental']),entrants:z.array(clubId).min(16).max(36),rounds:z.array(cupRoundSchema).min(1).max(6)});
+export type Cup=z.infer<typeof cupSchema>;
+export type CupTie=z.infer<typeof cupTieSchema>;
+
 const commandBase = { commandId: z.string().uuid(), careerId: z.string().uuid(), expectedRevision: integer };
 export const commandSchema = z.discriminatedUnion('type', [
   z.object({ ...commandBase, type: z.literal('SelectLineup'), lineup: z.array(playerId).max(22) }),

@@ -2,7 +2,7 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.5 country leagues, promotion/relegation and repeatable seasons implemented; cups are next. Continue through authorized milestones without routine approval pauses.
+- Current milestone: v0.5 country leagues, promotion/relegation and repeatable seasons implemented; cups are next. Latest owner direction: finish v0.5 and stop before v0.6.
 - Last completed gate: v0.1 Windows prototype and owner layout review. Native Linux remains unverified; v0.2 is not marked complete.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
@@ -12,10 +12,10 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 49 registered cases in ten files (48 Vitest, one Electron journey). Latest season/market/economy checks: 11 passed in 24.11 seconds; earlier simulation/save/market 30 passed in 2.42 seconds. Fixed workload: seed 2026, one 2,952-fixture world season plus saved rollover/continuation. Initial world case exceeded 25 seconds (about 40 seconds); diagnosis identified repeated preseason AI budget and scouting calculations, now reused within each search. No timeout increase. Typecheck/lint pass; no full suite run for this slice.
-- Evidence from latest change: Windows offline 1280x720 country/second-division selection, all-division table, scouting search, Save/Load and archived division browsing passed. Visual inspection found compressed initial club rows; fixed explicit scrolling row height. Screenshots work/world-selection-720.png, work/world-table-720.png and work/world-history-720.png.
+- Test inventory/runtime: 52 registered cases in eleven files (51 Vitest, one Electron journey). Cup draw/qualification/aggregate rules: three cases passed in .202 seconds. Typecheck/lint pass. Prior country-world season/market/economy checks: 11 passed in 24.11 seconds, including fixed seed 2026 and 2,952 league fixtures. No full suite run for this foundation slice.
+- Evidence from latest change: deterministic domestic preliminary draws/byes, separated midweek reservations, unique continental qualification, reversed second legs and no away-goals tiebreak are covered. These pure cup rules are not yet exposed in Career; match resolution and persistence integration remain. Country-world Windows UI evidence remains work/world-selection-720.png, work/world-table-720.png and work/world-history-720.png.
 - Open issues/next action: national and continental cups, extra time/shootouts and qualification before the v0.5 milestone gate. Native Linux, low-end and physical-controller evidence remain unverified.
-- Build identity: app/engine 0.5.1, schema 15, world-1. Renderer build .187 seconds. Packaged baseline remains v0.4.5 at release/build-IWb5sy. Commit subject: Add country leagues and promotion across repeatable seasons.
+- Build identity: app/engine 0.5.1, schema 15, world-1. Renderer build .187 seconds. Packaged baseline remains v0.4.5 at release/build-IWb5sy. Commit subject: Add deterministic cup draws and continental qualification.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
