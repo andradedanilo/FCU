@@ -22,7 +22,8 @@
     "build": "vite build && node scripts/build.mjs",
     "package:win": "node scripts/package.mjs win32",
     "package:linux": "node scripts/package.mjs linux",
-    "start:packaged": "node scripts/start-packaged.mjs"
+    "start:packaged": "node scripts/start-packaged.mjs",
+    "roster:check": "node scripts/roster-check.ts"
   },
   "dependencies": {
     "react": "19.3.0",

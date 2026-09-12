@@ -1,0 +1,48 @@
+import {describe,it,expect} from 'vitest';
+import {z} from 'zod';
+import {fictionalCandidate} from '../packages/roster-pipeline/src/fictional.ts';
+import {candidate,approve,canonicalRoster,rosterChanges} from '../packages/roster-pipeline/src/review.ts';
+import {validateRoster} from '../packages/roster-pipeline/src/validate.ts';
+import {collectPages} from '../packages/roster-pipeline/src/provider.ts';
+
+describe('Publisher roster boundaries',()=>{
+  it('preserves Unicode and stable identity through reordered snapshots and a transfer',()=>{
+    const a=fictionalCandidate(true), b=structuredClone(a);
+    b.roster.players[0]!.displayName='Jos\u00e9 M\u00fcller';a.roster.players[0]!.displayName=b.roster.players[0]!.displayName;
+    b.roster.players.reverse();b.roster.teams.reverse();b.roster.memberships.reverse();b.roster.gameProfiles.reverse();b.roster.competitions.reverse();b.roster.competitions.forEach(c=>c.participatingTeamIds.reverse());
+    expect(canonicalRoster(a.roster)).toBe(canonicalRoster(b.roster));
+    const moved=b.roster.memberships.find(m=>m.playerId===a.roster.players[3]!.id)!;
+    moved.playingTeamId=a.roster.teams[1]!.id;moved.owningTeamId=moved.playingTeamId;
+    expect(validateRoster(b.roster,b.audit).ok).toBe(true);
+    expect(rosterChanges(a.roster,b.roster)).toEqual([{kind:'transfer',playerId:moved.playerId,name:a.roster.players[3]!.displayName,from:a.roster.teams[0]!.id,to:moved.playingTeamId}]);
+    expect(a.roster.memberships[3]!.playingTeamId).toBe(a.roster.teams[0]!.id);
+  });
+  it('blocks incomplete coverage, unresolved identities and malformed roster facts',()=>{
+    const input=fictionalCandidate();
+    expect(validateRoster(input.roster,input.audit)).toMatchObject({ok:false,issues:expect.arrayContaining([expect.objectContaining({code:'REVIEW_REQUIRED'})])});
+    input.audit.reviewedTeamIds=[...input.audit.completedTeamIds];input.audit.completedTeamIds.pop();input.audit.unresolvedIdentities.push('ambiguous-person');input.roster.memberships.push({...input.roster.memberships[0]!});
+    const result=validateRoster(input.roster,input.audit);expect(result.ok).toBe(false);
+    if(result.ok)throw Error('Expected blocked roster');
+    expect(result.issues.map(i=>i.code)).toEqual(expect.arrayContaining(['INCOMPLETE_FETCH','IDENTITY_CONFLICT','DUPLICATE_ID']));
+    input.roster.players[0]!.dateOfBirth='2000-02-30';expect(validateRoster(input.roster,input.audit)).toMatchObject({ok:false,issues:[{code:'INVALID_SCHEMA',entity:null,message:expect.any(String)}]});
+  });
+  it('finishes pagination and rejects lost pages, duplicate IDs and cursor cycles',async()=>{
+    const stamp='2026-09-12T12:00:00Z';const item=z.strictObject({id:z.string()});
+    const page=(ids:string[],cursor:string|null,fingerprint:string,total=2)=>({items:ids.map(id=>({id})),nextCursor:cursor,total,requestFingerprint:fingerprint,fetchedAtUTC:stamp,sourceUpdatedAtUTC:null});
+    const complete=await collectPages(async cursor=>cursor===null?page(['a'],'2','first'):page(['b'],null,'second'),item,x=>x.id);
+    expect(complete.items.map(x=>x.id)).toEqual(['a','b']);
+    await expect(collectPages(async()=>page(['a'],null,'first'),item,x=>x.id)).rejects.toThrow('INCOMPLETE_FETCH');
+    await expect(collectPages(async cursor=>cursor===null?page(['a'],'2','first'):page(['a'],null,'second'),item,x=>x.id)).rejects.toThrow('DUPLICATE_PROVIDER_ID');
+    await expect(collectPages(async cursor=>cursor===null?page(['a'],'2','first'):page(['b'],'2','second'),item,x=>x.id)).rejects.toThrow('REPEATED_OR_EMPTY_PAGE');
+    await expect(collectPages(async()=>page(['a'],null,'first'),item,x=>x.id,AbortSignal.abort())).rejects.toThrow();
+  });
+  it('invalidates an exact review on roster or audit edits while content ignores fetch time',()=>{
+    const input=fictionalCandidate(true);const before=candidate(input.roster,input.audit);if(!before.ok)throw Error('Invalid fixture');
+    const accepted=approve(input.roster,input.audit,before.reviewHash,'Fixture reviewer','2026-09-12T13:00:00Z');expect(accepted.reviewHash).toBe(before.reviewHash);
+    input.audit.extractionCompletedAt='2026-09-12T12:05:00Z';const after=candidate(input.roster,input.audit);if(!after.ok)throw Error('Invalid changed fixture');
+    expect(after.contentHash).toBe(before.contentHash);expect(after.reviewHash).not.toBe(before.reviewHash);
+    expect(()=>approve(input.roster,input.audit,before.reviewHash,'Fixture reviewer','2026-09-12T13:00:00Z')).toThrow('CANDIDATE_CHANGED_OR_INVALID');
+    input.roster.gameProfiles[0]!.attributes.shooting++;
+    expect(()=>approve(input.roster,input.audit,after.reviewHash,'Fixture reviewer','2026-09-12T13:00:00Z')).toThrow('CANDIDATE_CHANGED_OR_INVALID');
+  });
+});

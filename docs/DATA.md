@@ -130,3 +130,9 @@ v0.6 delivers the adapter, sync workflow and versioned data checks. Use controll
 v0.5.1 introduced the fictional-world-2026-v1 development snapshot: 176 club identities, ten divisions and 3,884 generated players including twelve free agents. packages/contracts/src/world.ts centralizes city profiles and starting membership; original eight-club saves retain fictional-2026-v1 and the exhibition schedule. Identity profile version 2 adds countries without changing the approved starter IDs. This generated world is offline fixture content, not a provider integration or an authentic roster claim.
 
 Cup schedules and qualification are career state, not mutable roster-provider data. v0.5.2 retains both development snapshot IDs. Schema-15 country saves enable cups next season; their frozen roster, current fixtures and archived results remain intact. No live provider response or imported roster is claimed by this milestone.
+
+### v0.6 pipeline implementation
+
+The first slice lives in packages/roster-pipeline/src. Schema 1 separates canonical UUID entities, memberships, generated game profiles and the private extraction/provenance audit. Validation reconciles five target leagues and exact expected teams, rejects duplicate membership/unknown loan ownership and requires complete fetching plus per-team review. Review hashes include the exact audit; content hashes exclude extraction times and canonicalize entity ordering. Player diffs retain identity through transfers. The bounded page collector rejects duplicate IDs, repeated cursors/fingerprints and inconsistent totals.
+
+npm run roster:check audits a synthetic 96-team / 2112-player fixture using centralized FCU club names. Its explicit fixture-review flag is development evidence, not release approval or provider verification. The live adapter, publisher UI, signed ZIP archives and consumer import remain subsequent v0.6 slices. No API credentials or provider responses have been used.
