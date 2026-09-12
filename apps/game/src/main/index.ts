@@ -15,8 +15,9 @@ else void app.whenReady().then(async()=>{
   const store=createSaveStore(join(app.getPath('userData'),'saves'));
   const productionURL=pathToFileURL(join(here,'../dist/index.html')).href;
   const devURL=!app.isPackaged&&process.env.FCU_DEV_URL==='http://localhost:5173'?'http://localhost:5173':null;
-  const window=new BrowserWindow({width:1440,height:940,minWidth:1000,minHeight:720,title:brand.title,backgroundColor:'#10191c',show:false,webPreferences:{preload:join(here,'preload.cjs'),sandbox:true,contextIsolation:true,nodeIntegration:false}});
+  const window=new BrowserWindow({width:1440,height:940,minWidth:800,minHeight:600,fullscreen:true,title:brand.title,backgroundColor:'#10191c',show:false,webPreferences:{preload:join(here,'preload.cjs'),sandbox:true,contextIsolation:true,nodeIntegration:false}});
   window.removeMenu();
+  window.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&input.key==='F11'){event.preventDefault();window.setFullScreen(!window.isFullScreen());}});
   const trusted=(event:IpcMainInvokeEvent)=>event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame&&(event.senderFrame.url===productionURL||event.senderFrame.url===`${devURL}/`);
   const route=<T>(fn:(...args:unknown[])=>Promise<T>)=>async(event:IpcMainInvokeEvent,...args:unknown[]):Promise<Result<T>>=>{
     if(!trusted(event))return {ok:false,error:'INVALID_COMMAND'};

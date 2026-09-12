@@ -27,6 +27,8 @@ Use `main` directly; no feature branches, worktrees, pull requests or GitHub Act
 
 The owner supplied https://github.com/andradedanilo/FCU.git during v0.1 setup. Verify the configured remote before backup. Keep local commits if a push cannot be completed, and state that remote backup is pending. Never force-push or change repository visibility. Keep all project guidance tracked as the owner requested; `.gitignore` does not exclude it.
 
+Current owner match controls: Play/Pause, 1x/2x/3x and optional continuous half-time. No instant finish or manual minute skip. Start fullscreen with F11 window toggle; prioritize fluid stage composition and readable human figures. See GAME and ARCHITECTURE for current pacing choices.
+
 ## Working defaults
 
 Windows/Linux launch, the FCU name, recognizable city-based fictional club names, and trying Three.js first are owner-confirmed. Other choices below are explicit recommended defaults until changed:
@@ -57,7 +59,7 @@ For later work: "Implement v0.2 according to the package; keep within its scope 
 | Provider and recurring budget | Sportmonks is the first adapter candidate. Assume access/budget are handled; implement and validate the actual adapter without a procurement gate |
 | Exact real competition rules / lower leagues | Deferred; require a separate scope change and maintained season rule packs |
 | Steam Deck / controllers | Aim for Deck Verified; include controller support and actual Deck checks before release, with Valve status tracked separately |
-| Three.js required? | Early prototype required; owner chooses continuation or text/2D after v0.1. Later switch remains available |
+| Three.js required? | Owner approved Three.js and retro identity; current refinement priorities are stadium scale, fluid animation and fullscreen adaptive layout. Text fallback remains available |
 | Release price and date | Owner decision after v0.7 playtests; roadmap versions are gates, not dates |
 
 Rights and adequate provider availability are assumed handled; do not reopen them as approval tasks or launch blockers. Provider/legal notes remain factual reference material, not a certification of rights. The remaining planning choices are art/audio budget, audience validation and playtest availability. Research and balance numbers are starting hypotheses, not proof of realism.

@@ -49,7 +49,7 @@ Simulation exports `createCareer(snapshot, seed, rules)`, `applyCommand(state, c
 
 Commands: SelectLineup, SetTactics, AdvanceDay, StartMatch, AdvanceMatch, Substitute, SubmitOffer, CounterOffer, ConfirmDeal, SetTraining, ScoutPlayer, UpgradeFacility, AcceptJob. Payload always includes commandId, careerId and expected stateRevision. Return new revision, result/error, events and necessary view projections. Reject stale revision with `STALE_STATE`, refresh UI, never retry spending automatically. Keep an applied-command ID ring of last 256 commands in the save; revision checks prevent older requests from being reapplied outside that ring.
 
-The authoritative match advances only to the next requested tick/chunk. Never simulate future goals ahead of an allowed tactical interruption. Automatic playback requests the next minute; fast-forward processes a bounded chunk but stops for mandatory decisions. Each worker chunk yields within 50 ms. Visualization can lag; it cannot skip mandatory decision stops or mutate the match.
+The authoritative match advances only to the next requested tick/chunk. Never simulate future goals ahead of an allowed tactical interruption. Automatic playback requests one minute at a time. No public instant-finish or single-step controls; half-time continuation is a renderer pacing preference. Mandatory decisions still stop playback. Each worker chunk yields within 50 ms. Visualization can lag; it cannot skip mandatory decision stops or mutate the match.
 
 ## 4. Reproducibility and versions
 
@@ -156,5 +156,7 @@ At fixture completion atomically commit result, reward progress and new pack ent
 | A21 | 2026-09-12: original Web Audio square/triangle phrases and short SFX, optional music and independent effects toggle | No audio library or external recordings. Music starts on user input, voices are released after playback, all sounds stop while hidden or on unmount. Settings are session-only in this first audition; richer soundscape and persistent volume controls remain later visual work. |
 
 | A22 | 2026-09-12: owner approved the retro shell and requested continuously maintained reference documents; stadium batch follows | Pure samplePlay projects committed events into positions; Three.js owns rendering only. Instanced supporters, flag pivots and local canvas boards share resources with explicit disposal. Animation runs only during playback or bounded three-second replay, pauses when hidden, and never sends simulation commands. No engine/save version change. |
+
+| A23 | 2026-09-12: owner requests fullscreen, larger stadium scale and fluent match pacing; removes skip controls | Fullscreen default with native F11 toggle and fluid shell; full-pitch camera may crop outer decks. Pure choreography accepts previous visual positions; articulated block figures and instanced crowd arms stay presentation-only. Six-second highlights and 1.2-second quiet ticks at 1x, capped 3x; optional half-time continuation. Engine/rules/save versions unchanged. Supersedes A22 replay duration (now six seconds). |
 
 Append a dated row only for consequential changes: reason, alternatives rejected, affected gate and migration impact. Routine implementation details belong in code.

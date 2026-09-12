@@ -25,6 +25,8 @@ it('samples the committed pass, run and outcome without changing a career',()=>{
   expect(receive.ball.x).toBeCloseTo(receive.positions[goal.playerId]!.x);
   expect(Math.abs(finish.ball.x)).toBeCloseTo(54.3);
   expect(samplePlay(play,1)).toEqual(finish);
+  const next=samplePlay({...play,event:{...goal,order:goal.order+2}},0,finish.positions,finish.ball);
+  expect(next.positions).toEqual(finish.positions);expect(next.ball).toEqual(finish.ball);
   expect(canonical(state)).toBe(before);
 });
 it('keeps a saved shot with the defending keeper and a miss outside the posts',()=>{

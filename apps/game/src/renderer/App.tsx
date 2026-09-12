@@ -29,6 +29,8 @@ export function App() {
   const running = useRef(false);
   const [speed, setSpeed] = useState(1);
   const speedRef = useRef(1);
+  const [continuousHalf,setContinuousHalf]=useState(false);
+  const continuousRef=useRef(false);
   const audio = useRef<ReturnType<typeof createGameAudio>|null>(null);
   const [music, setMusic] = useState(false);
   const [effects, setEffects] = useState(true);
@@ -59,11 +61,11 @@ export function App() {
       if(result.value.round>current.round)await save(result.value,'auto');
       if(action.type==='StartMatch')setScreen('match');
       if(action.type==='SelectLineup')setNotice(t.confirmed);
-      if(result.value.match?.tick===45||result.value.match?.tick===90)stop();
+      if((result.value.match?.tick===45&&!continuousRef.current)||result.value.match?.tick===90)stop();
     } else {setNotice(t.errors[result.error]);stop();}
     occupied.current=false;setBusy(false);
   }
-  const tick=async()=>{if(!running.current)return;await command({type:'AdvanceMatch',minutes:1});if(running.current)timer.current=setTimeout(()=>void tick(),800/speedRef.current);};
+  const tick=async()=>{if(!running.current)return;const order=latest.current?.match?.events.at(-1)?.order;await command({type:'AdvanceMatch',minutes:1});const hasPlay=latest.current?.match?.events.at(-1)?.order!==order;if(running.current)timer.current=setTimeout(()=>void tick(),(hasPlay?6000:1200)/speedRef.current);};
   const play=()=>{if(running.current){stop();return;}running.current=true;setPlaying(true);void tick();};
   const navigate=(next:Screen)=>{stop();setNotice('');setScreen(next);};
   async function newCareer() {
@@ -101,9 +103,9 @@ export function App() {
         {state&&screen==='home'&&<Clubhouse state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.tick<90?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
-        {state?.match&&screen==='match'&&<MatchScreen state={state} busy={busy} playing={playing} speed={speed} play={play} minute={()=>void command({type:'AdvanceMatch',minutes:1})} finish={()=>void command({type:'AdvanceMatch',minutes:90})} changeSpeed={value=>{setSpeed(value);speedRef.current=value;}} done={()=>navigate('home')} goal={()=>audio.current?.goal()}/>}
+        {state?.match&&screen==='match'&&<MatchScreen state={state} busy={busy} playing={playing} speed={speed} play={play} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} changeSpeed={value=>{setSpeed(value);speedRef.current=value;}} done={()=>navigate('home')} goal={()=>audio.current?.goal()}/>}
       </main>
-      <footer className={s.footer}><span>{t.edition}</span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
+      <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}</span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>
     {saves!==null&&<dialog ref={dialog} className={s.dialog} onCancel={()=>setSaves(null)} aria-label={t.saves}><header><h2>{t.saves}</h2><button onClick={()=>setSaves(null)}>{t.close}</button></header><p>{t.recovery}</p><div className={s.saveList}>{saves.length===0?<p>{t.noSaves}</p>:saves.map(entry=><div className={s.saveRow} key={entry.commitId}>{entry.valid?<><span><strong>{entry.club}</strong><small>{entry.savedAtUTC.replace('T',' ').slice(0,19)} UTC / {t[entry.kind]} / {t.round} {entry.round} / {entry.tick}'</small></span><button disabled={busy} onClick={()=>void load(entry)}>{t.load}</button></>:<p>{entry.error==='FUTURE_SAVE'?t.future:t.corrupt}<small>{entry.commitId}</small></p>}</div>)}</div></dialog>}
   </div>;
