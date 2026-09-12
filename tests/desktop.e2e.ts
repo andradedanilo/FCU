@@ -79,7 +79,7 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
     await page.getByRole('button',{name:'Continue',exact:false}).click();
     // One bounded full-season user journey, 13 remaining fixtures.
     for(let round=1;round<14;round++){
-      await click('Squad');await click('Suggest lineup');await click('Confirm lineup');await click('Clubhouse');
+      await page.getByRole('button',{name:'Advance to next event',exact:false}).click();await click('Squad');await click('Suggest lineup');await click('Confirm lineup');await click('Clubhouse');
       await page.getByRole('button',{name:'Kick off'}).click();if(round===1){await page.getByRole('checkbox',{name:'Continue through half-time'}).check();await playUntil(0,90);await page.getByRole('button',{name:'Continue',exact:false}).click();continue;}await page.getByRole('checkbox',{name:'Continue through half-time'}).uncheck();await playUntil(0,45);await playUntil(45,90);await page.getByRole('button',{name:'Continue',exact:false}).click();
     }
     await expect(page.getByText('Season complete',{exact:true})).toBeVisible();await page.getByRole('button',{name:'League table',exact:true}).click();await expect(page.locator('tbody tr')).toHaveCount(8);expect((await latest()).round).toBe(14);expect(errors).toEqual([]);

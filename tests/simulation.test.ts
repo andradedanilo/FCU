@@ -1,3 +1,4 @@
+import {nextFixtureDate} from '../packages/simulation/src/calendar.ts';
 import {completeMinute} from '../packages/simulation/src/matchTime.ts';
 import {needsDecision} from '../packages/simulation/src/availability.ts';
 import { describe, it, expect } from 'vitest';
@@ -12,7 +13,7 @@ function run(s:Career, action: {type:'StartMatch'}|{type:'AdvanceMatch';minutes:
     const result=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:'00000000-0000-4000-8000-'+String(s.revision+1).padStart(12,'0')} as Command);if(!result.ok)throw Error(result.error);s=result.value;
   };
   // This test manager acknowledges removals and selects eligible players between fixtures.
-  if(action.type==='StartMatch'&&s.round>0){const lineup=autoPick(s.players,s.clubId,s.tactics.formation,s.date);s={...s,lineup,bench:pickBench(s.players,s.clubId,lineup,s.date)};}
+  if(action.type==='StartMatch'&&s.round>0){while(s.date<nextFixtureDate(s)!)send({type:'AdvanceCalendar',target:'event'} as Omit<Command,'careerId'|'commandId'|'expectedRevision'>);const lineup=autoPick(s.players,s.clubId,s.tactics.formation,s.date);s={...s,lineup,bench:pickBench(s.players,s.clubId,lineup,s.date)};}
   const first=s.match?.phase==='first';
   const end=action.type==='AdvanceMatch'?s.match!.tick+action.minutes:null;
   send(action);
@@ -133,7 +134,7 @@ it('retains fractional fatigue across ticks, substitutes and saved continuations
  expect(whole.condition[m.homeLineup[0]!]).toBe(100000-45*276);expect(whole.condition[m.homeBench[0]!]).toBe(100000);
  const changed=run({...s,match:whole},{type:'Substitute',out:whole.homeLineup[1]!,in:whole.homeBench.find(id=>s.players.find(p=>p.id===id)!.role!=='GK')!});const after=advanceMatch(changed.match!,s.players,1);expect(after.condition[whole.homeLineup[1]!]).toBe(whole.condition[whole.homeLineup[1]!]);
  const tired=initial();tired.players=tired.players.map(p=>({...p,condition:10000}));tired.training='intense';let career=run(tired,{type:'StartMatch'});career=run(career,{type:'AdvanceMatch',minutes:90});career=run(career,{type:'AdvanceMatch',minutes:90});
- expect(career.players.find(p=>p.id===tired.lineup[0])!.condition).toBe(28000);expect(career.players.find(p=>p.id===tired.bench[0])!.condition).toBe(38000);expect(career.players.every(p=>p.condition>=0&&p.condition<=100000&&p.morale>=0&&p.morale<=100)).toBe(true);
+ const recovered=applyCommand(career,{type:'AdvanceCalendar',target:'event',careerId:career.careerId,expectedRevision:career.revision,commandId:crypto.randomUUID()});if(!recovered.ok)throw Error(recovered.error);career=recovered.value;expect(career.players.find(p=>p.id===tired.lineup[0])!.condition).toBe(28000);expect(career.players.find(p=>p.id===tired.bench[0])!.condition).toBe(38000);expect(career.players.every(p=>p.condition>=0&&p.condition<=100000&&p.morale>=0&&p.morale<=100)).toBe(true);
 });
 
 it('freezes bounded stoppage time and preserves its half-time substitution boundary',()=>{

@@ -27,7 +27,7 @@ it('lists corruption for recovery, rejects future versions and preserves origina
   const file=join(root,s.careerId,`${second}.save`);const bytes=await readFile(file);
   const envelope=JSON.parse(gunzipSync(bytes).toString()) as {schema:number;checksum:string};
   envelope.checksum='0'.repeat(64);expect(()=>decode(gzipSync(canonical(envelope)))).toThrow('INVALID_SAVE');
-  envelope.schema=10;await writeFile(file,gzipSync(canonical(envelope)));
+  envelope.schema=11;await writeFile(file,gzipSync(canonical(envelope)));
   await expect(store.load(s.careerId,second)).rejects.toThrow('FUTURE_SAVE');
   expect((await store.list()).find(e=>e.commitId===second)?.error).toBe('FUTURE_SAVE');
   expect(checksum(await store.load(s.careerId,first))).toBe(checksum(s));expect((await readdir(join(root,s.careerId)))).toHaveLength(2);
@@ -42,7 +42,7 @@ it('migrates a v0.1 checkpoint without rewriting it and refuses missing current 
  const id=await store.save(started.value,'manual');const file=join(root,s.careerId,id+'.save');const raw=JSON.parse(gunzipSync(await readFile(file)).toString());
  const malformed=structuredClone(raw);delete malformed.payload.match.homeBench;malformed.checksum=checksum(malformed.payload);expect(()=>decode(gzipSync(canonical(malformed)))).toThrow();
  raw.schema=1;raw.rulesetVersion='exhibition-1';raw.payload.rulesetVersion='exhibition-1';delete raw.payload.tactics;delete raw.payload.match.homeTactics;delete raw.payload.match.awayTactics;raw.appVersion='0.1.0';raw.engineVersion='0.1.0';raw.payload.engineVersion='0.1.0';delete raw.payload.match.homeBench;delete raw.payload.match.awayBench;delete raw.payload.match.substitutions;raw.checksum=checksum(raw.payload);
- const legacy=gzipSync(canonical(raw));await writeFile(file,legacy);const loaded=await store.load(s.careerId,id);expect(loaded.match?.homeBench).toHaveLength(9);expect(loaded.match?.substitutions).toEqual([]);expect(loaded.engineVersion).toBe('0.4.1');expect({...loaded,economy:started.value.economy}).toEqual(started.value);expect(loaded.economy.ledger.every(e=>e.kind==='opening')).toBe(true);
+ const legacy=gzipSync(canonical(raw));await writeFile(file,legacy);const loaded=await store.load(s.careerId,id);expect(loaded.match?.homeBench).toHaveLength(9);expect(loaded.match?.substitutions).toEqual([]);expect(loaded.engineVersion).toBe('0.4.2');expect({...loaded,economy:started.value.economy}).toEqual(started.value);expect(loaded.economy.ledger.every(e=>e.kind==='opening')).toBe(true);
  await store.save(loaded,'manual');expect(await readFile(file)).toEqual(legacy);
 });
 

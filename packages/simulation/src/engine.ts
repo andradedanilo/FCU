@@ -1,10 +1,12 @@
+import {nextFixtureDate,advanceCalendar} from './calendar.ts';
+import {startScouting,validateScouting} from './scouting.ts';
 import {createContracts,initialContract,renewContract,validateContracts} from './contracts.ts';
 import {overall,effectiveRating} from './ratings.ts';
 export {overall,effectiveRating} from './ratings.ts';
 import {createEconomy,settleDay,settleGate,validateEconomy} from './economy.ts';
 import {halfBoundary,completeMinute} from './matchTime.ts';
 import {available,activeLineup,needsDecision,incidents,settleAvailability,addDays,validDate} from './availability.ts';
-import { careerSchema, financialCareerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
+import { careerSchema, renewalCareerSchema, financialCareerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
 import { clubs } from '../../contracts/src/identity.ts';
 import { draw, stream } from './rng.ts';
 
@@ -49,8 +51,8 @@ export function createCareer(careerId: string, seed: number, club: ClubId): Care
     return {id:`player-${String(ci+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}` as PlayerId, clubId:c.id, name:`${firstNames[i]} ${surnames[ci]}`, role, condition:100000,morale:70,academy:false,injuryUntil:null,leagueYellows:0,leagueBan:0,goalkeeping:role==='GK'?rating():15, tackling:rating(), passing:rating(), shooting:rating(), pace:rating(), stamina:rating(), discipline:rating()};
   }));
   if (!clubs.some(c => c.id === club)) throw new Error('INVALID_COMMAND');
-  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.4.1',training:'balanced', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null };
-  const state=careerSchema.parse({...base,economy:createEconomy(base,overall),contracts:createContracts(base)});settleDay(state,state.date);return state;
+  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.4.2',training:'balanced', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null };
+  const state=careerSchema.parse({...base,economy:createEconomy(base,overall),contracts:createContracts(base),scouting:{shortlist:[],active:null,reports:{}}});settleDay(state,state.date);return state;
 }
 const emptyStats = () => ({shots:0,onTarget:0,quality:0,possession:0});
 // Reserve one goalkeeper and the eight highest-rated remaining outfield players.
@@ -91,7 +93,11 @@ export function migrateTimedCareer(input:unknown):Career {
 }
 export function migrateFinancialCareer(input:unknown):Career {
  const old=financialCareerSchema.parse(input);
- return validateCareer({...old,engineVersion:'0.4.1',rulesetVersion:rules.version,contracts:createContracts(old)});
+ return migrateRenewalCareer({...old,engineVersion:'0.4.1',rulesetVersion:'exhibition-8',contracts:createContracts(old)});
+}
+export function migrateRenewalCareer(input:unknown):Career {
+ const old=renewalCareerSchema.parse(input);
+ return validateCareer({...old,engineVersion:'0.4.2',rulesetVersion:rules.version,scouting:{shortlist:[],active:null,reports:{}}});
 }
 export function validBench(players:Player[],club:ClubId,lineup:PlayerId[],bench:PlayerId[]):boolean {
  return bench.length<=9&&new Set(bench).size===bench.length&&bench.every(id=>!lineup.includes(id)&&players.some(p=>p.id===id&&p.clubId===club));
@@ -207,7 +213,14 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
   if(command.careerId!==state.careerId||command.expectedRevision!==state.revision)return {ok:false,error:'STALE_STATE'};
   if(state.appliedCommands.includes(command.commandId))return {ok:false,error:'DUPLICATE_COMMAND'};
   const next=structuredClone(state);
-  if(command.type==='RenewContract'){
+  if(command.type==='AdvanceCalendar'){
+    const error=advanceCalendar(next,command.target);if(error)return {ok:false,error};
+  } else if(command.type==='ScoutPlayer'){
+    const error=startScouting(next,command.playerId);if(error)return {ok:false,error};
+  } else if(command.type==='SetShortlist'){
+    if(!state.players.some(p=>p.id===command.playerId&&p.clubId!==state.clubId))return {ok:false,error:'INVALID_COMMAND'};
+    next.scouting.shortlist=command.listed?[...new Set([...state.scouting.shortlist,command.playerId])].sort():state.scouting.shortlist.filter(id=>id!==command.playerId);
+  } else if(command.type==='RenewContract'){
     const error=renewContract(next,command);if(error)return {ok:false,error};
   } else if(command.type==='SelectLineup') {
     if(state.match && state.match.phase!=='finished')return {ok:false,error:'INVALID_COMMAND'};
@@ -219,6 +232,7 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
     next.bench=[...retained,...pickBench(state.players,state.clubId,command.lineup,state.date).filter(id=>!retained.includes(id))].slice(0,9);
     if(!validBench(state.players,state.clubId,next.lineup,next.bench))next.bench=pickBench(state.players,state.clubId,next.lineup,state.date);
   } else if(command.type==='ForfeitMatch') {
+    if(state.date!==nextFixtureDate(state))return {ok:false,error:'NOT_MATCH_DAY'};
     if(state.round>=14||(state.match&&state.match.phase!=='finished')||state.players.filter(p=>p.clubId===state.clubId&&available(p,state.date)).length>=7||state.players.filter(p=>p.clubId===state.clubId&&p.academy).length<8)return {ok:false,error:'INVALID_COMMAND'};
     next.match=startMatch(state,state.fixtures.find(f=>f.round===state.round&&(f.home===state.clubId||f.away===state.clubId))!);awardForfeit(next.match,state.clubId);
   } else if(command.type==='CallUp') {
@@ -242,6 +256,7 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
   } else if(command.type==='Substitute') {
     if(!next.match||!substitutePlayer(next.match,state.players,state.clubId,command.out,command.in))return {ok:false,error:'INVALID_SUBSTITUTION'};
   } else if(command.type==='StartMatch') {
+    if(state.date!==nextFixtureDate(state))return {ok:false,error:'NOT_MATCH_DAY'};
     if(state.round>=14||(state.match&&state.match.phase!=='finished'))return {ok:false,error:'INVALID_COMMAND'};
     if([...state.lineup,...state.bench].some(id=>!available(state.players.find(p=>p.id===id)!,state.date)))return {ok:false,error:'UNAVAILABLE_PLAYER'};
     if(!validSelection(state,state.lineup))return {ok:false,error:'INVALID_LINEUP'};
@@ -267,11 +282,7 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
         return {...f,score:[m.homeGoals,m.awayGoals]};
       });
       next.round++;
-      for(let day=1;day<=7;day++){const date=addDays(state.date,day);settleDay(next,date);next.players=next.players.map(p=>({...p,condition:Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced']))}));}
-      // Date-only calendar arithmetic; no host timezone or wall clock.
-      const day=1+next.round*7; const month=day<=31?7:day<=62?8:day<=92?9:10;
-      const date=day-(month===7?0:month===8?31:month===9?62:92);
-      next.date=`2026-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+
   }
   next.revision++;next.appliedCommands=[...state.appliedCommands,command.commandId].slice(-256);
   return {ok:true,value:next};
@@ -292,7 +303,8 @@ export function standings(state: Career) {
 }
 export function validateCareer(input: unknown): Career {
   const state=careerSchema.parse(input);
-  validateEconomy(state);validateContracts(state);
+  validateEconomy(state);validateContracts(state);validateScouting(state);
+  const nextDate=nextFixtureDate(state);if((nextDate&&state.date>nextDate)||(state.match&&state.match.date>state.date))throw new Error('INVALID_SAVE');
   if(!validDate(state.date)||state.players.some(p=>p.injuryUntil!==null&&!validDate(p.injuryUntil)))throw new Error('INVALID_SAVE');
   const ids=state.clubs.map(c=>c.id);
   if(new Set(ids).size!==8||new Set(state.players.map(p=>p.id)).size!==state.players.length||!ids.includes(state.clubId)||!validLineup(state.players,state.clubId,state.lineup))throw new Error('INVALID_SAVE');
