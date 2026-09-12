@@ -91,3 +91,23 @@ it('gives mentality and tempo their stated chance tradeoffs within caps',()=>{
  expect(chanceProbability(own,other,false,{...defaultTactics,tempo:'fast'},defaultTactics)).toBeGreaterThan(base);expect(chanceProbability(own,other,false,{...defaultTactics,tempo:'slow'},defaultTactics)).toBeLessThan(base);
  expect(chanceProbability({A:100,M:100},{D:1,M:1},true,defaultTactics,defaultTactics)).toBe(2400);expect(chanceProbability({A:1,M:1},{D:100,M:100},false,defaultTactics,defaultTactics)).toBe(400);
 });
+
+it('freezes a selected bench and saves three setups without applying them',()=>{
+ const s=initial();const selected=[...s.bench];const spare=s.players.find(p=>p.clubId===s.clubId&&!s.lineup.includes(p.id)&&!s.bench.includes(p.id))!;selected[8]=spare.id;
+ const base={careerId:s.careerId,expectedRevision:s.revision,commandId:crypto.randomUUID()};
+ expect(applyCommand(s,{...base,type:'SelectBench',bench:[...selected.slice(0,8),s.lineup[0]!]})).toEqual({ok:false,error:'INVALID_BENCH'});
+ expect(applyCommand(s,{...base,type:'SelectBench',bench:Array(9).fill(selected[0])})).toEqual({ok:false,error:'INVALID_BENCH'});
+ const picked=applyCommand(s,{...base,type:'SelectBench',bench:selected});if(!picked.ok)throw Error();
+ const preset={...defaultTactics,mentality:'attacking' as const};const saved=applyCommand(picked.value,{...base,expectedRevision:picked.value.revision,commandId:crypto.randomUUID(),type:'StoreTacticPreset',slot:2,tactics:preset});if(!saved.ok)throw Error();
+ expect(saved.value.tactics).toEqual(defaultTactics);expect(saved.value.presets).toEqual([null,null,preset]);expect(validateCareer(JSON.parse(canonical(saved.value)))).toEqual(saved.value);
+ const started=run(saved.value,{type:'StartMatch'});expect(started.match!.homeBench).toEqual(selected);
+ expect(applyCommand(started,{...base,expectedRevision:started.revision,commandId:crypto.randomUUID(),type:'SelectBench',bench:s.bench})).toEqual({ok:false,error:'INVALID_COMMAND'});
+ const malformed=structuredClone(saved.value);malformed.bench[0]=malformed.lineup[0]!;expect(()=>validateCareer(malformed)).toThrow();
+});
+it('changes only AI mentality at minute 60 with identical chunked and saved continuation',()=>{
+ const s=initial();let m=advanceMatch(startMatch(s,s.fixtures[0]!),s.players,45);m=advanceMatch(m,s.players,15);m.homeGoals=1;m.awayGoals=0;
+ const human={...m.homeTactics,mentality:'cautious' as const};m.homeTactics=human;
+ const next=advanceMatch(m,s.players,1);expect(m.awayTactics.mentality).toBe('balanced');expect(next.awayTactics.mentality).toBe('attacking');expect(next.homeTactics).toEqual(human);expect(next.events.slice(0,m.events.length)).toEqual(m.events);
+ const both=structuredClone(m);both.managedClubId=null;expect(advanceMatch(both,s.players,1).homeTactics.mentality).toBe('cautious');both.awayGoals=1;expect(advanceMatch(both,s.players,1).homeTactics.mentality).toBe('balanced');
+ const final=advanceMatch(m,s.players,30);expect(advanceMatch(JSON.parse(canonical(next)),s.players,29)).toEqual(final);
+});

@@ -8,4 +8,4 @@ for(let seed=1;seed<=500;seed++) {
  let m=startMatch(s,s.fixtures[0]!);m=advanceMatch(m,s.players,90);m=advanceMatch(m,s.players,90);
  bucket.matches++;bucket.goals+=m.homeGoals+m.awayGoals;bucket.draws+=Number(m.homeGoals===m.awayGoals);bucket.shots+=m.homeStats.shots+m.awayStats.shots;
 }
-console.log(JSON.stringify({workload:'500 matches, seeds 1..500, fixture-00-0, home profiles cycle by (seed-1)%5; away balanced 4-4-2',goalsPerMatch:totals.reduce((n,b)=>n+b.goals,0)/500,drawPercent:totals.reduce((n,b)=>n+b.draws,0)/5,shotsPerMatch:totals.reduce((n,b)=>n+b.shots,0)/500,profiles:totals,runtimeMs:Math.round(performance.now()-started),cards:'not implemented',injuries:'not implemented'}));
+console.log(JSON.stringify({workload:'500 matches, seeds 1..500, fixture-00-0, home profiles cycle by (seed-1)%5; away starts balanced 4-4-2 and applies minute-60 AI policy',goalsPerMatch:totals.reduce((n,b)=>n+b.goals,0)/500,drawPercent:totals.reduce((n,b)=>n+b.draws,0)/5,shotsPerMatch:totals.reduce((n,b)=>n+b.shots,0)/500,profiles:totals,runtimeMs:Math.round(performance.now()-started),cards:'not implemented',injuries:'not implemented'}));

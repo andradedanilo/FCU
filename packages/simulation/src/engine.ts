@@ -1,8 +1,8 @@
-import { careerSchema, legacyCareerSchema, previousCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
+import { careerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
 import { clubs } from '../../contracts/src/identity.ts';
 import { draw, stream } from './rng.ts';
 
-export const rules = { version: 'exhibition-2', chance: 1200, minChance: 400, maxChance: 2400, homeFactor: 10800, target: 3200, goal: 3000, assist: 7000, mentality:{cautious:9000,balanced:10000,attacking:11200}, exposure:{cautious:9500,balanced:10000,attacking:10800},tempo:{slow:9500,normal:10000,fast:10500},pressing:{low:9700,normal:10000,high:10600} } as const;
+export const rules = { version: 'exhibition-3', chance: 1200, minChance: 400, maxChance: 2400, homeFactor: 10800, target: 3200, goal: 3000, assist: 7000, mentality:{cautious:9000,balanced:10000,attacking:11200}, exposure:{cautious:9500,balanced:10000,attacking:10800},tempo:{slow:9500,normal:10000,fast:10500},pressing:{low:9700,normal:10000,high:10600} } as const;
 const roles: Role[] = ['GK','GK', ...Array<Role>(8).fill('DEF'), ...Array<Role>(8).fill('MID'), ...Array<Role>(4).fill('FWD')];
 const firstNames = ['Alex','Robin','Sam','Jamie','Morgan','Casey','Drew','Ellis','Jules','Riley','Taylor','Noel','Avery','Cameron','Jordan','Rowan','Finley','Lee','Remy','Sasha','Micah','Quinn'];
 const surnames = ['Ashford','Bellwick','Creston','Dalehurst','Elmbridge','Fenwick','Greyford','Harrowell'];
@@ -38,7 +38,7 @@ export function createCareer(careerId: string, seed: number, club: ClubId): Care
     return {id:`player-${String(ci+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}` as PlayerId, clubId:c.id, name:`${firstNames[i]} ${surnames[ci]}`, role, goalkeeping:role==='GK'?rating():15, tackling:rating(), passing:rating(), shooting:rating(), pace:rating(), stamina:rating(), discipline:rating()};
   }));
   if (!clubs.some(c => c.id === club)) throw new Error('INVALID_COMMAND');
-  return careerSchema.parse({ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.2.1', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null });
+  return careerSchema.parse({ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.2.2', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null });
 }
 const emptyStats = () => ({shots:0,onTarget:0,quality:0,possession:0});
 // Reserve one goalkeeper and the eight highest-rated remaining outfield players.
@@ -51,11 +51,18 @@ export function substitutionWindows(match:Match,club:ClubId):number {
 }
 export function migrateLegacyCareer(input:unknown):Career {
  const old=legacyCareerSchema.parse(input);const m=old.match;
- return validateCareer({...old,engineVersion:'0.2.1',rulesetVersion:rules.version,tactics:{...defaultTactics},match:m?{...m,homeTactics:{...defaultTactics},awayTactics:{...defaultTactics},homeBench:pickBench(old.players,m.home,m.homeLineup),awayBench:pickBench(old.players,m.away,m.awayLineup),substitutions:[]}:null});
+ return migrateTacticalCareer({...old,engineVersion:'0.2.1',rulesetVersion:'exhibition-2',tactics:{...defaultTactics},match:m?{...m,homeTactics:{...defaultTactics},awayTactics:{...defaultTactics},homeBench:pickBench(old.players,m.home,m.homeLineup),awayBench:pickBench(old.players,m.away,m.awayLineup),substitutions:[]}:null});
 }
 export function migratePreviousCareer(input:unknown):Career {
  const old=previousCareerSchema.parse(input);
- return validateCareer({...old,engineVersion:'0.2.1',rulesetVersion:rules.version,tactics:{...defaultTactics},match:old.match?{...old.match,homeTactics:{...defaultTactics},awayTactics:{...defaultTactics}}:null});
+ return migrateTacticalCareer({...old,engineVersion:'0.2.1',rulesetVersion:'exhibition-2',tactics:{...defaultTactics},match:old.match?{...old.match,homeTactics:{...defaultTactics},awayTactics:{...defaultTactics}}:null});
+}
+export function migrateTacticalCareer(input:unknown):Career {
+ const old=tacticalCareerSchema.parse(input);
+ return validateCareer({...old,engineVersion:'0.2.2',rulesetVersion:rules.version,bench:pickBench(old.players,old.clubId,old.lineup),presets:[null,null,null],match:old.match?{...old.match,managedClubId:old.clubId}:null});
+}
+export function validBench(players:Player[],club:ClubId,lineup:PlayerId[],bench:PlayerId[]):boolean {
+ return bench.length===9&&new Set(bench).size===9&&bench.every(id=>!lineup.includes(id)&&players.some(p=>p.id===id&&p.clubId===club))&&bench.filter(id=>players.find(p=>p.id===id)?.role==='GK').length===1;
 }
 // Fill natural slots first, then assign remaining outfield players deterministically.
 export function arrangeLineup(players:Player[],ids:PlayerId[],formation:Tactics['formation']) {
@@ -67,7 +74,7 @@ export function arrangeLineup(players:Player[],ids:PlayerId[],formation:Tactics[
 export function startMatch(state: Career, fixture: Fixture): Match {
   const homeLineup=fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home);
   const awayLineup=fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away);
-  return {homeTactics:{...(fixture.home===state.clubId?state.tactics:defaultTactics)},awayTactics:{...(fixture.away===state.clubId?state.tactics:defaultTactics)},homeBench:pickBench(state.players,fixture.home,homeLineup),awayBench:pickBench(state.players,fixture.away,awayLineup),substitutions:[],fixtureId:fixture.id, home:fixture.home, away:fixture.away, tick:0, rng:stream(state.seed,`match/${fixture.id}`), homeLineup:fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home), awayLineup:fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away), homeGoals:0,awayGoals:0,homeStats:emptyStats(),awayStats:emptyStats(),events:[]};
+  return {managedClubId:fixture.home===state.clubId||fixture.away===state.clubId?state.clubId:null,homeTactics:{...(fixture.home===state.clubId?state.tactics:defaultTactics)},awayTactics:{...(fixture.away===state.clubId?state.tactics:defaultTactics)},homeBench:fixture.home===state.clubId?[...state.bench]:pickBench(state.players,fixture.home,homeLineup),awayBench:fixture.away===state.clubId?[...state.bench]:pickBench(state.players,fixture.away,awayLineup),substitutions:[],fixtureId:fixture.id, home:fixture.home, away:fixture.away, tick:0, rng:stream(state.seed,`match/${fixture.id}`), homeLineup:fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home), awayLineup:fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away), homeGoals:0,awayGoals:0,homeStats:emptyStats(),awayStats:emptyStats(),events:[]};
 }
 function strength(slots:ReturnType<typeof arrangeLineup>) {
  const mean=(role:Role)=>{const group=slots.filter(s=>s.role===role);return group.length?Math.round(group.reduce((n,s)=>n+overall({...s.player,role})*104*(s.player.role===role?1:.8),0)/group.length)/100:10;};
@@ -91,6 +98,10 @@ export function advanceMatch(previous: Match, players: Player[], minutes: number
   };
   const end=Math.min(90,match.tick+minutes,match.tick<45?45:90);
   while(match.tick<end) {
+    if(match.tick===60){
+      if(match.home!==match.managedClubId)match.homeTactics.mentality=match.homeGoals<match.awayGoals?'attacking':match.homeGoals>match.awayGoals?'cautious':'balanced';
+      if(match.away!==match.managedClubId)match.awayTactics.mentality=match.awayGoals<match.homeGoals?'attacking':match.awayGoals>match.homeGoals?'cautious':'balanced';
+    }
     match.tick++;
     const homePossession=Math.round(10000*strengths[0]!.M/(strengths[0]!.M+strengths[1]!.M));
     match.homeStats.possession+=homePossession; match.awayStats.possession+=10000-homePossession;
@@ -125,6 +136,16 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
     if(state.match && state.match.tick<90)return {ok:false,error:'INVALID_COMMAND'};
     if(!validLineup(state.players,state.clubId,command.lineup))return {ok:false,error:'INVALID_LINEUP'};
     next.lineup=command.lineup;
+    // Retain valid choices; fill only vacancies when the starting eleven changes.
+    const retained=state.bench.filter(id=>!command.lineup.includes(id));
+    next.bench=[...retained,...pickBench(state.players,state.clubId,command.lineup).filter(id=>!retained.includes(id))].slice(0,9);
+    if(!validBench(state.players,state.clubId,next.lineup,next.bench))next.bench=pickBench(state.players,state.clubId,next.lineup);
+  } else if(command.type==='SelectBench') {
+    if(state.match&&state.match.tick<90)return {ok:false,error:'INVALID_COMMAND'};
+    if(!validBench(state.players,state.clubId,state.lineup,command.bench))return {ok:false,error:'INVALID_BENCH'};
+    next.bench=command.bench;
+  } else if(command.type==='StoreTacticPreset') {
+    next.presets[command.slot]=command.tactics;
   } else if(command.type==='SetTactics') {
     if(state.match&&state.match.tick<90){
       if(state.match.home===state.clubId)next.match!.homeTactics=command.tactics;else next.match!.awayTactics=command.tactics;
@@ -184,11 +205,13 @@ export function validateCareer(input: unknown): Career {
   const ids=state.clubs.map(c=>c.id);
   if(new Set(ids).size!==8||new Set(state.players.map(p=>p.id)).size!==176||!ids.includes(state.clubId)||!validLineup(state.players,state.clubId,state.lineup))throw new Error('INVALID_SAVE');
   if(ids.some(id=>state.players.filter(p=>p.clubId===id).length!==22))throw new Error('INVALID_SAVE');
+  if(!validBench(state.players,state.clubId,state.lineup,state.bench))throw new Error('INVALID_SAVE');
   const expected=schedule(ids);
   if(state.fixtures.some((f,i)=>{const e=expected[i]!;return f.id!==e.id||f.home!==e.home||f.away!==e.away||f.round!==e.round||(f.score!==null)!==(f.round<state.round);}))throw new Error('INVALID_SAVE');
   if(state.match){const m=state.match;const f=state.fixtures.find(f=>f.id===m.fixtureId);if(!f||f.home!==m.home||f.away!==m.away||f.round!==(m.tick===90?state.round-1:state.round)||!validLineup(state.players,m.home,m.homeLineup)||!validLineup(state.players,m.away,m.awayLineup)||m.events.some((e,i)=>e.order!==i||e.tick>m.tick||!state.players.some(p=>p.id===e.playerId&&p.clubId===e.clubId)))throw new Error('INVALID_SAVE');}
   if(state.match){
     const m=state.match;
+    if(m.managedClubId!==state.clubId)throw new Error('INVALID_SAVE');
     for(const [club,lineup,bench] of [[m.home,m.homeLineup,m.homeBench],[m.away,m.awayLineup,m.awayBench]] as const){
       const changes=m.substitutions.filter(s=>s.clubId===club);
       if(changes.length>5||substitutionWindows(m,club)>3||new Set(bench).size!==9||bench.some(id=>!state.players.some(p=>p.id===id&&p.clubId===club)))throw new Error('INVALID_SAVE');
