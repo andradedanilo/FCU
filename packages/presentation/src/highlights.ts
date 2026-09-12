@@ -1,6 +1,14 @@
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export type HighlightKind='goal'|'save'|'shot';
 export type Highlight={kind:HighlightKind;player:string;color:string;opponentColor:string;tick:number;score:string};
+export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEvent|undefined {
+  let misses=0;
+  const fresh=events.filter(event=>{
+    if(event.type==='shot')misses++;
+    return event.order>afterOrder&&(event.type==='goal'||event.type==='save'||(event.type==='shot'&&misses%3===0));
+  });
+  return fresh.find(e=>e.type==='goal')??fresh.find(e=>e.type==='save')??fresh.at(-1);
+}
 export function projectHighlight(state:Career,event:MatchEvent):Highlight|null {
   if(event.type==='pass')return null;
   const match=state.match!;

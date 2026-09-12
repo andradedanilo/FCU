@@ -2,7 +2,7 @@ import {it,expect} from 'vitest';
 import {createCareer,startMatch,advanceMatch} from '../packages/simulation/src/engine.ts';
 import {clubs} from '../packages/contracts/src/identity.ts';
 import {canonical} from '../packages/contracts/src/index.ts';
-import {projectHighlight,sampleHighlight} from '../packages/presentation/src/highlights.ts';
+import {projectHighlight,sampleHighlight,selectHighlight} from '../packages/presentation/src/highlights.ts';
 it('projects committed identity and score without changing the career or illustrating a pass',()=>{
  const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);state.match=advanceMatch(startMatch(state,state.fixtures[0]!),state.players,45);
  const before=canonical(state);const goal=state.match.events.find(e=>e.type==='goal')!;const pass=state.match.events.find(e=>e.type==='pass')!;
@@ -13,4 +13,17 @@ it('places a goal inside the drawn goal before its celebration',()=>{
 });
 it('separates a held save from a miss outside the drawn posts',()=>{
  const saved=sampleHighlight('save',1);expect(saved.ballX).toBe(saved.keeperX);expect(saved.ballY).toBe(saved.keeperY);const missed=sampleHighlight('shot',1);expect(missed.ballX).toBeGreaterThan(300);expect(missed.ballY).toBeLessThan(59);
+});
+it('curates misses without changing or dropping recorded match outcomes',()=>{
+ const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);
+ let match=advanceMatch(startMatch(state,state.fixtures[0]!),state.players,90);match=advanceMatch(match,state.players,90);
+ const before=canonical(match);let after=-1;const selected=[];
+ // One fixture, in the same one-minute delivery order as the worker.
+ for(let tick=1;tick<=90;tick++){
+   const events=match.events.filter(e=>e.tick<=tick);const next=selectHighlight(events,after);if(next)selected.push(next);after=events.at(-1)?.order??-1;
+ }
+ expect(selected.filter(e=>e.type==='shot')).toHaveLength(6);
+ expect(selected.filter(e=>e.type==='goal'||e.type==='save')).toEqual(match.events.filter(e=>e.type==='goal'||e.type==='save'));
+ expect(match.events.filter(e=>e.type==='shot')).toHaveLength(18);expect(canonical(match)).toBe(before);
+ expect(selectHighlight(match.events,match.events.at(-1)!.order)).toBeUndefined();
 });

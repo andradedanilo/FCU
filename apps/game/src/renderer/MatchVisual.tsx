@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Career } from '../../../../packages/contracts/src/index.ts';
-import { projectHighlight, highlightDuration, type Highlight, type HighlightKind } from '../../../../packages/presentation/src/highlights.ts';
+import { projectHighlight, selectHighlight, highlightDuration, type Highlight, type HighlightKind } from '../../../../packages/presentation/src/highlights.ts';
 import { paintHighlight } from '../../../../packages/presentation/src/pixel.ts';
 import { text as t, describeEvent } from '../../../../packages/presentation/src/text.ts';
 import s from './MatchVisual.module.css';
@@ -14,9 +14,8 @@ export function MatchVisual({state,playing,speed,onGoal}:{state:Career;playing:b
   const seen=useRef(state.match!.events.at(-1)?.order??-1);
   const match=state.match!;const event=match.events.at(-1);
   useEffect(()=>{
-    const fresh=match.events.filter(e=>e.order>seen.current&&e.type!=='pass');
+    const next=selectHighlight(match.events,seen.current);
     seen.current=match.events.at(-1)?.order??-1;
-    const next=fresh.find(e=>e.type==='goal')??fresh.at(-1);
     if(!next||!current.current.playing)return;
     const highlight=projectHighlight(state,next);
     elapsed.current=0;sounded.current=false;

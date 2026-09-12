@@ -84,7 +84,7 @@ Steam Auto-Cloud syncs complete save files only; exclude `.tmp`, settings, cache
 
 ## 6. Presentation contract
 
-Pure projectHighlight maps a committed event to a small display value: outcome, player, club colors, tick and score. sampleHighlight supplies bounded phase/ball positions; neither imports DOM or alters the career. Canvas paintHighlight draws original 320x180 sprites and scenery. React owns clip selection and a cancellable animation loop, not per-frame domain updates.
+Pure selectHighlight curates events by miss ordinal (every third), with goals/saves prioritized and no domain RNG use. The same selector controls renderer pacing: omitted misses use the quiet-minute interval. Pure projectHighlight maps a committed event to a small display value: outcome, player, club colors, tick and score. sampleHighlight supplies bounded phase/ball positions; neither imports DOM or alters the career. Canvas paintHighlight draws original 320x180 sprites and scenery. React owns clip selection and a cancellable animation loop, not per-frame domain updates.
 
 No Three.js or WebGL runtime is retained. Pixel art is the default; reduced-motion preference starts in text. Canvas initialization failure switches to text with a notice. Stop animation on hidden/unmount and freeze actual clips on pause. Explicit art previews are presentation-only, run for 4.8 seconds and never write to the worker or save store. End or dismiss a clip by returning to the match board. Do not autoplay old events on load.
 
@@ -160,5 +160,7 @@ At fixture completion atomically commit result, reward progress and new pack ent
 | A23 | 2026-09-12: owner requests fullscreen, larger stadium scale and fluent match pacing; removes skip controls | Fullscreen default with native F11 toggle and fluid shell; full-pitch camera may crop outer decks. Pure choreography accepts previous visual positions; articulated block figures and instanced crowd arms stay presentation-only. Six-second highlights and 1.2-second quiet ticks at 1x, capped 3x; optional half-time continuation. Engine/rules/save versions unchanged. Supersedes A22 replay duration (now six seconds). |
 
 | A24 | 2026-09-12: owner selects pixel-art highlights and requests removal of unused tools | Supersedes A03/A18/A20/A22/A23 presentation experiments. Remove Three.js, its types, stadium, figure projector, choreography, GPU controls and build split. Original Canvas 2D goal/save/miss audition plus text; labeled previews never affect careers. Engine/rules/save versions unchanged. |
+
+| A25 | 2026-09-12: owner requests ISS Deluxe-informed anatomy and less repetitive miss cutaways | Original jointed sprite poses with six-frame gait, shaded slim bodies and planted-leg kick. Every third miss is eligible; goals/saves take priority within a minute. All attempts stay recorded; no probability/rules/save change. Off Target replaces the unsupported narrow-miss claim. |
 
 Append a dated row only for consequential changes: reason, alternatives rejected, affected gate and migration impact. Routine implementation details belong in code.

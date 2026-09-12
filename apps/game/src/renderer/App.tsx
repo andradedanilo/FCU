@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { brand, type Career, type ClubId, type PlayerId, type SaveEntry, type Command } from '../../../../packages/contracts/src/index.ts';
 import { clubs } from '../../../../packages/contracts/src/identity.ts';
+import { selectHighlight } from '../../../../packages/presentation/src/highlights.ts';
 import { autoPick } from '../../../../packages/simulation/src/engine.ts';
 import { text as t } from '../../../../packages/presentation/src/text.ts';
 import { request, resetWorker } from './client.ts';
@@ -65,7 +66,7 @@ export function App() {
     } else {setNotice(t.errors[result.error]);stop();}
     occupied.current=false;setBusy(false);
   }
-  const tick=async()=>{if(!running.current)return;const order=latest.current?.match?.events.at(-1)?.order;await command({type:'AdvanceMatch',minutes:1});const hasPlay=latest.current?.match?.events.at(-1)?.order!==order;if(running.current)timer.current=setTimeout(()=>void tick(),(hasPlay?6000:1200)/speedRef.current);};
+  const tick=async()=>{if(!running.current)return;const order=latest.current?.match?.events.at(-1)?.order;await command({type:'AdvanceMatch',minutes:1});const hasPlay=!!selectHighlight(latest.current?.match?.events??[],order??-1);if(running.current)timer.current=setTimeout(()=>void tick(),(hasPlay?6000:1200)/speedRef.current);};
   const play=()=>{if(running.current){stop();return;}running.current=true;setPlaying(true);void tick();};
   const navigate=(next:Screen)=>{stop();setNotice('');setScreen(next);};
   async function newCareer() {
