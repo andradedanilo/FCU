@@ -33,3 +33,5 @@
 .analysis>section span{font-size:15px}
 @media(max-height:800px){.stage{gap:14px}.toolbar{padding:10px 14px}.toolbar strong{font-size:12px}.lead{font-size:18px;padding:10px;min-height:64px}.lead>span{font-size:24px}.commentary li{font-size:14px;padding:8px}.analysis{gap:10px}.analysis>section{padding:6px 12px;gap:0 14px}.analysis>section>div{padding:6px 0}.analysis>section b{font-size:19px}.analysis>section span{font-size:13px}.analysis>section>h3{font-size:14px;margin:2px 0 6px}.highlight{padding:8px}.clipLabel{min-height:42px}.clipLabel span{font-size:11px}}
 @media(max-width:750px){.stage{grid-template-columns:1fr;overflow:auto}.highlight{min-height:260px}.analysis{min-height:520px}.commentary{min-height:240px}}
+
+.commentary li.yellow{border-left:5px solid #e8cd61;color:#fff0b5}.commentary li.incident{border-left:5px solid #de675c;color:#ffd2c5;background:#523a43}

@@ -17,16 +17,18 @@ export const clubSchema = z.object({ id: clubId, name: z.string().min(1).max(80)
 const rating = z.number().int().min(1).max(100);
 export const playerSchema = z.object({ id: playerId, clubId, name: z.string().min(1).max(100), role: roleSchema, goalkeeping: rating, tackling: rating, passing: rating, shooting: rating, pace: rating, stamina: rating, discipline: rating });
 export const fitPlayerSchema=playerSchema.extend({condition:integer.max(100000),morale:integer.max(100)});
-export type Player = z.infer<typeof fitPlayerSchema>;
+export const availablePlayerSchema=fitPlayerSchema.extend({academy:z.boolean(),injuryUntil:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),leagueYellows:integer.max(4),leagueBan:integer.max(100)});
+export type Player = z.infer<typeof availablePlayerSchema>;
 export const trainingSchema=z.enum(['light','balanced','intense']);
 export const eventSchema = z.object({ tick: integer.max(90), order: integer, clubId, playerId, assistId: playerId.nullable(), type: z.enum(['pass', 'shot', 'save', 'goal']), homeGoals: integer.max(90), awayGoals: integer.max(90) });
-export type MatchEvent = z.infer<typeof eventSchema>;
+export const incidentEventSchema=eventSchema.extend({type:z.enum(['pass','shot','save','goal','foul','yellow','secondYellow','red','injury'])});
+export type MatchEvent = z.infer<typeof incidentEventSchema>;
 const statsSchema = z.object({ shots: integer.max(90), onTarget: integer.max(90), quality: integer.max(900000), possession: integer.max(900000) });
 export const fixtureSchema = z.object({ id: z.string().regex(/^fixture-\d{2}-\d$/), round: integer.max(13), home: clubId, away: clubId, score: z.tuple([integer.max(90), integer.max(90)]).nullable() });
 export type Fixture = z.infer<typeof fixtureSchema>;
 export const substitutionSchema=z.object({tick:integer.min(1).max(89),clubId,out:playerId,in:playerId});
 export const matchSchema = z.object({ fixtureId: z.string(), home: clubId, away: clubId, tick: integer.max(90), rng: integer.max(4294967295), homeLineup: z.array(playerId).length(11), awayLineup: z.array(playerId).length(11), homeGoals: integer.max(90), awayGoals: integer.max(90), homeStats: statsSchema, awayStats: statsSchema, events: z.array(eventSchema).max(600), homeBench:z.array(playerId).length(9),awayBench:z.array(playerId).length(9),substitutions:z.array(substitutionSchema).max(10),homeTactics:tacticsSchema,awayTactics:tacticsSchema });
-export type Match = z.infer<typeof matchSchema> & {managedClubId:ClubId|null;condition:Record<PlayerId,number>};
+
 export const tacticalCareerSchema = z.object({
   careerId: z.string().uuid(), revision: integer, appliedCommands: z.array(z.string().uuid()).max(256), seed: integer.max(4294967295),
   engineVersion: z.literal('0.2.1'), rulesetVersion: z.literal('exhibition-2'), snapshotId: z.literal('fictional-2026-v1'), identityProfileId: z.literal('fcu-city-v1'), identityProfileVersion: z.literal(1),
@@ -36,13 +38,19 @@ export const tacticalCareerSchema = z.object({
 export const previousCareerSchema=tacticalCareerSchema.omit({tactics:true}).extend({engineVersion:z.literal('0.2.0'),rulesetVersion:z.literal('exhibition-1'),match:matchSchema.omit({homeTactics:true,awayTactics:true}).nullable()});
 export const legacyCareerSchema=previousCareerSchema.extend({engineVersion:z.literal('0.1.0'),match:matchSchema.omit({homeBench:true,awayBench:true,substitutions:true,homeTactics:true,awayTactics:true}).nullable()});
 export const planningCareerSchema=tacticalCareerSchema.extend({engineVersion:z.literal('0.2.2'),rulesetVersion:z.literal('exhibition-3'),bench:z.array(playerId).length(9),presets:z.array(tacticsSchema.nullable()).length(3),match:matchSchema.extend({managedClubId:clubId.nullable()}).nullable()});
-export const careerSchema=planningCareerSchema.extend({engineVersion:z.literal('0.3.0'),rulesetVersion:z.literal('exhibition-4'),training:trainingSchema,players:z.array(fitPlayerSchema).length(176),match:matchSchema.extend({managedClubId:clubId.nullable(),condition:z.record(playerId,integer.max(100000))}).nullable()});
+export const conditionCareerSchema=planningCareerSchema.extend({engineVersion:z.literal('0.3.0'),rulesetVersion:z.literal('exhibition-4'),training:trainingSchema,players:z.array(fitPlayerSchema).length(176),match:matchSchema.extend({managedClubId:clubId.nullable(),condition:z.record(playerId,integer.max(100000))}).nullable()});
+export const incidentMatchSchema=matchSchema.extend({homeLineup:z.array(playerId).max(11),awayLineup:z.array(playerId).max(11),managedClubId:clubId.nullable(),condition:z.record(playerId,integer.max(100000)),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),events:z.array(incidentEventSchema).max(1200),homeBench:z.array(playerId).max(9),awayBench:z.array(playerId).max(9),dismissed:z.array(playerId).max(22),injuries:z.array(z.object({playerId,until:z.string().regex(/^\d{4}-\d{2}-\d{2}$/)})).max(22),pendingInjuries:z.array(playerId).max(11),pendingDismissal:z.boolean(),forfeit:clubId.nullable()});
+export type Match=z.infer<typeof incidentMatchSchema>;
+export const careerSchema=conditionCareerSchema.extend({engineVersion:z.literal('0.3.1'),rulesetVersion:z.literal('exhibition-5'),lineup:z.array(playerId).min(7).max(11),players:z.array(availablePlayerSchema).min(176).max(240),bench:z.array(playerId).max(9),match:incidentMatchSchema.nullable()});
 export type Career = z.infer<typeof careerSchema>;
 const commandBase = { commandId: z.string().uuid(), careerId: z.string().uuid(), expectedRevision: integer };
 export const commandSchema = z.discriminatedUnion('type', [
   z.object({ ...commandBase, type: z.literal('SelectLineup'), lineup: z.array(playerId).max(22) }),
   z.object({ ...commandBase, type: z.literal('StartMatch') }),
   z.object({...commandBase,type:z.literal('SetTraining'),training:trainingSchema}),
+  z.object({...commandBase,type:z.literal('AcknowledgeMatch')}),
+  z.object({...commandBase,type:z.literal('CallUp')}),
+  z.object({...commandBase,type:z.literal('ForfeitMatch')}),
   z.object({...commandBase,type:z.literal('SetTactics'),tactics:tacticsSchema}),
   z.object({...commandBase,type:z.literal('SelectBench'),bench:z.array(playerId).max(22)}),
   z.object({...commandBase,type:z.literal('StoreTacticPreset'),slot:z.number().int().min(0).max(2),tactics:tacticsSchema.nullable()}),
@@ -56,7 +64,7 @@ export const requestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('Command'), command: commandSchema })
 ]);
 export type Request = z.infer<typeof requestSchema>;
-export type FailureCode = 'INVALID_BENCH' | 'INVALID_SUBSTITUTION' | 'INVALID_LINEUP' | 'STALE_STATE' | 'DUPLICATE_COMMAND' | 'INVALID_COMMAND' | 'INVALID_SAVE' | 'FUTURE_SAVE' | 'IO_ERROR' | 'WORKER_FAILED';
+export type FailureCode = 'UNAVAILABLE_PLAYER' | 'MATCH_DECISION' | 'INVALID_BENCH' | 'INVALID_SUBSTITUTION' | 'INVALID_LINEUP' | 'STALE_STATE' | 'DUPLICATE_COMMAND' | 'INVALID_COMMAND' | 'INVALID_SAVE' | 'FUTURE_SAVE' | 'IO_ERROR' | 'WORKER_FAILED';
 export type Result<T> = { ok: true; value: T } | { ok: false; error: FailureCode };
 export type SaveEntry = { careerId: string; commitId: string; club: string; round: number; tick: number; savedAtUTC: string; kind: 'manual' | 'auto'; valid: boolean; engineVersion:string|null; error: FailureCode | null };
 export interface DesktopBridge {

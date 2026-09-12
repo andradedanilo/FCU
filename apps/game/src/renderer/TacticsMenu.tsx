@@ -1,3 +1,4 @@
+import {activeLineup} from '../../../../packages/simulation/src/availability.ts';
 import {useModal} from './input.ts';
 import {useRef,useState} from 'react';
 import {formationSchema,type Career,type Tactics,type PlayerId} from '../../../../packages/contracts/src/index.ts';
@@ -10,7 +11,7 @@ export function TacticsMenu({state,store,draftLineup,busy,confirm,close}:{state:
  const [feedback,setFeedback]=useState('');
  const [draft,setDraft]=useState<Tactics>({...initial});const dialog=useRef<HTMLDialogElement>(null);
  useModal(dialog);
- const lineup=match?(home?match.homeLineup:match.awayLineup):validLineup(state.players,state.clubId,draftLineup)?draftLineup:state.lineup;
+ const lineup=match?activeLineup(match,state.clubId):validLineup(state.players,state.clubId,draftLineup)?draftLineup:state.lineup;
  const slots=arrangeLineup(state.players,lineup,draft.formation);
  const groups=[{key:'mentality',options:['cautious','balanced','attacking'],hint:t.mentalityHint},{key:'tempo',options:['slow','normal','fast'],hint:t.tempoHint},{key:'pressing',options:['low','normal','high'],hint:t.pressingHint}] as const;
  return <dialog ref={dialog} className={s.dialog} aria-label={t.tactics} onCancel={e=>{if(busy)e.preventDefault();else close();}}>

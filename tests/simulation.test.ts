@@ -1,13 +1,26 @@
+import {needsDecision} from '../packages/simulation/src/availability.ts';
 import { describe, it, expect } from 'vitest';
-import { createCareer, applyCommand, advanceMatch, startMatch, standings, validateCareer, autoPick, arrangeLineup, chanceProbability } from '../packages/simulation/src/engine.ts';
+import { createCareer, applyCommand, advanceMatch, startMatch, standings, validateCareer, autoPick, arrangeLineup, chanceProbability, pickBench } from '../packages/simulation/src/engine.ts';
 import { clubs } from '../packages/contracts/src/identity.ts';
-import { defaultTactics, canonical, type Career, type Command, type PlayerId, type Tactics } from '../packages/contracts/src/index.ts';
+import { defaultTactics, canonical, type Career, type Command, type PlayerId, type Tactics, type Match, type Player } from '../packages/contracts/src/index.ts';
 import { draw } from '../packages/simulation/src/rng.ts';
 const id='00000000-0000-4000-8000-000000000001';
 const initial=()=>createCareer(id,12345,clubs[0]!.id);
 function run(s:Career, action: {type:'StartMatch'}|{type:'AdvanceMatch';minutes:number}|{type:'Substitute';out:PlayerId;in:PlayerId}|{type:'SetTactics';tactics:Tactics}):Career {
-  const result=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:`00000000-0000-4000-8000-${String(s.revision+1).padStart(12,'0')}`} as Command);
-  if(!result.ok)throw new Error(result.error);return result.value;
+  const send=(action:Omit<Command,'careerId'|'commandId'|'expectedRevision'>)=>{
+    const result=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:'00000000-0000-4000-8000-'+String(s.revision+1).padStart(12,'0')} as Command);if(!result.ok)throw Error(result.error);s=result.value;
+  };
+  // This test manager acknowledges removals and selects eligible players between fixtures.
+  if(action.type==='StartMatch'&&s.round>0){const lineup=autoPick(s.players,s.clubId,s.tactics.formation,s.date);s={...s,lineup,bench:pickBench(s.players,s.clubId,lineup,s.date)};}
+  const end=action.type==='AdvanceMatch'?Math.min(90,s.match!.tick+action.minutes,s.match!.tick<45?45:90):null;
+  send(action);
+  if(end!==null)while(s.match!.tick<end){if(needsDecision(s.match!))send({type:'AcknowledgeMatch'});send({type:'AdvanceMatch',minutes:end-s.match!.tick} as Omit<Command,'careerId'|'commandId'|'expectedRevision'>);}
+  return s;
+}
+
+function continueMatch(previous:Match,players:Player[],minutes:number):Match{
+ const end=Math.min(90,previous.tick+minutes,previous.tick<45?45:90);let match=structuredClone(previous);
+ while(match.tick<end){match.pendingDismissal=false;match.pendingInjuries=[];match=advanceMatch(match,players,end-match.tick);}return match;
 }
 describe('exhibition domain',()=>{
   it('pins the PRNG vector and creates a balanced complete home-away schedule',()=>{
@@ -32,7 +45,7 @@ describe('exhibition domain',()=>{
     const half=advanceMatch(m,s.players,90);expect(half.tick).toBe(45);
     const split=advanceMatch(JSON.parse(JSON.stringify(advanceMatch(m,s.players,17))),s.players,28);
     expect(canonical(split)).toBe(canonical(half));
-    const final=advanceMatch(half,s.players,90);expect(final.tick).toBe(90);
+    const final=continueMatch(half,s.players,90);expect(final.tick).toBe(90);
     expect(final.homeStats.onTarget).toBeGreaterThanOrEqual(final.homeGoals);
     expect(final.events.filter(e=>e.type==='goal')).toHaveLength(final.homeGoals+final.awayGoals);
   });
@@ -105,7 +118,7 @@ it('freezes a selected bench and saves three setups without applying them',()=>{
  const malformed=structuredClone(saved.value);malformed.bench[0]=malformed.lineup[0]!;expect(()=>validateCareer(malformed)).toThrow();
 });
 it('changes only AI mentality at minute 60 with identical chunked and saved continuation',()=>{
- const s=initial();let m=advanceMatch(startMatch(s,s.fixtures[0]!),s.players,45);m=advanceMatch(m,s.players,15);m.homeGoals=1;m.awayGoals=0;
+ const s=initial();let m=continueMatch(startMatch(s,s.fixtures[0]!),s.players,45);m=continueMatch(m,s.players,15);m.homeGoals=1;m.awayGoals=0;
  const human={...m.homeTactics,mentality:'cautious' as const};m.homeTactics=human;
  const next=advanceMatch(m,s.players,1);expect(m.awayTactics.mentality).toBe('balanced');expect(next.awayTactics.mentality).toBe('attacking');expect(next.homeTactics).toEqual(human);expect(next.events.slice(0,m.events.length)).toEqual(m.events);
  const both=structuredClone(m);both.managedClubId=null;expect(advanceMatch(both,s.players,1).homeTactics.mentality).toBe('cautious');both.awayGoals=1;expect(advanceMatch(both,s.players,1).homeTactics.mentality).toBe('balanced');

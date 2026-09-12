@@ -10,7 +10,7 @@ export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEven
   return fresh.find(e=>e.type==='goal')??fresh.find(e=>e.type==='save')??fresh.at(-1);
 }
 export function projectHighlight(state:Career,event:MatchEvent):Highlight|null {
-  if(event.type==='pass')return null;
+  if(event.type!=='goal'&&event.type!=='save'&&event.type!=='shot')return null;
   return {kind:event.type,player:state.players.find(p=>p.id===event.playerId)!.name,color:state.clubs.find(c=>c.id===event.clubId)!.color,tick:event.tick,score:`${event.homeGoals} - ${event.awayGoals}`};
 }
 export const highlightDuration=4800;
