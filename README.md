@@ -2,7 +2,7 @@
 
 A fast, offline football management prototype for Windows and native Linux.
 
-The match board places statistics above team management on the left, and commentary above highlights on the right. Play/Pause is beside the central clock. Match effects are available as individual WAV files in `apps/game/src/renderer/assets/audio`: `kick`, `whistle`, `crowd`, `cheer` and `groan`. They play at normal audio speed even while the match runs at 2x. Open Sound library in the footer to audition the recorded effects and view their source credits.
+The match board places statistics above team management on the left, and commentary above highlights on the right. Play/Pause is beside the central clock. Match effects are available as individual WAV files in `apps/game/src/renderer/assets/audio`: `kick`, `whistle`, `crowd`, `cheer`, `groan` and `tackle`. They play at normal audio speed even while the match runs at 2x. Open Sound library in the footer to audition the recorded effects and view their source credits.
 
 **Status: v0.5 Windows prototype.** Windows development and packaged launch have been tested. Native Linux packaging is configured but not yet built or tested on Linux. No public release or Steam compatibility claim is made.
 
@@ -90,5 +90,6 @@ The shipped WAV effects are excerpts from the following free recordings, with le
 - Kick: [Ball Kicked](https://bigsoundbank.com/ball-kicked-s1044.html), Joseph SARDIN, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 - Whistle: [referee-whistle.wav](https://freesound.org/people/Pablo-F/sounds/90743/), Pablo-F, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 - Goal cheer: [goalloop.wav](https://freesound.org/people/huubjeroen/sounds/113698/), huubjeroen, CC0 1.0.
-- Crowd disapproval: [Football stadium fans are not happy with the referee](https://freesound.org/people/avakas/sounds/263680/), avakas, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Crowd disappointment: [crowd oh - disappointed](https://freesound.org/people/mrrap4food/sounds/619007/), mrrap4food, CC0 1.0.
+- Sliding-tackle foley: [Grass Slide,Grass Scuff](https://freesound.org/people/yeemeng/sounds/530467/), yeemeng, CC0 1.0.
 - Stadium ambience: [noise#01.aif](https://freesound.org/people/huubjeroen/sounds/39733/), huubjeroen, CC0 1.0.

@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import type {Career} from '../../../../packages/contracts/src/index.ts';
 import {nextHighlight,penaltyHighlights,penaltyView,highlightDuration,highlightFrame,playbackSpeed,type Highlight,type HighlightFrame,type HighlightKind,type HighlightSide} from '../../../../packages/presentation/src/highlights.ts';
-export type MatchCue=HighlightKind|'anticipation'|'kick'|'whistle';
+export type MatchCue=HighlightKind|'anticipation'|'kick'|'whistle'|'tackle';
 export type BroadcastScene={highlight:Highlight;preview:boolean;frame:HighlightFrame};
 type Sequence={highlight:Highlight;preview:boolean;before:Career;frame:HighlightFrame;remaining:Highlight[]};
 
@@ -23,7 +23,7 @@ export function useMatchBroadcast(state:Career,playing:boolean,cue:(kind:MatchCu
   if(!sequence)return;
   const match=state.match!;
   if(!sequence.preview&&!playing&&!match.pendingDismissal&&!match.pendingInjuries.length&&!['interval','extraInterval','finished'].includes(match.phase))return;
-  if(!playback.current.started){sound.current(sequence.frame==='tackle'?'whistle':sequence.frame==='prepare'||sequence.frame==='penalty'?'anticipation':sequence.highlight.kind);playback.current.started=true;}
+  if(!playback.current.started){sound.current(sequence.frame==='tackle'?'tackle':sequence.frame==='prepare'||sequence.frame==='penalty'?'anticipation':sequence.highlight.kind);playback.current.started=true;}
   let last=performance.now();const clock=playback.current;
   const timer=setInterval(()=>{
    const now=performance.now();if(!document.hidden)clock.elapsed+=Math.max(0,now-last)*(sequence.preview?1:playbackSpeed);last=now;

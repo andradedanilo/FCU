@@ -27,20 +27,29 @@
     "channels": 2
   },
   {
-    "file": "groan.wav",
-    "sourceSha256": "96b47b55d8dd2db879d475b7f0dd018f9f025a8632c159eb8332de0c1958f0af",
-    "startSeconds": 0,
-    "durationSeconds": 3,
-    "gain": 2.76676771662146,
-    "sampleRate": 48000,
-    "channels": 2
-  },
-  {
     "file": "crowd.wav",
     "sourceSha256": "476935dd27a03ed88f13ec1df224d26e3814ce21011207eaf6239ea391c365ee",
     "startSeconds": 10,
     "durationSeconds": 20,
     "gain": 1.529108848941608,
+    "sampleRate": 48000,
+    "channels": 2
+  },
+  {
+    "file": "groan.wav",
+    "sourceSha256": "ab4324ebc6b6f96846df7da0ef6c15471207f353d0621d039a0e77e30d512357",
+    "startSeconds": 0,
+    "durationSeconds": 3,
+    "gain": 0.8573817461345623,
+    "sampleRate": 48000,
+    "channels": 2
+  },
+  {
+    "file": "tackle.wav",
+    "sourceSha256": "857e64a8dfbe741faac29ac879f6457e25412858d5f54631211f1d2f1cf98635",
+    "startSeconds": 1.0950000000000002,
+    "durationSeconds": 1.2,
+    "gain": 1.293847545701634,
     "sampleRate": 48000,
     "channels": 2
   }

@@ -58,11 +58,12 @@ export function createGameAudio() {
     effects(value: boolean) { effects = value;if(!value){stopNotes();if(music)loop();}ambient(); },
     match(value:boolean){matchActive=value;ambient();},
     click() { if (effects) tone(72, 0.055, 0.025, 'triangle'); },
-    highlight(kind:HighlightKind|'anticipation'|'kick'|'whistle') {
+    highlight(kind:HighlightKind|'anticipation'|'kick'|'whistle'|'tackle') {
       if(!effects||document.hidden)return;
       if(kind==='kick')sample('kick',.7);
+      else if(kind==='tackle')sample('tackle',.65);
       else if(['whistle','foul','yellow','red','halftime','lineup'].includes(kind))sample('whistle',.22);
-      else if(kind!=='anticipation')sample(kind==='shot'||kind==='penaltyMiss'||kind==='injury'||kind==='coach'?'groan':'cheer',.6);
+      else if(kind!=='anticipation'&&kind!=='injury'&&kind!=='coach')sample(kind==='shot'||kind==='penaltyMiss'?'groan':'cheer',.6);
     },
     dispose() { music = false;matchActive=false;ambient(); stopNotes(); document.removeEventListener('visibilitychange', visibility); void context?.close(); }
   };
