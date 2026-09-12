@@ -1,6 +1,17 @@
 import {keyboardAction,controllerAction} from '../packages/presentation/src/input.ts';
 import {matchReport} from '../packages/presentation/src/report.ts';
-import {it,expect} from 'vitest';
+import {it,expect,vi} from 'vitest';
+import {createGameAudio} from '../apps/game/src/renderer/audio.ts';
+
+it('keeps one recorded ambience loop, fixed audio speed and immediate SFX mute',()=>{
+ const clips:Clip[]=[];
+ class Clip{volume=1;playbackRate=1;loop=false;paused=false;constructor(public src:string){clips.push(this);}play(){return Promise.resolve();}pause(){this.paused=true;}}
+ vi.stubGlobal('Audio',Clip);vi.stubGlobal('document',{hidden:false,addEventListener:vi.fn(),removeEventListener:vi.fn()});
+ const audio=createGameAudio();
+ try{audio.match(true);const first=clips[0]!;expect(first.loop).toBe(true);audio.match(true);expect(first.paused).toBe(true);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(1);
+ audio.highlight('kick');expect(clips.at(-1)!.src).toContain('kick.wav');expect(clips.at(-1)!.playbackRate).toBe(1);audio.match(false);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(0);audio.effects(false);expect(clips.every(c=>c.paused)).toBe(true);const count=clips.length;audio.highlight('whistle');expect(clips).toHaveLength(count);
+ }finally{audio.dispose();vi.unstubAllGlobals();}
+});
 import {createCareer,startMatch,advanceMatch,applyCommand,standings} from '../packages/simulation/src/engine.ts';
 import {clubs} from '../packages/contracts/src/identity.ts';
 import {canonical} from '../packages/contracts/src/index.ts';

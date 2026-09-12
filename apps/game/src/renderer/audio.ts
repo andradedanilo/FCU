@@ -1,12 +1,12 @@
 import type {HighlightKind} from '../../../../packages/presentation/src/highlights.ts';
-const samples={kick:new URL('./assets/audio/kick.wav',import.meta.url).href,whistle:new URL('./assets/audio/whistle.wav',import.meta.url).href,crowd:new URL('./assets/audio/crowd.wav',import.meta.url).href,cheer:new URL('./assets/audio/cheer.wav',import.meta.url).href,groan:new URL('./assets/audio/groan.wav',import.meta.url).href};
+import {audioAssets} from './audioAssets.ts';
 // Original short diatonic phrases. No sampled music or sounds from other games.
 const melody = [64, 67, 71, 72, 71, 67, 64, 62, 60, 64, 67, 69, 67, 64, 62, 59,
   57, 60, 64, 67, 64, 60, 57, 59, 60, 64, 67, 71, 69, 67, 64, 62];
 export function createGameAudio() {
   let context: AudioContext | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
-  let ambientTimer:ReturnType<typeof setInterval>|null=null;
+  let ambience:HTMLAudioElement|null=null;
   let matchActive=false;
   const clips=new Set<HTMLAudioElement>();
   let music = false;
@@ -34,15 +34,16 @@ export function createGameAudio() {
     if (step % 2 === 0) tone([40, 36, 33, 36][Math.floor(step / 8) % 4]!, 0.24, 0.055, 'triangle');
     step++; timer = setTimeout(loop, 225);
   }
-  function sample(name:keyof typeof samples,volume:number){
+  function sample(name:keyof typeof audioAssets,volume:number){
     if(document.hidden||!effects)return;
-    const clip=new Audio(samples[name]);clip.volume=volume;clip.playbackRate=1;clips.add(clip);
+    const clip=new Audio(audioAssets[name].url);clip.volume=volume;clip.playbackRate=1;clips.add(clip);
     const release=()=>{clips.delete(clip);};clip.onended=release;clip.onerror=release;void clip.play().catch(release);
+    return clip;
   }
   function ambient(){
-    if(ambientTimer)clearInterval(ambientTimer);ambientTimer=null;
+    if(ambience){ambience.pause();clips.delete(ambience);ambience=null;}
     if(!matchActive||!effects||document.hidden)return;
-    sample('crowd',.2);ambientTimer=setInterval(()=>sample('crowd',.2),4000);
+    ambience=sample('crowd',.13)??null;if(ambience)ambience.loop=true;
   }
   function stopNotes() {
     if (timer) clearTimeout(timer);
@@ -53,7 +54,7 @@ export function createGameAudio() {
   function visibility() { stopNotes();ambient(); if (!document.hidden && music) loop(); }
   document.addEventListener('visibilitychange', visibility);
   return {
-    music(value: boolean) { music = value; stopNotes(); if (music) loop(); },
+    music(value: boolean) { music = value; stopNotes();ambient(); if (music) loop(); },
     effects(value: boolean) { effects = value;if(!value){stopNotes();if(music)loop();}ambient(); },
     match(value:boolean){matchActive=value;ambient();},
     click() { if (effects) tone(72, 0.055, 0.025, 'triangle'); },
@@ -61,7 +62,7 @@ export function createGameAudio() {
       if(!effects||document.hidden)return;
       if(kind==='kick')sample('kick',.7);
       else if(['whistle','foul','yellow','red','halftime','lineup'].includes(kind))sample('whistle',.22);
-      else sample(kind==='shot'||kind==='penaltyMiss'?'groan':kind==='anticipation'?'crowd':'cheer',kind==='anticipation'?.3:.65);
+      else if(kind!=='anticipation')sample(kind==='shot'||kind==='penaltyMiss'||kind==='injury'||kind==='coach'?'groan':'cheer',.6);
     },
     dispose() { music = false;matchActive=false;ambient(); stopNotes(); document.removeEventListener('visibilitychange', visibility); void context?.close(); }
   };

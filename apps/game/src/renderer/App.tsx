@@ -12,6 +12,7 @@ import { autoPick } from '../../../../packages/simulation/src/engine.ts';
 import { text as t } from '../../../../packages/presentation/src/text.ts';
 import { request, resetWorker } from './client.ts';
 import { createGameAudio } from './audio.ts';
+import {AudioCredits} from './AudioCredits.tsx';
 import { TitleScreen, ClubSelect, Clubhouse, SquadScreen, TableScreen } from './Screens.tsx';
 import { useGameInput } from './input.ts';
 import { MatchReport } from './MatchReport.tsx';
@@ -24,6 +25,7 @@ type Screen = 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match';
 type CommandPayload<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
 type Action=CommandPayload<Command>;
 export function App() {
+  const [soundLibrary,setSoundLibrary]=useState(false);
   const [state, setState] = useState<Career|null>(null);
   const latest = useRef<Career|null>(null);
   const [benchOpen,setBenchOpen]=useState(false);
@@ -136,7 +138,7 @@ export function App() {
         {state&&screen==='table'&&<TableScreen state={state}/>}
         {state?.match&&screen==='match'&&<MatchScreen hold={value=>{presentationBusy.current=value;}} acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>
-      <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}<small title={t.controllerHint}>{t.inputHint}</small></span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
+      {soundLibrary&&<AudioCredits close={()=>setSoundLibrary(false)}/>}<footer className={s.footer}><button onClick={()=>{stop();setSoundLibrary(true);}}>{t.soundLibrary}</button><span>{t.edition} / {t.fullscreenHint}<small title={t.controllerHint}>{t.inputHint}</small></span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>
     {state&&tacticsOpen&&<TacticsMenu store={(slot,tactics)=>command({type:'StoreTacticPreset',slot,tactics})} draftLineup={screen==='squad'?lineup:state.lineup} state={state} busy={busy} close={()=>setTacticsOpen(false)} confirm={tactics=>command({type:'SetTactics',tactics})}/>}
     {state&&historyOpen&&<SeasonHistory state={state} close={()=>setHistoryOpen(false)}/>}

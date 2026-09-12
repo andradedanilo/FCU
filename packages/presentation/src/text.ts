@@ -1,6 +1,7 @@
 import {matchMinute} from './highlights.ts';
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+ soundLibrary:'Sound library',soundLibraryHint:'Recorded match effects. Audition one sound at a time at normal speed. Source credits and edits are listed below.',soundNames:{kick:'Ball kick',whistle:'Referee whistle',crowd:'Stadium ambience',cheer:'Goal celebration',groan:'Crowd disapproval'},
  teamManagement:'Team management',
  domesticRounds:['Preliminary round','Round of 32','Round of 16','Quarter-finals','Semi-finals','Final'],continentalRounds:['Round of 16','Quarter-finals','Semi-finals','Final'],homeTeam:'Home club',awayTeam:'Away club',result:'Result',tieWinner:'Tie winner',
  penaltyScored:'Scored',penaltyMissed:'Missed',
