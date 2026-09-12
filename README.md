@@ -2,6 +2,8 @@
 
 A fast, offline football management prototype for Windows and native Linux.
 
+The match board places statistics above team management on the left, and commentary above highlights on the right. Play/Pause is beside the central clock. Match effects are available as individual WAV files in `apps/game/src/renderer/assets/audio`: `kick`, `whistle`, `crowd`, `cheer` and `groan`. They play at normal audio speed even while the match runs at 2x. These original synthesized replacement cues are awaiting listening feedback.
+
 **Status: v0.5 Windows prototype.** Windows development and packaged launch have been tested. Native Linux packaging is configured but not yet built or tested on Linux. No public release or Steam compatibility claim is made.
 
 ## Build your club

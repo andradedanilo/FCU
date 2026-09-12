@@ -1,6 +1,7 @@
 import {matchMinute} from './highlights.ts';
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+ teamManagement:'Team management',
  domesticRounds:['Preliminary round','Round of 32','Round of 16','Quarter-finals','Semi-finals','Final'],continentalRounds:['Round of 16','Quarter-finals','Semi-finals','Final'],homeTeam:'Home club',awayTeam:'Away club',result:'Result',tieWinner:'Tie winner',
  penaltyScored:'Scored',penaltyMissed:'Missed',
  extraTime:'Extra time',extraHalf:'Extra-time interval',penalties:'Penalties',cupRules:'Single-leg domestic cup; two-leg continental ties until a neutral final. Level deciding ties use extra time and penalties. No away-goals rule.',cupMatch:'Cup match',cups:'Cups',cupChampion:'Cup winner',cupBye:'Bye to next round',cupPending:'Awaiting result',cupRound:'Cup round',neutralFinal:'Neutral final',aggregate:'Aggregate',cupNames:{'ENG-CUP':'England Cup','ESP-CUP':'Spain Cup','FRA-CUP':'France Cup','ITA-CUP':'Italy Cup','DEU-CUP':'Germany Cup',CONTINENTAL:'Continental Cup'},
