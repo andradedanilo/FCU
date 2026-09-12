@@ -61,6 +61,8 @@ While paused, Preview goal, Preview save and Preview miss audition the two-frame
 
 Keep fullscreen launch, F11 window toggle, Play/Pause and optional continuous half-time. No instant finish or manual minute skip.
 
+Audio review correction: the owner rejected the small-group disappointment as office-like, grass scuff as microphone taps, and kick as too weak for a shot. Require a real stadium near-miss swell, a purposeful soccer tackle and a forceful shot impact. Source labels and amplitude peaks do not establish audible suitability. Audition full recordings before selecting excerpts; do not automatically trim an action from the first loud transient. Candidate sources for review: Quistard's [St Mary's near miss](https://freesound.org/people/Quistard/sounds/237683/) (CC BY 3.0), MPooman's [soccer tackles](https://freesound.org/people/MPooman/sounds/662107/) (CC0), and dersuperanton's [football kick](https://freesound.org/people/dersuperanton/sounds/433722/) (CC BY 4.0). These are unapproved candidates, not replacements already installed.
+
 The v0.2 result line shows outcome, points earned and rank at full time. Match report lists scorers, on-target attempts and chance quality; it is available again from the clubhouse until the next kickoff. These are factual projections of committed state, not generated coaching claims.
 
 Keyboard arrows/Tab navigate, Enter confirms, Escape backs out, P toggles Play/Pause and Q/E change control sections. Standard gamepads share those actions through D-pad/stick, south/east buttons, shoulders and Start. Dialogs retain and restore focus; text editing keeps native keys. Steam text input and physical-controller polish remain v0.8.
