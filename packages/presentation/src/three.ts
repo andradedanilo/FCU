@@ -1,19 +1,23 @@
 import * as THREE from 'three';
-import { visualOffset, type MatchPresenter, type MatchView } from './projector.ts';
+import { type MatchPresenter, type MatchView } from './projector.ts';
+import { createStadium } from './stadium.ts';
+import { samplePlay } from './choreography.ts';
 import type { MatchEvent, PlayerId } from '../../contracts/src/index.ts';
 
-export function createThreePresenter(onFailure:()=>void):MatchPresenter & {shadows(value:boolean):void;fps(value:number):void} {
+export function createThreePresenter(onFailure:()=>void):MatchPresenter & {shadows(value:boolean):void;fps(value:number):void;replay():void} {
   const scene=new THREE.Scene();scene.background=new THREE.Color('#12332e');
   const camera=new THREE.OrthographicCamera(-70,70,50,-50,0.1,400);camera.position.set(0,95,100);camera.lookAt(0,0,0);camera.updateMatrixWorld();
   function fitCamera(width:number,height:number) {
-    const footprint=new THREE.Box3(new THREE.Vector3(-63,-3,-50),new THREE.Vector3(63,11,50));
+    const footprint=new THREE.Box3(new THREE.Vector3(-68,-3,-51),new THREE.Vector3(68,16,51));
     const projected=new THREE.Box3();
     for(const x of [footprint.min.x,footprint.max.x])for(const y of [footprint.min.y,footprint.max.y])for(const z of [footprint.min.z,footprint.max.z])projected.expandByPoint(new THREE.Vector3(x,y,z).applyMatrix4(camera.matrixWorldInverse));
-    const aspect=width/Math.max(1,height);const halfHeight=Math.max((projected.max.y-projected.min.y)/2+2,65/aspect);
+    const aspect=width/Math.max(1,height);const halfHeight=Math.max((projected.max.y-projected.min.y)/2+2,70/aspect);
     const center=(projected.min.y+projected.max.y)/2;
     camera.left=-halfHeight*aspect;camera.right=halfHeight*aspect;camera.top=center+halfHeight;camera.bottom=center-halfHeight;camera.updateProjectionMatrix();
   }
   let renderer:THREE.WebGLRenderer|null=null;let container:HTMLElement|null=null;let resize:ResizeObserver|null=null;
+  let stadium:ReturnType<typeof createStadium>|null=null;
+  let progress=1;let ambient=0;let replaying=false;
   let view:MatchView|null=null;let lastKey='';let speed=1;let frame=0;let start=0;let lastFrame=0;let frameRate=30;let active=false;let disposed=false;
   const figures=new Map<PlayerId,THREE.Group>();const allocatedGeometries:THREE.BufferGeometry[]=[];const allocatedMaterials:THREE.Material[]=[];
   const geometry=<T extends THREE.BufferGeometry>(value:T)=>{allocatedGeometries.push(value);return value;};
@@ -33,7 +37,6 @@ export function createThreePresenter(onFailure:()=>void):MatchPresenter & {shado
     mesh(geometry(new THREE.BoxGeometry(.35,.35,9.3)),white,sign*53,4,0);
     const net=material('#96b5a0');net.wireframe=true;
     mesh(geometry(new THREE.BoxGeometry(3,4,9)),net,sign*54.5,2,0);
-    for(let tier=0;tier<3;tier++)mesh(geometry(new THREE.BoxGeometry(106,1.5,2.4)),material(tier%2?'#516854':'#789075'),0,tier*1.5,sign*(38+tier*2.5));
     for(const x of [-57,57])mesh(geometry(new THREE.CylinderGeometry(.18,.18,2,6)),white,x,1,sign*34);
   }
   scene.add(new THREE.HemisphereLight('#f9f4d8','#234638',2.6));
@@ -42,51 +45,46 @@ export function createThreePresenter(onFailure:()=>void):MatchPresenter & {shado
   const skin=material('#d6b38c');const dark=material('#172b29');
   const ball=mesh(geometry(new THREE.IcosahedronGeometry(.55,1)),white,0,.65,0);ball.castShadow=true;
   function buildFigures(next:MatchView) {
+    stadium=createStadium(scene,next.figures.find(f=>f.team===next.home)!.color,next.figures.find(f=>f.team!==next.home)!.color);
     for(const figure of next.figures) {
       const group=new THREE.Group();const kit=material(figure.role==='GK'?'#ecd370':figure.color);
       const body=new THREE.Mesh(bodyGeometry,kit);body.position.y=1.9;body.castShadow=true;group.add(body);
       const head=new THREE.Mesh(headGeometry,skin);head.position.y=3.55;head.castShadow=true;group.add(head);
-      for(const x of [-.38,.38]){const leg=new THREE.Mesh(legGeometry,figure.team===next.home?dark:white);leg.position.set(x,.55,0);group.add(leg);}
+      for(const x of [-.38,.38]){const leg=new THREE.Mesh(legGeometry,figure.team===next.home?dark:white);leg.position.set(x,.55,0);leg.name=x<0?'leftLeg':'rightLeg';group.add(leg);}
       group.position.set(figure.x,0,figure.z);scene.add(group);figures.set(figure.id,group);
     }
   }
-  function draw(progress:number) {
+  function draw(value:number) {
     if(!view||!renderer||disposed)return;
-    for(const f of view.figures)figures.get(f.id)?.position.set(f.x,0,f.z);
-    const event=view.event;
-    if(event) {
-      const shooter=figures.get(event.playerId);const passer=view.passer?figures.get(view.passer):null;
-      if(shooter) {
-        const sign=event.clubId===view.home?1:-1;
-        const offset=visualOffset(`${view.fixtureId}/${event.order}`);
-        const shooting=new THREE.Vector3(sign*32,0,(offset-.5)*22);
-        shooter.position.lerp(shooting,Math.min(1,progress*2));
-        const origin=passer?.position??new THREE.Vector3(0,0,0);
-        const end=new THREE.Vector3(sign*(event.type==='goal'?54:event.type==='shot'?56:50),.6,event.type==='shot'?7+offset*8:(offset-.5)*6);
-        if(progress<.45)ball.position.copy(origin).lerp(shooting,progress/.45);
-        else ball.position.copy(shooting).lerp(end,(progress-.45)/.55);
-        ball.position.y=.6+Math.sin(Math.PI*Math.min(1,Math.max(0,(progress-.45)/.55)))*(event.type==='shot'?4:1.5);
-        if(event.type==='save'){const keeper=view.figures.find(f=>f.role==='GK'&&f.team!==event.clubId);if(keeper){const group=figures.get(keeper.id)!;group.position.z=end.z*Math.max(0,(progress-.6)/.4);}}
-        if(event.type==='goal'&&progress>.9)shooter.position.y=Math.sin((progress-.9)*Math.PI*10)*1.1;
-      }
-    }else ball.position.set(0,.6,0);
+    const pose=samplePlay(view,value);
+    for(const f of view.figures){
+      const group=figures.get(f.id)!;const position=pose.positions[f.id]!;
+      group.position.set(position.x,position.y,position.z);
+      group.rotation.z=f.role==='GK'&&f.team!==view.event?.clubId?pose.keeperDive:0;
+      const stride=value>0&&value<1?Math.sin(value*Math.PI*12)*.65:0;
+      group.getObjectByName('leftLeg')!.rotation.x=stride;
+      group.getObjectByName('rightLeg')!.rotation.x=-stride;
+    }
+    ball.position.set(pose.ball.x,pose.ball.y,pose.ball.z);ball.rotation.z=value*12;
+    stadium?.animate(ambient,view.event?.type==='goal'&&value>.65&&value<1?1:0);
     renderer.render(scene,camera);
   }
   function animate(time:number) {
     if(disposed||!active||document.hidden)return;
     if(!start)start=time;
-    const progress=Math.min(1,(time-start)/(800/speed));
-    if(time-lastFrame>=1000/frameRate){draw(progress);lastFrame=time;}
-    if(progress<1)frame=requestAnimationFrame(animate);else {draw(1);active=false;}
+    progress=Math.min(1,(time-start)/(replaying?3000:800/speed));
+    if(time-lastFrame>=1000/frameRate){ambient+=Math.min(.1,(time-lastFrame)/1000);draw(progress);lastFrame=time;}
+    if(replaying&&progress===1){draw(1);active=false;replaying=false;}else frame=requestAnimationFrame(animate);
   }
-  function pause(){active=false;cancelAnimationFrame(frame);draw(1);}
-  function visibility(){if(document.hidden)pause();else draw(1);}
+  function pause(){replaying=false;active=false;cancelAnimationFrame(frame);draw(progress);}
+  function visibility(){if(document.hidden){cancelAnimationFrame(frame);}else if(active){start=performance.now()-progress*(replaying?3000:800/speed);lastFrame=performance.now();frame=requestAnimationFrame(animate);}else draw(progress);}
   function failed(event:Event){event.preventDefault();pause();onFailure();}
   return {
-    mount(target){container=target;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=false;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.domElement.setAttribute('aria-label','Stylized football pitch');renderer.domElement.addEventListener('webglcontextlost',failed);target.append(renderer.domElement);resize=new ResizeObserver(()=>{if(!renderer||!container)return;const width=container.clientWidth;const height=container.clientHeight;renderer.setSize(width,height);fitCamera(width,height);draw(1);});resize.observe(target);document.addEventListener('visibilitychange',visibility);}catch{onFailure();}},
-    render(next:MatchView,_events:MatchEvent[]){if(disposed)return;if(figures.size===0)buildFigures(next);view=next;const key=`${next.fixtureId}/${next.event?.order??-1}`;if(key!==lastKey){lastKey=key;start=0;active=true;cancelAnimationFrame(frame);frame=requestAnimationFrame(animate);}else draw(1);},
+    mount(target){container=target;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=false;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.domElement.setAttribute('aria-label','Stylized football pitch');renderer.domElement.addEventListener('webglcontextlost',failed);target.append(renderer.domElement);resize=new ResizeObserver(()=>{if(!renderer||!container)return;const width=container.clientWidth;const height=container.clientHeight;renderer.setSize(width,height);fitCamera(width,height);draw(progress);});resize.observe(target);document.addEventListener('visibilitychange',visibility);}catch{onFailure();}},
+    render(next:MatchView,_events:MatchEvent[]){if(disposed)return;if(figures.size===0)buildFigures(next);view=next;const key=`${next.fixtureId}/${next.event?.order??-1}`;if(key!==lastKey){replaying=false;lastKey=key;start=0;progress=0;}if(!active){active=true;if(start)start=performance.now()-progress*(replaying?3000:800/speed);lastFrame=performance.now();frame=requestAnimationFrame(animate);}draw(progress);},
     setSpeed(value){speed=value;},pause,
-    shadows(value){if(renderer){renderer.shadowMap.enabled=value;draw(1);}},fps(value){frameRate=value;},
-    dispose(){disposed=true;cancelAnimationFrame(frame);resize?.disconnect();document.removeEventListener('visibilitychange',visibility);renderer?.domElement.removeEventListener('webglcontextlost',failed);renderer?.domElement.remove();for(const g of allocatedGeometries)g.dispose();for(const m of allocatedMaterials)m.dispose();light.shadow.dispose();renderer?.dispose();renderer?.forceContextLoss();figures.clear();scene.clear();renderer=null;container=null;}
+    replay(){if(disposed||!view?.event)return;cancelAnimationFrame(frame);replaying=true;progress=0;start=0;active=true;lastFrame=performance.now();frame=requestAnimationFrame(animate);},
+    shadows(value){if(renderer){renderer.shadowMap.enabled=value;draw(progress);}},fps(value){frameRate=value;},
+    dispose(){disposed=true;stadium?.dispose();cancelAnimationFrame(frame);resize?.disconnect();document.removeEventListener('visibilitychange',visibility);renderer?.domElement.removeEventListener('webglcontextlost',failed);renderer?.domElement.remove();for(const g of allocatedGeometries)g.dispose();for(const m of allocatedMaterials)m.dispose();light.shadow.dispose();renderer?.dispose();renderer?.forceContextLoss();figures.clear();scene.clear();renderer=null;container=null;}
   };
 }

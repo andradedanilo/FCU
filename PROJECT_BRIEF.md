@@ -1,6 +1,6 @@
 # Football Club Universe (FCU) - project contract
 
-Documentation edition 1.4 | Research cutoff: 11 September 2026 | Implementation status: v0.1 playable on Windows; Linux and owner visual evaluation pending. See ROADMAP evidence.
+Documentation edition 1.5 | Research cutoff: 11 September 2026 | Implementation status: v0.1 playable on Windows; owner approved the retro game shell. Linux remains unverified. See ROADMAP evidence.
 
 Owner-selected title: **Football Club Universe**, abbreviated **FCU**. Modes are **FCU Career** and **FCU Dream Club**. Keep the title in one configuration value so future branding changes do not rename save IDs or packages. This records the creative decision, not a trademark availability check.
 

@@ -1,5 +1,6 @@
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+  stadiumBoards:['HALF TIME SODA','BOOT ROOM','ONE MORE MATCH'],
   titleTag:'A whole season of possibilities', startGame:'Start a career', titleMenu:'Title screen', clubhouse:'Clubhouse', back:'Back',
   chooseClub:'Choose your club', chooseHint:'Eight clubs. One trophy. Your story starts here.', prevClub:'Previous club', nextClub:'Next club',
   ready:'Ready for the touchline?', beginHint:'Your eleven. Your season.', squadAction:'Pick the eleven', tableAction:'Chase the trophy',
@@ -20,7 +21,7 @@ export const text = {
   selection:'selected', confirmLineup:'Confirm lineup', autoPick:'Suggest 4-4-2', position:'Role', player:'Player', ability:'Ability', starting:'Start', confirmed:'Lineup confirmed.',
   matchLocked:'Your lineup is locked during this match.', clubName:'Club', played:'P', won:'W', drawn:'D', lost:'L', goalsFor:'GF', goalsAgainst:'GA', difference:'GD', points:'Pts',
   ranking:'Ranking: points, goal difference, goals scored, head-to-head points, then stable club ID (draw-lot fallback).',
-  matchIntro:'Your next ninety minutes', matchEmpty:'Kick off from Home to enter the match centre.', events:'Live commentary', noEvents:'The teams are settling into the match.', highlights:'Stylized event highlights', textMode:'Text', threeMode:'3D',
+  matchIntro:'Your next ninety minutes', matchEmpty:'Kick off from Home to enter the match centre.', events:'Live commentary', noEvents:'The teams are settling into the match.', highlights:'Stylized event highlights', replayPlay:'Replay play', textMode:'Text', threeMode:'3D',
   visualNote:'Animation follows committed match events. Ball movement does not decide the result.', graphicsFailed:'3D is unavailable. Text play remains available and your career is unchanged.',
   shadows:'Shadows', speed:'Speed', shots:'Shots', onTarget:'On target', possession:'Possession', quality:'Chance quality', currentPosition:'League position', record:'Season record', playedRounds:'Rounds played',
   welcome:'THE TOUCHLINE IS YOURS', versus:'vs', live:'LIVE', final:'FINAL', season:'EXHIBITION 2026', roster:'22 fictional players', profile:'City identity profile', next:'Up next',

@@ -2,6 +2,8 @@
 
 Research cutoff: **11 September 2026**. Sources were accessed during preparation on 11-12 September in the working session; exclude claims about later events. Relative dates below are identified as such. This is a targeted qualitative review of public Reddit discussions and Steam community threads, plus primary technical/provider documentation. It is not a systematic survey, vote-count analysis, a claim about every player, or independent verification of reported bugs.
 
+Owner feedback after the initial research approved FCU's original 1995-era retro direction and game shell. That creative decision is recorded in GAME and ARCHITECTURE; it is owner preference, not an additional market-research finding or a change to the research cutoff.
+
 ## 1. Method and limitations
 
 Searched for current FM26 complaints, wishlists, navigation, immersion, transfers and roster APIs. Read recent Reddit threads and replies, contrasted them with launch-era feedback, and inspected Steam's current discussion list plus individual topics. Steam pages whose main web fetch failed were read directly from their public HTML. Do not equate "indexed recently" with "posted recently". Dates from Steam without a year are recorded as displayed; the current list was read at the research cutoff. No private communities, provider accounts or paid datasets were accessed.
