@@ -4,6 +4,13 @@ import {fictionalCandidate} from '../packages/roster-pipeline/src/fictional.ts';
 import {candidate,approve,canonicalRoster,rosterChanges} from '../packages/roster-pipeline/src/review.ts';
 import {validateRoster} from '../packages/roster-pipeline/src/validate.ts';
 import {collectPages} from '../packages/roster-pipeline/src/provider.ts';
+import {generateKeyPairSync} from 'node:crypto';
+import {mkdtemp,readFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {zipSync,unzipSync,strToU8} from 'fflate';
+import {createArchive,openArchive} from '../packages/roster-pipeline/src/archive.ts';
+import {writeArchive} from '../packages/roster-pipeline/src/store.ts';
 
 describe('Publisher roster boundaries',()=>{
   it('preserves Unicode and stable identity through reordered snapshots and a transfer',()=>{
@@ -44,5 +51,20 @@ describe('Publisher roster boundaries',()=>{
     expect(()=>approve(input.roster,input.audit,before.reviewHash,'Fixture reviewer','2026-09-12T13:00:00Z')).toThrow('CANDIDATE_CHANGED_OR_INVALID');
     input.roster.gameProfiles[0]!.attributes.shooting++;
     expect(()=>approve(input.roster,input.audit,after.reviewHash,'Fixture reviewer','2026-09-12T13:00:00Z')).toThrow('CANDIDATE_CHANGED_OR_INVALID');
+  });
+  it('verifies signed immutable packs and refuses tampering, links and unsafe entries',async()=>{
+    const input=fictionalCandidate(true), current=candidate(input.roster,input.audit);if(!current.ok)throw Error('Invalid fixture');
+    const approval=approve(input.roster,input.audit,current.reviewHash,'Fixture reviewer','2026-09-12T13:00:00Z');
+    const keys=generateKeyPairSync('ed25519');const trust={allowDevelopment:false,trustedKeys:new Map([['fixture-key',keys.publicKey]])};
+    const options={snapshotId:'roster-2026-27.20260912.r1',previousSnapshotId:null,attribution:'FCU development fixture',rightsRef:null,notices:'Original synthetic fixture.',key:{id:'fixture-key',privateKey:keys.privateKey}};
+    const bytes=createArchive(input.roster,input.audit,approval,options);
+    expect(openArchive(bytes,trust).roster.players).toHaveLength(2112);
+    expect(()=>openArchive(bytes,{...trust,trustedKeys:new Map()})).toThrow('UNTRUSTED_PACK');
+    const files=unzipSync(bytes);files['notices.txt']=strToU8('changed');expect(()=>openArchive(zipSync(files),trust)).toThrow('PACK_CHECKSUM');
+    const unsafe:Record<string,Uint8Array>={...unzipSync(bytes),'../roster.json':strToU8('{}')};delete unsafe['roster.json'];expect(()=>openArchive(zipSync(unsafe),trust)).toThrow('UNEXPECTED_PACK_ENTRY');
+    const symlink=bytes.slice();const data=new DataView(symlink.buffer);let offset=symlink.length-22;offset=data.getUint32(offset+16,true);data.setUint32(offset+38,0xa0000000,true);expect(()=>openArchive(symlink,trust)).toThrow('UNEXPECTED_PACK_ENTRY');
+    const development=createArchive(input.roster,input.audit,approval,{...options,key:null});expect(()=>openArchive(development,trust)).toThrow('UNTRUSTED_PACK');expect(openArchive(development,{...trust,allowDevelopment:true}).manifest.permittedDistribution).toBe('development');
+    const directory=await mkdtemp(join(tmpdir(),'fcu-roster-pack-'));const path=await writeArchive(directory,bytes,trust);
+    await expect(writeArchive(directory,bytes,trust)).rejects.toMatchObject({code:'EEXIST'});expect(await readFile(path)).toEqual(Buffer.from(bytes));
   });
 });

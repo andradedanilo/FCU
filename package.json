@@ -26,6 +26,7 @@
     "roster:check": "node scripts/roster-check.ts"
   },
   "dependencies": {
+    "fflate": "0.8.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "4.6.2"
