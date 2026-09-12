@@ -11,7 +11,7 @@ import { MatchScreen } from './MatchScreen.tsx';
 import s from './App.module.css';
 
 type Screen = 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match';
-type Action = {type:'StartMatch'} | {type:'SelectLineup';lineup:PlayerId[]} | {type:'AdvanceMatch';minutes:number};
+type Action = {type:'StartMatch'} | {type:'SelectLineup';lineup:PlayerId[]} | {type:'AdvanceMatch';minutes:number} | {type:'Substitute';out:PlayerId;in:PlayerId};
 export function App() {
   const [state, setState] = useState<Career|null>(null);
   const latest = useRef<Career|null>(null);
@@ -52,7 +52,7 @@ export function App() {
     try {await save();} finally {occupied.current=false;setBusy(false);}
   }
   async function command(action:Action) {
-    const current=latest.current;if(!current||occupied.current)return;
+    const current=latest.current;if(!current||occupied.current)return false;
     occupied.current=true;setBusy(true);setNotice('');
     const result=await request({type:'Command',command:{...action,careerId:current.careerId,expectedRevision:current.revision,commandId:crypto.randomUUID()} as Command});
     if(result.ok) {
@@ -60,9 +60,10 @@ export function App() {
       if(result.value.round>current.round)await save(result.value,'auto');
       if(action.type==='StartMatch')setScreen('match');
       if(action.type==='SelectLineup')setNotice(t.confirmed);
+      if(action.type==='Substitute')setNotice(t.subConfirmed);
       if((result.value.match?.tick===45&&!continuousRef.current)||result.value.match?.tick===90)stop();
     } else {setNotice(t.errors[result.error]);stop();}
-    occupied.current=false;setBusy(false);
+    occupied.current=false;setBusy(false);return result.ok;
   }
   const tick=async()=>{if(!running.current)return;await command({type:'AdvanceMatch',minutes:1});const match=latest.current?.match;if(running.current&&match)timer.current=setTimeout(()=>void tick(),minuteDuration(match.events,match.tick));};
   const play=()=>{if(running.current){stop();return;}running.current=true;setPlaying(true);void tick();};
@@ -102,7 +103,7 @@ export function App() {
         {state&&screen==='home'&&<Clubhouse state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.tick<90?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
-        {state?.match&&screen==='match'&&<MatchScreen state={state} busy={busy} playing={playing} play={play} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
+        {state?.match&&screen==='match'&&<MatchScreen state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>
       <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}</span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>

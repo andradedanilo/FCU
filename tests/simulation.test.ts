@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { createCareer, applyCommand, advanceMatch, startMatch, standings, validateCareer } from '../packages/simulation/src/engine.ts';
 import { clubs } from '../packages/contracts/src/identity.ts';
-import { canonical, type Career, type Command } from '../packages/contracts/src/index.ts';
+import { canonical, type Career, type Command, type PlayerId } from '../packages/contracts/src/index.ts';
 import { draw } from '../packages/simulation/src/rng.ts';
 const id='00000000-0000-4000-8000-000000000001';
 const initial=()=>createCareer(id,12345,clubs[0]!.id);
-function run(s:Career, action: {type:'StartMatch'}|{type:'AdvanceMatch';minutes:number}):Career {
+function run(s:Career, action: {type:'StartMatch'}|{type:'AdvanceMatch';minutes:number}|{type:'Substitute';out:PlayerId;in:PlayerId}):Career {
   const result=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:`00000000-0000-4000-8000-${String(s.revision+1).padStart(12,'0')}`} as Command);
   if(!result.ok)throw new Error(result.error);return result.value;
 }
@@ -50,4 +50,25 @@ describe('exhibition domain',()=>{
     const s=initial();s.players[0]!.name='Jo\u00e3o Example';expect(validateCareer(s).players[0]!.name).toBe('Jo\u00e3o Example');
     s.fixtures[0]!.home=s.fixtures[0]!.away;expect(()=>validateCareer(s)).toThrow();
   });
+});
+
+it('substitutes only future participants and resumes the same saved stream',()=>{
+ const s=run(run(initial(),{type:'StartMatch'}),{type:'AdvanceMatch',minutes:20});const before=canonical(s);const match=s.match!;const incoming=match.homeBench.find(id=>s.players.find(p=>p.id===id)!.role!=='GK')!;const outgoing=match.homeLineup.find(id=>s.players.find(p=>p.id===id)!.role!=='GK')!;
+ const changed=run(s,{type:'Substitute',out:outgoing,in:incoming});expect(canonical(s)).toBe(before);expect(changed.match!.events).toEqual(match.events);expect(changed.match!.rng).toBe(match.rng);expect(changed.match!.tick).toBe(20);expect(changed.match!.homeLineup).toContain(incoming);expect(changed.lineup).toEqual(s.lineup);
+ const reloaded=validateCareer(JSON.parse(canonical(changed)));const continued=run(changed,{type:'AdvanceMatch',minutes:25});expect(canonical(run(reloaded,{type:'AdvanceMatch',minutes:25}))).toBe(canonical(continued));expect(continued.match!.events.filter(e=>e.tick>20).some(e=>e.playerId===outgoing)).toBe(false);
+ const bad=structuredClone(changed);bad.match!.substitutions[0]!.in=outgoing;expect(()=>validateCareer(bad)).toThrow();
+});
+it('rejects foreign, duplicate, re-entry and goalkeeper-invalid substitutions',()=>{
+ const s=run(run(initial(),{type:'StartMatch'}),{type:'AdvanceMatch',minutes:1});const m=s.match!;const keeper=m.homeLineup.find(id=>s.players.find(p=>p.id===id)!.role==='GK')!;const out=m.homeLineup.find(id=>id!==keeper)!;const incoming=m.homeBench.find(id=>s.players.find(p=>p.id===id)!.role!=='GK')!;
+ const command:Command={type:'Substitute',out,in:incoming,careerId:s.careerId,expectedRevision:s.revision,commandId:crypto.randomUUID()};
+ expect(applyCommand(s,{...command,out:keeper})).toEqual({ok:false,error:'INVALID_SUBSTITUTION'});expect(applyCommand(s,{...command,in:m.awayBench[0]!})).toEqual({ok:false,error:'INVALID_SUBSTITUTION'});expect(applyCommand(s,{...command,in:out})).toEqual({ok:false,error:'INVALID_SUBSTITUTION'});
+ const result=applyCommand(s,command);if(!result.ok)throw Error();expect(applyCommand(result.value,{...command,expectedRevision:result.value.revision})).toEqual({ok:false,error:'DUPLICATE_COMMAND'});
+ expect(applyCommand(result.value,{...command,out:incoming,in:out,expectedRevision:result.value.revision,commandId:crypto.randomUUID()})).toEqual({ok:false,error:'INVALID_SUBSTITUTION'});
+});
+it('allows five changes in three windows with free half-time and rejects a fourth window',()=>{
+ let s=run(run(initial(),{type:'StartMatch'}),{type:'AdvanceMatch',minutes:1});
+ const swap=()=>{const m=s.match!;const outgoing=m.homeLineup.find(id=>s.players.find(p=>p.id===id)!.role!=='GK')!;const incoming=m.homeBench.find(id=>!m.homeLineup.includes(id)&&!m.substitutions.some(c=>c.out===id)&&s.players.find(p=>p.id===id)!.role!=='GK')!;return {type:'Substitute' as const,out:outgoing,in:incoming};};
+ s=run(s,swap());s=run(s,swap());expect(s.match!.substitutions).toHaveLength(2);s=run(s,{type:'AdvanceMatch',minutes:1});s=run(s,swap());s=run(s,{type:'AdvanceMatch',minutes:1});s=run(s,swap());s=run(s,{type:'AdvanceMatch',minutes:1});
+ const attempt=()=>applyCommand(s,{...swap(),careerId:s.careerId,expectedRevision:s.revision,commandId:crypto.randomUUID()});expect(attempt()).toEqual({ok:false,error:'INVALID_SUBSTITUTION'});
+ s=run(s,{type:'AdvanceMatch',minutes:90});s=run(s,swap());expect(s.match!.substitutions).toHaveLength(5);expect(attempt()).toEqual({ok:false,error:'INVALID_SUBSTITUTION'});expect(validateCareer(s)).toEqual(s);
 });

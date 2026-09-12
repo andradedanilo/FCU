@@ -1,6 +1,6 @@
 # Football Club Universe (FCU) - project contract
 
-Documentation edition 1.5 | Research cutoff: 11 September 2026 | Implementation status: v0.1 playable on Windows; owner approved the retro game shell. Linux remains unverified. See ROADMAP evidence.
+Documentation edition 1.5 | Research cutoff: 11 September 2026 | Implementation status: v0.2 in progress on Windows; owner accepted the current match layout and authorized the next feature steps. Linux remains unverified. See ROADMAP evidence.
 
 Owner-selected title: **Football Club Universe**, abbreviated **FCU**. Modes are **FCU Career** and **FCU Dream Club**. Keep the title in one configuration value so future branding changes do not rename save IDs or packages. This records the creative decision, not a trademark availability check.
 
@@ -8,7 +8,7 @@ Build a fast, offline football management game for Steam, inspired by the feelin
 
 ## Start here
 
-Extract this folder into the root of a new repository. `AGENTS.md` must be at the repository root, beside this project brief. Open that repository in Codex and use the starter request below. The repository now contains the v0.1 exhibition prototype with synthetic players. Real roster integration is deferred. Read the current ROADMAP status and keep v0.1 mechanics while iterating the owner-approved pixel-art highlights and retro game identity in reviewable visual batches. `README.md` is the public game introduction shown on GitHub; keep agent setup instructions here.
+Extract this folder into the root of a new repository. `AGENTS.md` must be at the repository root, beside this project brief. Open that repository in Codex and use the starter request below. The repository now contains the v0.1 exhibition prototype with synthetic players. Real roster integration is deferred. Read the current ROADMAP status and keep the accepted match layout while implementing v0.2 in complete feature slices. `README.md` is the public game introduction shown on GitHub; keep agent setup instructions here.
 
 | File | Authority |
 | --- | --- |
@@ -26,6 +26,8 @@ Keep these seven agent/specification documents plus the public README (eight Mar
 Use `main` directly; no feature branches, worktrees, pull requests or GitHub Actions. After every completed coherent change, perform relevant local verification, commit with a descriptive plain-language subject and push to the configured GitHub remote. Example: `Add FCU squad selection`. Do not add `feat:`, `fix(dev):` or similar prefixes. Full behavior, safe synchronization and failure handling are in AGENTS.md. Ordinary source pushes are preauthorized; they do not publish the game to Steam or create a release.
 
 The owner supplied https://github.com/andradedanilo/FCU.git during v0.1 setup. Verify the configured remote before backup. Keep local commits if a push cannot be completed, and state that remote backup is pending. Never force-push or change repository visibility. Keep all project guidance tracked as the owner requested; `.gitignore` does not exclude it.
+
+The first v0.2 slice adds paused substitutions with a fixed nine-player bench, five-change/three-window limits and v0.1 save migration. Formation presets, tactical controls and controller foundation remain pending; do not mark the milestone complete.
 
 Current owner match controls: Play/Pause, fixed 2x playback and optional continuous half-time. No instant finish or manual minute skip. Start fullscreen with F11 window toggle; prioritize readable original pixel sprites and short expressive highlights. The match screen uses a prominent scoreboard, a larger permanent highlight screen on the left and a right column split between commentary and compact statistics; a running MM:SS clock is retained; no separate Pixel art/Text modes or speed selector. Attacks move bottom-to-top in a close attacker-versus-keeper scene, with no defender. Show the approach and the outcome reaction in the same pitch view. Use the owner's ISS Deluxe references for athletic pixel proportions and connected limb poses. Curate repeated misses rather than changing match probabilities for spectacle; keep all attempts in commentary/statistics. See GAME and ARCHITECTURE for current pacing choices.
 

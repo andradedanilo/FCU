@@ -4,18 +4,19 @@ import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { z } from 'zod';
 import { canonical, type SaveEntry } from '../../../../packages/contracts/src/index.ts';
-import { validateCareer } from '../../../../packages/simulation/src/engine.ts';
+import { validateCareer, migrateLegacyCareer } from '../../../../packages/simulation/src/engine.ts';
 
 const MAX_BYTES=4*1024*1024;
 export const checksum=(value:unknown)=>createHash('sha256').update(canonical(value)).digest('hex');
-const envelopeSchema=z.object({schema:z.literal(1),appVersion:z.literal('0.1.0'),engineVersion:z.literal('0.1.0'),rulesetVersion:z.literal('exhibition-1'),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.literal('fictional-2026-v1'),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
+const envelopeSchema=z.object({schema:z.union([z.literal(1),z.literal(2)]),appVersion:z.enum(['0.1.0','0.2.0']),engineVersion:z.enum(['0.1.0','0.2.0']),rulesetVersion:z.literal('exhibition-1'),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.literal('fictional-2026-v1'),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decode(bytes:Uint8Array) {
   if(bytes.length>MAX_BYTES)throw new Error('INVALID_SAVE');
   const raw:unknown=JSON.parse(gunzipSync(bytes,{maxOutputLength:MAX_BYTES}).toString('utf8'));
-  if(typeof raw==='object'&&raw!==null&&'schema' in raw&&typeof raw.schema==='number'&&raw.schema>1)throw new Error('FUTURE_SAVE');
+  if(typeof raw==='object'&&raw!==null&&'schema' in raw&&typeof raw.schema==='number'&&raw.schema>2)throw new Error('FUTURE_SAVE');
   const e=envelopeSchema.parse(raw);
   if(checksum(e.payload)!==e.checksum)throw new Error('INVALID_SAVE');
-  const state=validateCareer(e.payload);
+  if((e.schema===1&&(e.engineVersion!=='0.1.0'||e.appVersion!=='0.1.0'))||(e.schema===2&&(e.engineVersion!=='0.2.0'||e.appVersion!=='0.2.0')))throw new Error('INVALID_SAVE');
+  const state=e.schema===1?migrateLegacyCareer(e.payload):validateCareer(e.payload);
   if(state.careerId!==e.careerId||state.revision!==e.stateRevision)throw new Error('INVALID_SAVE');
   return {envelope:e,state};
 }
@@ -52,7 +53,7 @@ export function createSaveStore(root:string) {
     const action=pending.then(async()=>{
       const state=validateCareer(input);const saveCommitId=randomUUID();const folder=directory(state.careerId);
       await mkdir(folder,{recursive:true});
-      const envelope={schema:1,appVersion:'0.1.0',engineVersion:state.engineVersion,rulesetVersion:state.rulesetVersion,careerId:state.careerId,saveCommitId,parentCommitId:parents.get(state.careerId)??null,stateRevision:state.revision,savedAtUTC:new Date().toISOString(),snapshotId:state.snapshotId,kind,checksum:checksum(state),payload:state};
+      const envelope={schema:2,appVersion:'0.2.0',engineVersion:state.engineVersion,rulesetVersion:state.rulesetVersion,careerId:state.careerId,saveCommitId,parentCommitId:parents.get(state.careerId)??null,stateRevision:state.revision,savedAtUTC:new Date().toISOString(),snapshotId:state.snapshotId,kind,checksum:checksum(state),payload:state};
       const temp=join(folder,`${saveCommitId}.tmp`);const handle=await open(temp,'wx');
       try {await handle.writeFile(gzipSync(canonical(envelope)));await handle.sync();}finally{await handle.close();}
       decode(await readFile(temp));await rename(temp,filename(state.careerId,saveCommitId));

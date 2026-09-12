@@ -1,5 +1,6 @@
 import { brand, type Career, type MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+  substitutions:'Substitutions',onPitch:'On the pitch',matchBench:'Match bench',makeChange:'Confirm substitution',subHint:'Choose a player to take off and a replacement. Changes affect the next minute. The nine-player bench is selected at kickoff.',subCount:'Changes',windows:'Stoppages',subConfirmed:'Substitution confirmed. Resume when ready.',
   pixelBoards:`${brand.short}  /  HALF TIME SODA  /  ONE MORE MATCH`, artPreview:'Art preview', previewGoal:'Preview goal', previewSave:'Preview save', previewMiss:'Preview miss', previewNote:'Art preview - does not affect your match', saveBanner:'WHAT A SAVE!', missBanner:'OFF TARGET', skipHighlight:'Skip highlight', canvasFailed:'Highlights are unavailable. Live commentary continues.',
   titleTag:'A whole season of possibilities', startGame:'Start a career', titleMenu:'Title screen', clubhouse:'Clubhouse', back:'Back',
   chooseClub:'Choose your club', chooseHint:'Eight clubs. One trophy. Your story starts here.', prevClub:'Previous club', nextClub:'Next club',
@@ -8,7 +9,7 @@ export const text = {
   matchClock:'Match clock', fixedSpeed:'Match pace: 2x', matchStats:'Match statistics', noChance:'Play continues. Waiting for the next chance.', music:'Music', effects:'SFX', on:'On', off:'Off', musicHint:'Original chiptune',
   bench:'Squad list', starters:'Starting eleven', rosterShort:'22 players', broadcast:'FCU LIVE', goalBanner:'GOAL!',
   retroMode:'RETRO EXHIBITION', scored:'Goal scorer',
-  exhibition:'Development exhibition league', edition:'FIRST PLAYABLE / v0.1', home:'Home', squad:'Squad', table:'League table', match:'Match centre',
+  exhibition:'Development exhibition league', edition:'FIRST PLAYABLE / v0.2', home:'Home', squad:'Squad', table:'League table', match:'Match centre',
   newCareer:'New career', begin:'Begin career', club:'Your club', seed:'World seed', seedHint:'Whole number from 0 to 4294967295. Same seed and decisions, same football.',
   intro:'Eight clubs. One small football universe.', introBody:'Take the touchline for a 14-round exhibition season. Pick your eleven and see what happens next.',
   fixtureNotice:'Fictional test players. Balanced generated abilities. A cross-country exhibition, not an actual national league.',
@@ -25,7 +26,7 @@ export const text = {
   visualNote:'Short pixel-art scenes illustrate committed chances. The simulation decides results.',
   speed:'Speed', shots:'Shots', onTarget:'On target', possession:'Possession', quality:'Chance quality', currentPosition:'League position', record:'Season record', playedRounds:'Rounds played',
   welcome:'THE TOUCHLINE IS YOURS', versus:'vs', live:'LIVE', final:'FINAL', season:'EXHIBITION 2026', roster:'22 fictional players', profile:'City identity profile', next:'Up next',
-  errors:{INVALID_LINEUP:'Select eleven distinct players from your club, including exactly one goalkeeper.',STALE_STATE:'The career changed. Review the refreshed state and try again.',DUPLICATE_COMMAND:'This action has already been applied.',INVALID_COMMAND:'This action is not available now.',INVALID_SAVE:'This save is invalid. Choose an earlier checkpoint.',FUTURE_SAVE:'This save needs a newer version of FCU.',IO_ERROR:'The save operation failed. Progress is unsaved; retry Save or choose another checkpoint.',WORKER_FAILED:'The simulation worker stopped. Load a confirmed checkpoint to recover.'},
+  errors:{INVALID_SUBSTITUTION:'Choose an active player and an unused bench player, keeping one goalkeeper. Maximum five changes in three stoppages; half-time is free.',INVALID_LINEUP:'Select eleven distinct players from your club, including exactly one goalkeeper.',STALE_STATE:'The career changed. Review the refreshed state and try again.',DUPLICATE_COMMAND:'This action has already been applied.',INVALID_COMMAND:'This action is not available now.',INVALID_SAVE:'This save is invalid. Choose an earlier checkpoint.',FUTURE_SAVE:'This save needs a newer version of FCU.',IO_ERROR:'The save operation failed. Progress is unsaved; retry Save or choose another checkpoint.',WORKER_FAILED:'The simulation worker stopped. Load a confirmed checkpoint to recover.'},
   event:{pass:'plays the pass',shot:'shoots off target',save:'has a shot saved',goal:'scores'},
   manual:'Manual',auto:'Automatic',newHint:'Existing saved careers remain available under Load.',paused:'Paused',seedInvalid:'Enter a valid whole-number seed.',
 } as const;

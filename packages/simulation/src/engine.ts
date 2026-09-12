@@ -1,4 +1,4 @@
-import { careerSchema, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
+import { careerSchema, legacyCareerSchema, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
 import { clubs } from '../../contracts/src/identity.ts';
 import { draw, stream } from './rng.ts';
 
@@ -38,11 +38,25 @@ export function createCareer(careerId: string, seed: number, club: ClubId): Care
     return {id:`player-${String(ci+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}` as PlayerId, clubId:c.id, name:`${firstNames[i]} ${surnames[ci]}`, role, goalkeeping:role==='GK'?rating():15, tackling:rating(), passing:rating(), shooting:rating(), pace:rating(), stamina:rating(), discipline:rating()};
   }));
   if (!clubs.some(c => c.id === club)) throw new Error('INVALID_COMMAND');
-  return careerSchema.parse({ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.1.0', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null });
+  return careerSchema.parse({ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.2.0', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null });
 }
 const emptyStats = () => ({shots:0,onTarget:0,quality:0,possession:0});
+// Reserve one goalkeeper and the eight highest-rated remaining outfield players.
+export function pickBench(players:Player[],club:ClubId,lineup:PlayerId[]):PlayerId[] {
+ const available=players.filter(p=>p.clubId===club&&!lineup.includes(p.id)).sort((a,b)=>overall(b)-overall(a)||compare(a.id,b.id));
+ return [...available.filter(p=>p.role==='GK').slice(0,1),...available.filter(p=>p.role!=='GK').slice(0,8)].map(p=>p.id);
+}
+export function substitutionWindows(match:Match,club:ClubId):number {
+ return new Set(match.substitutions.filter(s=>s.clubId===club&&s.tick!==45).map(s=>s.tick)).size;
+}
+export function migrateLegacyCareer(input:unknown):Career {
+ const old=legacyCareerSchema.parse(input);const m=old.match;
+ return validateCareer({...old,engineVersion:'0.2.0',match:m?{...m,homeBench:pickBench(old.players,m.home,m.homeLineup),awayBench:pickBench(old.players,m.away,m.awayLineup),substitutions:[]}:null});
+}
 export function startMatch(state: Career, fixture: Fixture): Match {
-  return {fixtureId:fixture.id, home:fixture.home, away:fixture.away, tick:0, rng:stream(state.seed,`match/${fixture.id}`), homeLineup:fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home), awayLineup:fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away), homeGoals:0,awayGoals:0,homeStats:emptyStats(),awayStats:emptyStats(),events:[]};
+  const homeLineup=fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home);
+  const awayLineup=fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away);
+  return {homeBench:pickBench(state.players,fixture.home,homeLineup),awayBench:pickBench(state.players,fixture.away,awayLineup),substitutions:[],fixtureId:fixture.id, home:fixture.home, away:fixture.away, tick:0, rng:stream(state.seed,`match/${fixture.id}`), homeLineup:fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home), awayLineup:fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away), homeGoals:0,awayGoals:0,homeStats:emptyStats(),awayStats:emptyStats(),events:[]};
 }
 function strength(players: Player[]) {
   const mean = (role: Role) => { const group=players.filter(p=>p.role===role); return group.length ? Math.round(group.reduce((n,p)=>n+overall(p)*104,0)/group.length)/100:10; };
@@ -94,6 +108,17 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
     if(state.match && state.match.tick<90)return {ok:false,error:'INVALID_COMMAND'};
     if(!validLineup(state.players,state.clubId,command.lineup))return {ok:false,error:'INVALID_LINEUP'};
     next.lineup=command.lineup;
+  } else if(command.type==='Substitute') {
+    const m=next.match;
+    if(!m||m.tick<1||m.tick>=90)return {ok:false,error:'INVALID_SUBSTITUTION'};
+    const home=m.home===state.clubId;const lineup=home?m.homeLineup:m.awayLineup;const bench=home?m.homeBench:m.awayBench;
+    const changes=m.substitutions.filter(s=>s.clubId===state.clubId);
+    const windowAvailable=m.tick===45||changes.some(s=>s.tick===m.tick)||substitutionWindows(m,state.clubId)<3;
+    const index=lineup.indexOf(command.out);
+    if(index<0||!bench.includes(command.in)||lineup.includes(command.in)||changes.some(s=>s.out===command.in)||changes.length>=5||!windowAvailable)return {ok:false,error:'INVALID_SUBSTITUTION'};
+    lineup[index]=command.in;
+    if(!validLineup(state.players,state.clubId,lineup))return {ok:false,error:'INVALID_SUBSTITUTION'};
+    m.substitutions.push({tick:m.tick,clubId:state.clubId,out:command.out,in:command.in});
   } else if(command.type==='StartMatch') {
     if(state.round>=14||(state.match&&state.match.tick<90))return {ok:false,error:'INVALID_COMMAND'};
     if(!validLineup(state.players,state.clubId,state.lineup))return {ok:false,error:'INVALID_LINEUP'};
@@ -140,5 +165,21 @@ export function validateCareer(input: unknown): Career {
   const expected=schedule(ids);
   if(state.fixtures.some((f,i)=>{const e=expected[i]!;return f.id!==e.id||f.home!==e.home||f.away!==e.away||f.round!==e.round||(f.score!==null)!==(f.round<state.round);}))throw new Error('INVALID_SAVE');
   if(state.match){const m=state.match;const f=state.fixtures.find(f=>f.id===m.fixtureId);if(!f||f.home!==m.home||f.away!==m.away||f.round!==(m.tick===90?state.round-1:state.round)||!validLineup(state.players,m.home,m.homeLineup)||!validLineup(state.players,m.away,m.awayLineup)||m.events.some((e,i)=>e.order!==i||e.tick>m.tick||!state.players.some(p=>p.id===e.playerId&&p.clubId===e.clubId)))throw new Error('INVALID_SAVE');}
+  if(state.match){
+    const m=state.match;
+    for(const [club,lineup,bench] of [[m.home,m.homeLineup,m.homeBench],[m.away,m.awayLineup,m.awayBench]] as const){
+      const changes=m.substitutions.filter(s=>s.clubId===club);
+      if(changes.length>5||substitutionWindows(m,club)>3||new Set(bench).size!==9||bench.some(id=>!state.players.some(p=>p.id===id&&p.clubId===club)))throw new Error('INVALID_SAVE');
+      const original=[...lineup];
+      for(const change of [...changes].reverse()){
+        const index=original.indexOf(change.in);
+        if(index<0||original.includes(change.out)||!bench.includes(change.in))throw new Error('INVALID_SAVE');
+        original[index]=change.out;
+        if(!validLineup(state.players,club,original))throw new Error('INVALID_SAVE');
+      }
+      if(!validLineup(state.players,club,original)||original.some(id=>bench.includes(id))||new Set(changes.map(c=>c.in)).size!==changes.length||new Set(changes.map(c=>c.out)).size!==changes.length||changes.some((c,i)=>changes.slice(0,i).some(other=>other.out===c.in)))throw new Error('INVALID_SAVE');
+    }
+    if(m.substitutions.some((s,i)=>s.tick>m.tick||(s.clubId!==m.home&&s.clubId!==m.away)||(i>0&&s.tick<m.substitutions[i-1]!.tick)))throw new Error('INVALID_SAVE');
+  }
   return state;
 }
