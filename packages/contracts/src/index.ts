@@ -28,7 +28,7 @@ export const careerSchema = z.object({
 export type Career = z.infer<typeof careerSchema>;
 const commandBase = { commandId: z.string().uuid(), careerId: z.string().uuid(), expectedRevision: integer };
 export const commandSchema = z.discriminatedUnion('type', [
-  z.object({ ...commandBase, type: z.literal('SelectLineup'), lineup: z.array(playerId).length(11) }),
+  z.object({ ...commandBase, type: z.literal('SelectLineup'), lineup: z.array(playerId).max(22) }),
   z.object({ ...commandBase, type: z.literal('StartMatch') }),
   z.object({ ...commandBase, type: z.literal('AdvanceMatch'), minutes: z.number().int().min(1).max(90) })
 ]);

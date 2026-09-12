@@ -2,8 +2,8 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.1, implementation in progress.
-- Last completed gate: none; text-mode desktop playable, Three.js and final platform checks pending.
+- Current milestone: v0.1 delivered for owner evaluation; no v0.2 work authorized.
+- Last completed gate: v0.1 Windows implementation/checks complete; cumulative gate open for native Linux checks and owner visual decision.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; early Three.js experiment with a later text/2D alternative.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
 - Product assumptions awaiting optional revision: English, premium single-player, fictional second tiers, simplified rules. See README.
@@ -12,12 +12,17 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 9 registered cases in 2 files, 0 E2E; domain 1.12 seconds, save suite 0.232 seconds. Cold npm install 19 seconds; reproducible npm ci 5 seconds after one diagnosed open-executable retry. Ceilings live only in AGENTS.md.
-- Evidence from latest change: worker-owned career, Home/Squad/Match/Table, manual save/load and round autosaves. Typecheck 7.0.2 and lint pass; save suite 4/4; text build 1.1 seconds plus main bundling. Actual Electron new-career-to-Home check succeeded; screenshot work/home.png inspected. Initial startup deadlock fixed by moving readiness out of top-level ESM await. Fixed 500-match probe previously recorded: seeds 1..500, 1.73 goals/match, 33.6% draws, 21.992 shots/match in 149 ms; below future goal band, no tuning.
-- Open issues/next action: add Three.js highlights and fallback; final Windows packaging/E2E. Linux and owner visual evaluation unverified. v0.1 retains all immutable autosaves; no pruning yet.
+- Test inventory/runtime: 11 registered cases in 4 files: 10 Vitest cases (full suite 0.671 seconds) and 1 Electron journey (6.1 seconds including runner). Final typecheck/lint under 2 seconds. E2E found a lineup-message bug; it was fixed, relevant 5 domain cases passed in 0.194 seconds, then E2E passed. Manual Save now locks actions until the write completes; affected E2E reran successfully after that fix. No automatic retries or removed assertions. Cold npm install 19 seconds; npm ci 5 seconds after one diagnosed open-executable retry. First Electron download time was not isolated from the startup stall and is not claimed as test time.
+- Evidence from latest change: lazy Three.js pitch/22 figures/pass-shot-save-goal illustration, shadows, 30/60 fps and text/reduced-motion fallback. E2E proved matching text/3D match and fixture payloads, save/restart at half-time, actual WebGL context loss and all 14 rounds. Windows packaged offline smoke: new career, worker playback to minute 18, shadows and disk save; app.isPackaged true. Actual screenshot work/packaged-match.png inspected. Final Vite build 0.145 seconds; build and Windows packaging combined under 7 seconds warm. Lazy Three.js chunk warning (541 kB) retained; no limit suppression.
+- Open issues/next action: owner chooses 3D or text/2D before expansion. Native Linux build/launch and cross-OS hash comparison unverified (no Linux environment). Low-end GPU baseline and human fun/clarity unverified. All immutable autosaves retained; no pruning. Fixed probe seeds 1..500: 1.73 goals/match, 33.6% draws, 21.992 shots/match in 149 ms; below future v0.3 goal band, no tuning.
+- Build identity: app 0.1.0, engine 0.1.0, exhibition-1; Windows app.asar SHA-256 8f9387a3c3b688bf1257ebb9ecea1bf2e313469cb337421641210fb29de96d9f. Commit subject: Add the Three.js match prototype and verify Windows play.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, empty remote fetched successfully. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
+
+| Milestone | Implemented | Verified | Remaining gate |
+| --- | --- | --- | --- |
+| v0.1 | Eight approved clubs, 176 synthetic players, squad selection, deterministic worker league/matches, table, Save/Load, Three.js/text, packaging configuration | Windows 11: 11 registered cases; packaged offline launch/play/save | Native Linux build/launch and reproducibility; owner presenter choice |
 
 ## Gates and scope discipline
 

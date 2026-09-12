@@ -1,6 +1,6 @@
 # Football Club Universe (FCU) - project contract
 
-Documentation edition 1.4 | Research cutoff: 11 September 2026 | Implementation status: v0.1 in progress; see ROADMAP evidence.
+Documentation edition 1.4 | Research cutoff: 11 September 2026 | Implementation status: v0.1 playable on Windows; Linux and owner visual evaluation pending. See ROADMAP evidence.
 
 Owner-selected title: **Football Club Universe**, abbreviated **FCU**. Modes are **FCU Career** and **FCU Dream Club**. Keep the title in one configuration value so future branding changes do not rename save IDs or packages. This records the creative decision, not a trademark availability check.
 
@@ -8,7 +8,7 @@ Build a fast, offline football management game for Steam, inspired by the feelin
 
 ## Start here
 
-Extract this folder into the root of a new repository. `AGENTS.md` must be at the repository root, beside this project brief. Open that repository in Codex and use the starter request below. These are specifications; the package contains no game implementation, licensed rosters, or purchased rights. `README.md` is the public game introduction shown on GitHub; keep agent setup instructions here.
+Extract this folder into the root of a new repository. `AGENTS.md` must be at the repository root, beside this project brief. Open that repository in Codex and use the starter request below. The repository now contains the v0.1 exhibition prototype with synthetic players. Real roster integration is deferred. Read the current ROADMAP status and stop at v0.1 until the owner evaluates Three.js. `README.md` is the public game introduction shown on GitHub; keep agent setup instructions here.
 
 | File | Authority |
 | --- | --- |

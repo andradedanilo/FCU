@@ -1,30 +1,70 @@
 # Football Club Universe (FCU)
 
-A football management game about building a club, shaping a squad and creating a history worth remembering.
+A fast, offline football management prototype for Windows and native Linux.
 
-**Status: pre-development.** This repository currently contains the project specifications. There is no playable release or verified platform support yet.
+**Status: v0.1 playable prototype.** Windows development and packaged launch have been tested. Native Linux packaging is configured but not yet built or tested on Linux. No public release or Steam compatibility claim is made.
 
-## The game
+## Play the exhibition
 
-FCU takes inspiration from the quick decisions and season-to-season pull of classic football management games, with selected modern depth.
+Choose one of eight city-based clubs, select your starting eleven and play a 14-round home-and-away exhibition season. Every club has 22 fictional test players with generated abilities. This cross-country development league is not an actual national competition.
 
-- **FCU Career:** manage lineups, tactics, transfers, finances and player development as your club competes for promotion and trophies.
-- **FCU Dream Club:** build a fantasy squad through player-choice packs earned by playing. No paid packs or premium currency.
-- **Match presentation:** experiment with stylized Three.js highlights, with text/2D alternatives planned.
-- **Club identities:** recognizable city-based fictional names and original visual identities.
+Matches run minute by minute in a deterministic worker. Watch stylized Three.js highlights or switch to text; both use the same match events and results. Pause, change playback speed, advance a minute or finish the current half. Half-time stops for your input. WebGL failure falls back to text without losing the career.
 
-These are planned features, not implemented functionality.
+Home, Squad, Match centre and League table are playable. Manual Save and Load support checkpoints during matches; completed rounds save automatically. Load lists previous checkpoints and identifies unreadable ones for recovery. Saves stay outside the installation folder, under Electron user data (`%APPDATA%\fcu\saves` on Windows, normally `~/.config/fcu/saves` on Linux). Save before closing to retain progress since the latest automatic checkpoint.
 
-## Platforms
+The prototype stops after one small season. Transfers, tactics, injuries, cards, roster sync, Dream Club and advanced 3D are not implemented.
 
-Windows and native Linux are planned. Steam Deck compatibility is a goal; no Valve verification badge has been awarded. Single-player gameplay is designed to work offline.
+## Run from source
 
-## Development
+Tested development tools: Node.js 26.8.2 and npm 11.19.1. Dependencies are pinned in the lockfile. The first launch may download Electron; installed gameplay is offline.
 
-Planned stack: Electron, React, TypeScript and Vite, with simulation separated from the interface.
+```sh
+npm ci
+npm run dev
+```
 
-Setup and launch commands will be added once the first playable build exists. Do not assume a published download or working installation command yet.
+For a production build without the development server:
 
-Project status and milestone evidence are maintained in the repository. This README will be updated as features become playable.
+```sh
+npm run build
+npm start
+```
+
+Select a club and seed, then **Begin career**. Open **Squad** to edit the eleven and choose **Confirm lineup**. Return **Home**, choose **Kick off**, then **Play**. **Finish half** stops at minute 45 or 90; choose **Continue** after full time to reach the next fixture.
+
+## Build a portable folder
+
+Run the corresponding command on its native OS, after `npm ci` and `npm run build`:
+
+```sh
+# Windows
+npm run package:win
+# Linux
+npm run package:linux
+```
+
+Windows executable: `release/win-unpacked/Football Club Universe.exe`.
+Linux executable: `release/linux-unpacked/fcu` (configured; unverified on Linux).
+Keep the complete output folder together. These are unsigned local prototype builds, not published installers. No GitHub Actions or hosted build service is used.
+
+## Local checks
+
+```sh
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run test:e2e
+npm run check:docs
+```
+
+The suite registers 10 unit/integration cases plus one Electron journey in four files. The E2E journey covers offline play, lineup rejection, save/restart, text/3D equivalence, actual WebGL context loss and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
+
+## Prototype limits
+
+- Three.js is an early visual experiment awaiting owner evaluation. It illustrates events rather than physically reconstructing football.
+- The fixed 500-match probe produced 1.73 goals per match, below the later balance target. No artificial score correction is applied.
+- All immutable saves are retained in v0.1, including autosaves. Automatic pruning is not implemented yet.
+- Linux, low-end graphics, controllers and Steam Deck remain unverified. Reduced-motion preference starts in text mode.
 
 FCU is an independent project and does not claim affiliation with existing football games, clubs or leagues.

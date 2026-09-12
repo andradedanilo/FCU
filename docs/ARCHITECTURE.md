@@ -149,4 +149,6 @@ At fixture completion atomically commit result, reward progress and new pack ent
 | A16 | 2026-09-11: renderer relays typed worker checkpoints to a sender-validated main save service; sandboxed CJS preload, ESM main | v0.1 permitted relay topology. Main parses all disk payloads. Typecheck explicitly invokes the 7.0.2 binary to avoid npm compatibility-package bin collisions. Electron runtime: Chromium 152.0.7977.78 / Node 24.20.0. |
 | A17 | 2026-09-11: immutable checkpoints retained in v0.1, including all autosaves, with explicit recovery selection | Conservative first playable policy preserves older and branched files. Three-autosave pruning deferred until ancestry-aware cleanup; disk use grows within this bounded single season. No pre-v0.1 schema exists to migrate. |
 
+| A18 | 2026-09-11: lazy plain Three.js with separate stable visual offset, original primitives, bounded animation and context-loss cleanup | v0.1 experiment only. No simulation dependency on rendering or external art. 30 fps default, 60 optional, shadows off. Reduced-motion starts in text. Owner evaluation pending. |
+
 Append a dated row only for consequential changes: reason, alternatives rejected, affected gate and migration impact. Routine implementation details belong in code.
