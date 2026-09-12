@@ -39,6 +39,7 @@ export function createEconomy(world:World,rating:(p:Player)=>number):Economy {
   squad.forEach((p,i)=>{economy.wages[p.id]=total>limit?Math.floor(desired[i]!*limit/total):desired[i]!;});
   external(economy,club.id,world.date,'opening',economicRules.sponsorship/2,'opening/'+club.id);
  }
+ for(const player of world.players)if(player.clubId===null)economy.wages[player.id]=0;
  return economy;
 }
 function monday(date:string){

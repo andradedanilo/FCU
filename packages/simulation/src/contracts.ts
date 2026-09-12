@@ -5,7 +5,7 @@ import {validDate} from './availability.ts';
 
 export function initialContract(player:Player,date:string):Contract {
  const number=Number(player.id.slice(-2));
- return {ownerId:player.clubId,birthDate:`${player.academy?Number(date.slice(0,4))-17:1992+(number-1)%15}-07-01`,ends:`${Number(date.slice(0,4))+1+(player.academy?0:number%3)}-06-30`,role:player.academy?'prospect':'rotation',revision:0};
+ return {ownerId:player.clubId,birthDate:`${player.academy?Number(date.slice(0,4))-17:1992+(number-1)%15}-07-01`,ends:player.clubId===null?null:`${Number(date.slice(0,4))+1+(player.academy?0:number%3)}-06-30`,role:player.academy?'prospect':'rotation',revision:0};
 }
 export function createContracts(state:Pick<Career,'players'|'date'>):Career['contracts']{
  return Object.fromEntries(state.players.map(p=>[p.id,initialContract(p,state.date)]));
@@ -16,7 +16,7 @@ export function marketValue(state:Career,player:Player){
  const contract=state.contracts[player.id]!;const age=ageOn(contract.birthDate,state.date);
  const ageFactor=age<24?12000:age<30?10000:6500;
  const yearLater=String(Number(state.date.slice(0,4))+1)+state.date.slice(4);
- const termFactor=contract.ends<yearLater?6500:10000;
+ const termFactor=(contract.ends??state.date)<yearLater?6500:10000;
  return Math.round(1000*overall(player)**2*ageFactor/10000*termFactor/10000/1000)*100000;
 }
 export function desiredTerms(state:Career,player:Player){
@@ -30,7 +30,7 @@ export function renewalError(state:Career,action:Omit<Renewal,'careerId'|'comman
  if(contract.revision!==action.contractRevision)return 'CONTRACT_CHANGED';
  const end=contractEnd(state.date,action.years),desired=desiredTerms(state,player);
  const roles={prospect:0,rotation:1,starter:2};
- if(end<=contract.ends||action.wage<desired.wage||action.bonus<4*action.wage||roles[action.role]<roles[contract.role])return 'PLAYER_TERMS';
+ if((contract.ends===null||end<=contract.ends)||action.wage<desired.wage||action.bonus<4*action.wage||roles[action.role]<roles[contract.role])return 'PLAYER_TERMS';
  const bank=budgets(state,state.clubId),weekly=bank.weekly-state.economy.wages[player.id]!+action.wage;
  if(weekly>bank.wage)return 'WAGE_BUDGET';
  if(bank.cash-action.bonus<13*weekly+4*bank.overhead)return 'INSUFFICIENT_FUNDS';
@@ -47,6 +47,6 @@ export function renewContract(state:Career,action:Renewal):FailureCode|null {
 export function validateContracts(state:Career){
  if(Object.keys(state.contracts).length!==state.players.length)throw Error('INVALID_SAVE');
  for(const player of state.players){const contract=state.contracts[player.id];
-  if(!contract||contract.ownerId!==player.clubId||!validDate(contract.birthDate)||!validDate(contract.ends)||ageOn(contract.birthDate,state.date)<15||ageOn(contract.birthDate,state.date)>60||contract.ends<=state.date)throw Error('INVALID_SAVE');
+  if(!contract||contract.ownerId!==player.clubId||!validDate(contract.birthDate)||(player.clubId===null?contract.ends!==null||state.economy.wages[player.id]!==0:contract.ends===null||!validDate(contract.ends)||contract.ends<state.date)||ageOn(contract.birthDate,state.date)<15||ageOn(contract.birthDate,state.date)>60)throw Error('INVALID_SAVE');
  }
 }

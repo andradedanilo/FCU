@@ -28,7 +28,7 @@ function continueMatch(previous:Match,players:Player[],minutes:number):Match{
 describe('exhibition domain',()=>{
   it('pins the PRNG vector and creates a balanced complete home-away schedule',()=>{
     expect(draw(0)).toEqual([1831565813,1144304738]);
-    const s=initial();expect(s.players).toHaveLength(176);expect(s.fixtures).toHaveLength(56);
+    const s=initial();expect(s.players).toHaveLength(188);expect(s.fixtures).toHaveLength(56);
     expect(new Set(s.fixtures.map(f=>`${f.home}/${f.away}`)).size).toBe(56);
     expect(s.fixtures.filter(f=>f.home===s.clubId)).toHaveLength(7);
     expect(new Set(s.fixtures.filter(f=>f.round===0).flatMap(f=>[f.home,f.away])).size).toBe(8);

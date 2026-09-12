@@ -9,7 +9,7 @@ import s from './ContractsMenu.module.css';
 type Renewal=Omit<Extract<Command,{type:'RenewContract'}>,'careerId'|'commandId'|'expectedRevision'>;
 export function ContractsMenu({state,busy,confirm,close}:{state:Career;busy:boolean;confirm:(action:Renewal)=>Promise<boolean>;close:()=>void}){
  const players=state.players.filter(p=>p.clubId===state.clubId&&!p.academy);
- const draftFor=(p:Player)=>({id:p.id,wage:String(desiredTerms(state,p).wage/100),years:Math.min(5,Number(state.contracts[p.id]!.ends.slice(0,4))-Number(state.date.slice(0,4))+1),role:state.contracts[p.id]!.role});
+ const draftFor=(p:Player)=>({id:p.id,wage:String(desiredTerms(state,p).wage/100),years:Math.min(5,Number(state.contracts[p.id]!.ends!.slice(0,4))-Number(state.date.slice(0,4))+1),role:state.contracts[p.id]!.role});
  const [draft,setDraft]=useState(()=>draftFor(players[0]!));const [review,setReview]=useState(false);
  const dialog=useRef<HTMLDialogElement>(null);useModal(dialog);
  const player=players.find(p=>p.id===draft.id)!,contract=state.contracts[player.id]!,wage=parseEuro(draft.wage);

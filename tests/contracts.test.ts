@@ -25,7 +25,7 @@ it('rejects unaffordable or inadequate terms and parses cent-accurate offers at 
  expect(commandSchema.safeParse({...action,wage:Infinity}).success).toBe(false);expect(parseEuro('123.45')).toBe(12345);expect(parseEuro('123.456')).toBeNull();expect(parseEuro('9007199254740991')).toBeNull();expect(canonical(s)).toBe(before);
 });
 it('migrates financial saves without repricing wages or fabricating past signing costs',()=>{
- const s=initial(),old={...s,engineVersion:'0.4.0',rulesetVersion:'exhibition-7'};const migrated=migrateFinancialCareer(old);
+ const s=initial(),old={...s,players:s.players.filter(p=>p.clubId!==null),economy:{...s.economy,wages:Object.fromEntries(s.players.filter(p=>p.clubId!==null).map(p=>[p.id,s.economy.wages[p.id]]))},engineVersion:'0.4.0',rulesetVersion:'exhibition-7'};const migrated=migrateFinancialCareer(old);
  expect(migrated.economy).toEqual(s.economy);expect(migrated.match).toEqual(s.match);expect(migrated.contracts).toEqual(s.contracts);
  const broken=structuredClone(migrated);broken.contracts[s.players[0]!.id]!.ownerId=clubs[1]!.id;expect(()=>validateCareer(broken)).toThrow();
 });
