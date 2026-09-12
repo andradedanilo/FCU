@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { createCareer, applyCommand, advanceMatch, startMatch, standings, validateCareer } from '../packages/simulation/src/engine.ts';
+import { createCareer, applyCommand, advanceMatch, startMatch, standings, validateCareer, autoPick, arrangeLineup, chanceProbability } from '../packages/simulation/src/engine.ts';
 import { clubs } from '../packages/contracts/src/identity.ts';
-import { canonical, type Career, type Command, type PlayerId } from '../packages/contracts/src/index.ts';
+import { defaultTactics, canonical, type Career, type Command, type PlayerId, type Tactics } from '../packages/contracts/src/index.ts';
 import { draw } from '../packages/simulation/src/rng.ts';
 const id='00000000-0000-4000-8000-000000000001';
 const initial=()=>createCareer(id,12345,clubs[0]!.id);
-function run(s:Career, action: {type:'StartMatch'}|{type:'AdvanceMatch';minutes:number}|{type:'Substitute';out:PlayerId;in:PlayerId}):Career {
+function run(s:Career, action: {type:'StartMatch'}|{type:'AdvanceMatch';minutes:number}|{type:'Substitute';out:PlayerId;in:PlayerId}|{type:'SetTactics';tactics:Tactics}):Career {
   const result=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:`00000000-0000-4000-8000-${String(s.revision+1).padStart(12,'0')}`} as Command);
   if(!result.ok)throw new Error(result.error);return result.value;
 }
@@ -71,4 +71,23 @@ it('allows five changes in three windows with free half-time and rejects a fourt
  s=run(s,swap());s=run(s,swap());expect(s.match!.substitutions).toHaveLength(2);s=run(s,{type:'AdvanceMatch',minutes:1});s=run(s,swap());s=run(s,{type:'AdvanceMatch',minutes:1});s=run(s,swap());s=run(s,{type:'AdvanceMatch',minutes:1});
  const attempt=()=>applyCommand(s,{...swap(),careerId:s.careerId,expectedRevision:s.revision,commandId:crypto.randomUUID()});expect(attempt()).toEqual({ok:false,error:'INVALID_SUBSTITUTION'});
  s=run(s,{type:'AdvanceMatch',minutes:90});s=run(s,swap());expect(s.match!.substitutions).toHaveLength(5);expect(attempt()).toEqual({ok:false,error:'INVALID_SUBSTITUTION'});expect(validateCareer(s)).toEqual(s);
+});
+
+it('fills the three formation presets with unique natural-role players',()=>{
+ const s=initial();const shapes=['4-4-2','4-3-3','4-2-3-1'] as const;
+ const picked=shapes.map(shape=>arrangeLineup(s.players,autoPick(s.players,s.clubId,shape),shape));expect(picked.map(slots=>slots.filter(s=>s.role==='FWD').length)).toEqual([2,3,1]);expect(picked.map(slots=>slots.filter(s=>s.role==='MID').length)).toEqual([4,3,5]);expect(picked.every(slots=>slots.length===11&&new Set(slots.map(s=>s.player.id)).size===11&&slots.every(s=>s.role===s.player.role))).toBe(true);
+ const rearranged=arrangeLineup(s.players,s.lineup,'4-3-3');expect(rearranged.some(slot=>slot.role!==slot.player.role)).toBe(true);expect(new Set(rearranged.map(slot=>slot.player.id))).toEqual(new Set(s.lineup));
+});
+it('applies tactics only to future ticks with the same saved deterministic continuation',()=>{
+ const s=run(run(initial(),{type:'StartMatch'}),{type:'AdvanceMatch',minutes:20});const changed=run(s,{type:'SetTactics',tactics:{formation:'4-3-3',mentality:'attacking',tempo:'fast',pressing:'high'}});expect(changed.match!.events).toEqual(s.match!.events);expect(changed.match!.rng).toBe(s.match!.rng);expect(changed.match!.homeLineup).toEqual(s.match!.homeLineup);expect(changed.match!.tick).toBe(20);expect(changed.match!.awayTactics).toEqual(s.match!.awayTactics);
+ const next=run(changed,{type:'AdvanceMatch',minutes:25});expect(run(validateCareer(JSON.parse(canonical(changed))),{type:'AdvanceMatch',minutes:25})).toEqual(next);expect(next.match!.homeStats.possession).not.toBe(run(s,{type:'AdvanceMatch',minutes:25}).match!.homeStats.possession);
+ expect(startMatch(changed,changed.fixtures[0]!).homeTactics).toEqual(changed.tactics);
+});
+
+it('gives mentality and tempo their stated chance tradeoffs within caps',()=>{
+ const own={A:65,M:65};const other={D:65,M:65};const base=chanceProbability(own,other,false,defaultTactics,defaultTactics);
+ expect(chanceProbability(own,other,false,{...defaultTactics,mentality:'attacking'},defaultTactics)).toBeGreaterThan(base);expect(chanceProbability(own,other,false,{...defaultTactics,mentality:'cautious'},defaultTactics)).toBeLessThan(base);
+ expect(chanceProbability(own,other,false,defaultTactics,{...defaultTactics,mentality:'attacking'})).toBeGreaterThan(base);expect(chanceProbability(own,other,false,defaultTactics,{...defaultTactics,mentality:'cautious'})).toBeLessThan(base);
+ expect(chanceProbability(own,other,false,{...defaultTactics,tempo:'fast'},defaultTactics)).toBeGreaterThan(base);expect(chanceProbability(own,other,false,{...defaultTactics,tempo:'slow'},defaultTactics)).toBeLessThan(base);
+ expect(chanceProbability({A:100,M:100},{D:1,M:1},true,defaultTactics,defaultTactics)).toBe(2400);expect(chanceProbability({A:1,M:1},{D:100,M:100},false,defaultTactics,defaultTactics)).toBe(400);
 });

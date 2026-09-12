@@ -1,8 +1,8 @@
-import { careerSchema, legacyCareerSchema, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
+import { careerSchema, legacyCareerSchema, previousCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
 import { clubs } from '../../contracts/src/identity.ts';
 import { draw, stream } from './rng.ts';
 
-export const rules = { version: 'exhibition-1', chance: 1200, minChance: 400, maxChance: 2400, homeFactor: 10800, target: 3200, goal: 3000, assist: 7000 } as const;
+export const rules = { version: 'exhibition-2', chance: 1200, minChance: 400, maxChance: 2400, homeFactor: 10800, target: 3200, goal: 3000, assist: 7000, mentality:{cautious:9000,balanced:10000,attacking:11200}, exposure:{cautious:9500,balanced:10000,attacking:10800},tempo:{slow:9500,normal:10000,fast:10500},pressing:{low:9700,normal:10000,high:10600} } as const;
 const roles: Role[] = ['GK','GK', ...Array<Role>(8).fill('DEF'), ...Array<Role>(8).fill('MID'), ...Array<Role>(4).fill('FWD')];
 const firstNames = ['Alex','Robin','Sam','Jamie','Morgan','Casey','Drew','Ellis','Jules','Riley','Taylor','Noel','Avery','Cameron','Jordan','Rowan','Finley','Lee','Remy','Sasha','Micah','Quinn'];
 const surnames = ['Ashford','Bellwick','Creston','Dalehurst','Elmbridge','Fenwick','Greyford','Harrowell'];
@@ -12,8 +12,8 @@ export function overall(p: Player): number {
   if (p.role === 'MID') return Math.round((60*p.passing+20*p.stamina+20*p.tackling)/100);
   return Math.round((60*p.shooting+20*p.pace+20*p.passing)/100);
 }
-export function autoPick(players: Player[], club: ClubId): PlayerId[] {
-  return (['GK','DEF','MID','FWD'] as const).flatMap((role, i) => players.filter(p => p.clubId === club && p.role === role).sort((a,b) => overall(b)-overall(a) || compare(a.id,b.id)).slice(0, [1,4,4,2][i]).map(p => p.id));
+export function autoPick(players: Player[], club: ClubId,formation:Tactics['formation']='4-4-2'): PlayerId[] {
+  return (['GK','DEF','MID','FWD'] as const).flatMap((role, i) => players.filter(p => p.clubId === club && p.role === role).sort((a,b) => overall(b)-overall(a) || compare(a.id,b.id)).slice(0, formationCounts[formation][i]).map(p => p.id));
 }
 export function validLineup(players: Player[], club: ClubId, lineup: PlayerId[]): boolean {
   if (lineup.length !== 11 || new Set(lineup).size !== 11) return false;
@@ -38,7 +38,7 @@ export function createCareer(careerId: string, seed: number, club: ClubId): Care
     return {id:`player-${String(ci+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}` as PlayerId, clubId:c.id, name:`${firstNames[i]} ${surnames[ci]}`, role, goalkeeping:role==='GK'?rating():15, tackling:rating(), passing:rating(), shooting:rating(), pace:rating(), stamina:rating(), discipline:rating()};
   }));
   if (!clubs.some(c => c.id === club)) throw new Error('INVALID_COMMAND');
-  return careerSchema.parse({ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.2.0', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null });
+  return careerSchema.parse({ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.2.1', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null });
 }
 const emptyStats = () => ({shots:0,onTarget:0,quality:0,possession:0});
 // Reserve one goalkeeper and the eight highest-rated remaining outfield players.
@@ -51,22 +51,39 @@ export function substitutionWindows(match:Match,club:ClubId):number {
 }
 export function migrateLegacyCareer(input:unknown):Career {
  const old=legacyCareerSchema.parse(input);const m=old.match;
- return validateCareer({...old,engineVersion:'0.2.0',match:m?{...m,homeBench:pickBench(old.players,m.home,m.homeLineup),awayBench:pickBench(old.players,m.away,m.awayLineup),substitutions:[]}:null});
+ return validateCareer({...old,engineVersion:'0.2.1',rulesetVersion:rules.version,tactics:{...defaultTactics},match:m?{...m,homeTactics:{...defaultTactics},awayTactics:{...defaultTactics},homeBench:pickBench(old.players,m.home,m.homeLineup),awayBench:pickBench(old.players,m.away,m.awayLineup),substitutions:[]}:null});
+}
+export function migratePreviousCareer(input:unknown):Career {
+ const old=previousCareerSchema.parse(input);
+ return validateCareer({...old,engineVersion:'0.2.1',rulesetVersion:rules.version,tactics:{...defaultTactics},match:old.match?{...old.match,homeTactics:{...defaultTactics},awayTactics:{...defaultTactics}}:null});
+}
+// Fill natural slots first, then assign remaining outfield players deterministically.
+export function arrangeLineup(players:Player[],ids:PlayerId[],formation:Tactics['formation']) {
+ const roles=(['GK','DEF','MID','FWD'] as const).flatMap((role,i)=>Array<Role>(formationCounts[formation][i]!).fill(role));
+ const remaining=ids.map(id=>players.find(p=>p.id===id)!).sort((a,b)=>compare(a.id,b.id));
+ const slots=roles.map(role=>{const i=remaining.findIndex(p=>p.role===role);return {role,player:i<0?null:remaining.splice(i,1)[0]!};});
+ return slots.map(slot=>({role:slot.role,player:slot.player??remaining.shift()!}));
 }
 export function startMatch(state: Career, fixture: Fixture): Match {
   const homeLineup=fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home);
   const awayLineup=fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away);
-  return {homeBench:pickBench(state.players,fixture.home,homeLineup),awayBench:pickBench(state.players,fixture.away,awayLineup),substitutions:[],fixtureId:fixture.id, home:fixture.home, away:fixture.away, tick:0, rng:stream(state.seed,`match/${fixture.id}`), homeLineup:fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home), awayLineup:fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away), homeGoals:0,awayGoals:0,homeStats:emptyStats(),awayStats:emptyStats(),events:[]};
+  return {homeTactics:{...(fixture.home===state.clubId?state.tactics:defaultTactics)},awayTactics:{...(fixture.away===state.clubId?state.tactics:defaultTactics)},homeBench:pickBench(state.players,fixture.home,homeLineup),awayBench:pickBench(state.players,fixture.away,awayLineup),substitutions:[],fixtureId:fixture.id, home:fixture.home, away:fixture.away, tick:0, rng:stream(state.seed,`match/${fixture.id}`), homeLineup:fixture.home===state.clubId?state.lineup:autoPick(state.players,fixture.home), awayLineup:fixture.away===state.clubId?state.lineup:autoPick(state.players,fixture.away), homeGoals:0,awayGoals:0,homeStats:emptyStats(),awayStats:emptyStats(),events:[]};
 }
-function strength(players: Player[]) {
-  const mean = (role: Role) => { const group=players.filter(p=>p.role===role); return group.length ? Math.round(group.reduce((n,p)=>n+overall(p)*104,0)/group.length)/100:10; };
-  return { A:mean('FWD'),M:mean('MID'),D:mean('DEF'),K:mean('GK') };
+function strength(slots:ReturnType<typeof arrangeLineup>) {
+ const mean=(role:Role)=>{const group=slots.filter(s=>s.role===role);return group.length?Math.round(group.reduce((n,s)=>n+overall({...s.player,role})*104*(s.player.role===role?1:.8),0)/group.length)/100:10;};
+ return {A:mean('FWD'),M:mean('MID'),D:mean('DEF'),K:mean('GK')};
 }
 const clamp = (n:number,lo:number,hi:number) => Math.max(lo,Math.min(hi,Math.round(n)));
+export function chanceProbability(own:{A:number;M:number},other:{D:number;M:number},home:boolean,tactics:Tactics,opponent:Tactics):number {
+ return clamp(rules.chance*(own.A+own.M)/(other.D+other.M)*(home?rules.homeFactor/10000:1)*rules.mentality[tactics.mentality]/10000*rules.tempo[tactics.tempo]/10000*rules.exposure[opponent.mentality]/10000,rules.minChance,rules.maxChance);
+}
 export function advanceMatch(previous: Match, players: Player[], minutes: number): Match {
   const match=structuredClone(previous);
-  const lineups=[match.homeLineup,match.awayLineup].map(ids=>ids.map(id=>players.find(p=>p.id===id)!));
-  const strengths=lineups.map(strength);
+  const tactics=[match.homeTactics,match.awayTactics];
+  const slots=[match.homeLineup,match.awayLineup].map((ids,i)=>arrangeLineup(players,ids,tactics[i]!.formation));
+  // Keep the committed lineup order for weighted draws when natural roles are unchanged.
+  const lineups=[match.homeLineup,match.awayLineup].map((ids,i)=>ids.map(id=>{const slot=slots[i]!.find(s=>s.player.id===id)!;return {...slot.player,role:slot.role};}));
+  const strengths=slots.map((team,i)=>{const value=strength(team);return {...value,M:Math.round(value.M*rules.pressing[tactics[i]!.pressing]/100)/100};});
   const roll=()=>{let value; [match.rng,value]=draw(match.rng); return value%10000;};
   const weighted=(pool:Player[],weight:(p:Player)=>number):Player=>{
     const total=pool.reduce((n,p)=>n+weight(p),0); let target=roll()*total/10000;
@@ -80,7 +97,7 @@ export function advanceMatch(previous: Match, players: Player[], minutes: number
     const order=roll()<5000?[0,1]:[1,0];
     for(const side of order) {
       const own=strengths[side]!; const other=strengths[1-side]!;
-      const chance=clamp(rules.chance*(own.A+own.M)/(other.D+other.M)*(side===0?rules.homeFactor/10000:1),rules.minChance,rules.maxChance);
+      const chance=chanceProbability(own,other,side===0,tactics[side]!,tactics[1-side]!);
       if(roll()>=chance) continue;
       const shooter=weighted(lineups[side]!.filter(p=>p.role!=='GK'),p=>p.shooting*(p.role==='FWD'?3:p.role==='MID'?2:1));
       const passer=weighted(lineups[side]!.filter(p=>p.id!==shooter.id),p=>p.passing);
@@ -108,6 +125,11 @@ export function applyCommand(state: Career, command: Command): Result<Career> {
     if(state.match && state.match.tick<90)return {ok:false,error:'INVALID_COMMAND'};
     if(!validLineup(state.players,state.clubId,command.lineup))return {ok:false,error:'INVALID_LINEUP'};
     next.lineup=command.lineup;
+  } else if(command.type==='SetTactics') {
+    if(state.match&&state.match.tick<90){
+      if(state.match.home===state.clubId)next.match!.homeTactics=command.tactics;else next.match!.awayTactics=command.tactics;
+    }
+    next.tactics=command.tactics;
   } else if(command.type==='Substitute') {
     const m=next.match;
     if(!m||m.tick<1||m.tick>=90)return {ok:false,error:'INVALID_SUBSTITUTION'};

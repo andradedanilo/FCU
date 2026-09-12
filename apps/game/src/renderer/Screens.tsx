@@ -1,7 +1,7 @@
 import type { Career, ClubId, PlayerId } from '../../../../packages/contracts/src/index.ts';
 import { brand } from '../../../../packages/contracts/src/index.ts';
 import { clubs } from '../../../../packages/contracts/src/identity.ts';
-import { overall, standings } from '../../../../packages/simulation/src/engine.ts';
+import { overall, standings, arrangeLineup, validLineup } from '../../../../packages/simulation/src/engine.ts';
 import { text as t } from '../../../../packages/presentation/src/text.ts';
 import { ClubBadge, Shirt, StadiumArt } from './GameArt.tsx';
 import s from './App.module.css';
@@ -34,11 +34,12 @@ export function Clubhouse({state,squad,table,match,busy}:{state:Career;squad:()=
     </div>
   </section>;
 }
-export function SquadScreen({state,lineup,change,suggest,confirm,busy}:{state:Career;lineup:PlayerId[];change:(ids:PlayerId[])=>void;suggest:()=>void;confirm:()=>void;busy:boolean}) {
+export function SquadScreen({state,tactics,lineup,change,suggest,confirm,busy}:{state:Career;tactics:()=>void;lineup:PlayerId[];change:(ids:PlayerId[])=>void;suggest:()=>void;confirm:()=>void;busy:boolean}) {
   const players=state.players.filter(p=>p.clubId===state.clubId);const club=state.clubs.find(c=>c.id===state.clubId)!;const locked=busy||Boolean(state.match&&state.match.tick<90);
+  const slots=validLineup(state.players,state.clubId,lineup)?arrangeLineup(state.players,lineup,state.tactics.formation):lineup.map(id=>({role:state.players.find(p=>p.id===id)!.role,player:state.players.find(p=>p.id===id)!}));
   return <section className={s.squadScreen}><div className={s.sectionTitle}><p className={s.eyebrow}>{club.name}</p><h1>{t.squadTitle}</h1><p>{locked?t.matchLocked:t.squadHint}</p></div>
     <div className={s.squadBody}><div className={s.squadList}>{players.map(p=><label className={lineup.includes(p.id)?s.picked:undefined} key={p.id}><input type="checkbox" checked={lineup.includes(p.id)} disabled={locked} aria-label={`${t.starting} ${p.name}`} onChange={e=>change(e.target.checked?[...lineup,p.id]:lineup.filter(id=>id!==p.id))}/><span className={s.role}>{p.role}</span><strong>{p.name}</strong><b>{overall(p)}</b></label>)}</div>
-      <div className={s.lineupPanel}><p className={s.eyebrow}>{t.starters}</p><div className={s.tacticsPitch}>{(['FWD','MID','DEF','GK'] as const).map(role=><div key={role}>{players.filter(p=>lineup.includes(p.id)&&p.role===role).map(p=><div key={p.id} title={p.name}><span style={{background:club.color}}>{p.id.slice(-2)}</span><small>{p.name.split(' ')[0]}</small></div>)}</div>)}</div><div className={s.lineupActions}><strong>{lineup.length}/11 {t.selection}</strong><button disabled={locked} onClick={suggest}>{t.autoPick}</button><button className={s.primary} disabled={locked} onClick={confirm}>{t.confirmLineup}</button></div></div>
+      <div className={s.lineupPanel}><p className={s.eyebrow}>{t.starters} / {state.tactics.formation} <button disabled={locked} onClick={tactics}>{t.tactics}</button></p><div className={s.tacticsPitch}>{(['FWD','MID','DEF','GK'] as const).map(role=><div key={role}>{slots.filter(s=>s.role===role).map(({player:p})=><div key={p.id} title={p.name}><span style={{background:club.color}}>{p.id.slice(-2)}</span><small>{p.name.split(' ')[0]}</small></div>)}</div>)}</div><div className={s.lineupActions}><strong>{lineup.length}/11 {t.selection}</strong><button disabled={locked} onClick={suggest}>{t.autoPick}</button><button className={s.primary} disabled={locked} onClick={confirm}>{t.confirmLineup}</button></div></div>
     </div>
   </section>;
 }
