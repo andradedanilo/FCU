@@ -2,7 +2,7 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.2 software implemented and checked on Windows; native Linux, low-end and physical-controller evidence remain open. Accepted pixel-art layout retained.
+- Current milestone: v0.3 in progress: condition, morale and training recovery implemented. Owner authorizes autonomous progress through successive roadmap milestones; external checks remain recorded as open.
 - Last completed gate: v0.1 Windows prototype and owner layout review. Native Linux remains unverified; v0.2 is not marked complete.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
@@ -12,10 +12,10 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 28 registered cases in four files (27 Vitest, one Electron journey), five net new cases this task. Gate unit/integration run: 26 passed, one curation fixture failure in 0.695 seconds; removed dependence on old engine probabilities using an explicit 18-miss event fixture, retaining six selected misses and adding exact-minute assertions. All seven presentation cases then passed in 0.212 seconds; domain/save had passed. E2E 14.5 seconds, then extended for previously unverified synthetic pad/held-confirm behavior and passed in 14.8 seconds. Typecheck/lint pass. No repeated successful full unit suite.
-- Evidence from latest change: result line and Match report with points, rank, scorers and chances; last report accessible from Clubhouse. Shared keyboard/gamepad input, modal Back, focus restoration and held-confirm suppression. Windows 1280x720 manual report/clubhouse inspection: work/report-720.png and clubhouse-result-720.png. Existing bench/setup/substitution and schema-1/2/3 migration checks retained. Packaged Windows launch checked at the title screen.
-- Open issues/next action: native Linux packaging/play, low-end visual measurement and physical controller review remain unverified. Next software milestone is v0.3 squad consequences, subject to milestone scope; pressing fatigue/injury costs stay there. Fixed 500-match probe seeds 1..500, fixture-00-0, five cycling home profiles; away starts balanced and applies minute-60 policy: 1.724 goals/match, 33.4% draws, 22.432 shots/match, 186 ms. Scoring remains below the future v0.3 band; do not force outcomes. Linux, low-end and controller hardware checks unverified. No art expansion.
-- Build identity: app/engine 0.2.2, schema 4, exhibition-3; renderer build 0.175 seconds, Windows packaging 2.27 seconds. app.asar SHA-256 fdc966a934fbc14bdfa0293442031500c779370524692b16a34fec805aacbe0b. Launch npm run start:packaged. Commit subject: Add match reports and shared game navigation.
+- Test inventory/runtime: 29 registered cases in four files (28 Vitest, one Electron journey). One new condition/continuation/recovery case. Domain/save: 20 passed in 0.725 seconds; after adding the new case, 14 domain cases passed in 0.420 seconds. Typecheck/lint and document check pass. Manual Squad/training/bench/setup interaction at 1280x720; corrected pitch compression and verified work/condition-squad-720.png.
+- Evidence from latest change: per-player condition in thousandths, per-tick effective strength, morale results and training-based recovery. Schema 5 migration initializes missing fields while preserving old events/files. Selected training goes through the worker command boundary. Full v0.3 journey and packaged refresh follow the discipline/availability slice.
+- Open issues/next action: injuries, cards/bans, eligibility, added time, mandatory pauses and AI replacements. Current fixed 500-match probe, seeds 1..500 with five home profiles: 1.828 goals/match, 33.8% draws, 22.416 shots/match, 1.336 seconds. Scoring remains below the v0.3 band; calibrate after the complete mechanics arrive. Linux, low-end and physical-controller evidence remains unverified.
+- Build identity: app/engine 0.3.0, schema 5, exhibition-4. Renderer build 0.175 seconds. Previous packaged v0.2 remains available while v0.3 is in progress. Commit subject: Add player condition and training recovery.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
@@ -24,6 +24,8 @@ After each task replace the latest-evidence entry with build/commit identity, co
 | --- | --- | --- | --- |
 | v0.1 | Eight approved clubs, 176 synthetic players, squad selection, deterministic worker league/matches, table, Save/Load, pixel art/text, packaging configuration | Windows 11: 15 registered cases; packaged offline launch/play/save | Native Linux build/launch and reproducibility; owner accepted the current layout |
 | v0.2 (software implemented) | Substitutions, formations, tactical controls, editable bench, saved setups, AI mentality, old-save migration, result report, shared navigation, registered test-budget enforcement | Windows: 28 cases in four files, one offline Electron journey with synthetic pad input, manual 1280x720 UI and packaging | Low-end performance, physical controller and native Linux checks |
+
+| v0.3 (in progress) | Condition, morale, effective strength, training recovery and old-save migration | Windows domain/save checks and manual squad UI | Discipline, injuries, added time, availability, AI replacements and milestone checks |
 
 ## Gates and scope discipline
 

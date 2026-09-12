@@ -16,7 +16,9 @@ export const formationCounts={'4-4-2':[1,4,4,2],'4-3-3':[1,4,3,3],'4-2-3-1':[1,4
 export const clubSchema = z.object({ id: clubId, name: z.string().min(1).max(80), short: z.string().max(4), color: z.string().regex(/^#[0-9a-f]{6}$/) });
 const rating = z.number().int().min(1).max(100);
 export const playerSchema = z.object({ id: playerId, clubId, name: z.string().min(1).max(100), role: roleSchema, goalkeeping: rating, tackling: rating, passing: rating, shooting: rating, pace: rating, stamina: rating, discipline: rating });
-export type Player = z.infer<typeof playerSchema>;
+export const fitPlayerSchema=playerSchema.extend({condition:integer.max(100000),morale:integer.max(100)});
+export type Player = z.infer<typeof fitPlayerSchema>;
+export const trainingSchema=z.enum(['light','balanced','intense']);
 export const eventSchema = z.object({ tick: integer.max(90), order: integer, clubId, playerId, assistId: playerId.nullable(), type: z.enum(['pass', 'shot', 'save', 'goal']), homeGoals: integer.max(90), awayGoals: integer.max(90) });
 export type MatchEvent = z.infer<typeof eventSchema>;
 const statsSchema = z.object({ shots: integer.max(90), onTarget: integer.max(90), quality: integer.max(900000), possession: integer.max(900000) });
@@ -24,7 +26,7 @@ export const fixtureSchema = z.object({ id: z.string().regex(/^fixture-\d{2}-\d$
 export type Fixture = z.infer<typeof fixtureSchema>;
 export const substitutionSchema=z.object({tick:integer.min(1).max(89),clubId,out:playerId,in:playerId});
 export const matchSchema = z.object({ fixtureId: z.string(), home: clubId, away: clubId, tick: integer.max(90), rng: integer.max(4294967295), homeLineup: z.array(playerId).length(11), awayLineup: z.array(playerId).length(11), homeGoals: integer.max(90), awayGoals: integer.max(90), homeStats: statsSchema, awayStats: statsSchema, events: z.array(eventSchema).max(600), homeBench:z.array(playerId).length(9),awayBench:z.array(playerId).length(9),substitutions:z.array(substitutionSchema).max(10),homeTactics:tacticsSchema,awayTactics:tacticsSchema });
-export type Match = z.infer<typeof matchSchema> & {managedClubId:ClubId|null};
+export type Match = z.infer<typeof matchSchema> & {managedClubId:ClubId|null;condition:Record<PlayerId,number>};
 export const tacticalCareerSchema = z.object({
   careerId: z.string().uuid(), revision: integer, appliedCommands: z.array(z.string().uuid()).max(256), seed: integer.max(4294967295),
   engineVersion: z.literal('0.2.1'), rulesetVersion: z.literal('exhibition-2'), snapshotId: z.literal('fictional-2026-v1'), identityProfileId: z.literal('fcu-city-v1'), identityProfileVersion: z.literal(1),
@@ -33,12 +35,14 @@ export const tacticalCareerSchema = z.object({
 });
 export const previousCareerSchema=tacticalCareerSchema.omit({tactics:true}).extend({engineVersion:z.literal('0.2.0'),rulesetVersion:z.literal('exhibition-1'),match:matchSchema.omit({homeTactics:true,awayTactics:true}).nullable()});
 export const legacyCareerSchema=previousCareerSchema.extend({engineVersion:z.literal('0.1.0'),match:matchSchema.omit({homeBench:true,awayBench:true,substitutions:true,homeTactics:true,awayTactics:true}).nullable()});
-export const careerSchema=tacticalCareerSchema.extend({engineVersion:z.literal('0.2.2'),rulesetVersion:z.literal('exhibition-3'),bench:z.array(playerId).length(9),presets:z.array(tacticsSchema.nullable()).length(3),match:matchSchema.extend({managedClubId:clubId.nullable()}).nullable()});
+export const planningCareerSchema=tacticalCareerSchema.extend({engineVersion:z.literal('0.2.2'),rulesetVersion:z.literal('exhibition-3'),bench:z.array(playerId).length(9),presets:z.array(tacticsSchema.nullable()).length(3),match:matchSchema.extend({managedClubId:clubId.nullable()}).nullable()});
+export const careerSchema=planningCareerSchema.extend({engineVersion:z.literal('0.3.0'),rulesetVersion:z.literal('exhibition-4'),training:trainingSchema,players:z.array(fitPlayerSchema).length(176),match:matchSchema.extend({managedClubId:clubId.nullable(),condition:z.record(playerId,integer.max(100000))}).nullable()});
 export type Career = z.infer<typeof careerSchema>;
 const commandBase = { commandId: z.string().uuid(), careerId: z.string().uuid(), expectedRevision: integer };
 export const commandSchema = z.discriminatedUnion('type', [
   z.object({ ...commandBase, type: z.literal('SelectLineup'), lineup: z.array(playerId).max(22) }),
   z.object({ ...commandBase, type: z.literal('StartMatch') }),
+  z.object({...commandBase,type:z.literal('SetTraining'),training:trainingSchema}),
   z.object({...commandBase,type:z.literal('SetTactics'),tactics:tacticsSchema}),
   z.object({...commandBase,type:z.literal('SelectBench'),bench:z.array(playerId).max(22)}),
   z.object({...commandBase,type:z.literal('StoreTacticPreset'),slot:z.number().int().min(0).max(2),tactics:tacticsSchema.nullable()}),

@@ -15,7 +15,7 @@ import { MatchScreen } from './MatchScreen.tsx';
 import s from './App.module.css';
 
 type Screen = 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match';
-type Action = {type:'StartMatch'} | {type:'SelectLineup';lineup:PlayerId[]} | {type:'AdvanceMatch';minutes:number} | {type:'Substitute';out:PlayerId;in:PlayerId} | {type:'SetTactics';tactics:Tactics} | {type:'SelectBench';bench:PlayerId[]} | {type:'StoreTacticPreset';slot:number;tactics:Tactics|null};
+type Action = {type:'SetTraining';training:Career['training']} | {type:'StartMatch'} | {type:'SelectLineup';lineup:PlayerId[]} | {type:'AdvanceMatch';minutes:number} | {type:'Substitute';out:PlayerId;in:PlayerId} | {type:'SetTactics';tactics:Tactics} | {type:'SelectBench';bench:PlayerId[]} | {type:'StoreTacticPreset';slot:number;tactics:Tactics|null};
 export function App() {
   const [state, setState] = useState<Career|null>(null);
   const latest = useRef<Career|null>(null);
@@ -64,7 +64,7 @@ export function App() {
     occupied.current=true;setBusy(true);setNotice('');
     const result=await request({type:'Command',command:{...action,careerId:current.careerId,expectedRevision:current.revision,commandId:crypto.randomUUID()} as Command});
     if(result.ok) {
-      accept(result.value,action.type==='SetTactics'||action.type==='StoreTacticPreset'||action.type==='SelectBench');setDirty(true);
+      accept(result.value,action.type==='SetTactics'||action.type==='StoreTacticPreset'||action.type==='SelectBench'||action.type==='SetTraining');setDirty(true);
       if(result.value.round>current.round)await save(result.value,'auto');
       if(action.type==='StartMatch')setScreen('match');
       if(action.type==='SelectLineup')setNotice(t.confirmed);
@@ -111,7 +111,7 @@ export function App() {
         {screen==='title'&&<TitleScreen start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
         {screen==='setup'&&<ClubSelect club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
         {state&&screen==='home'&&<Clubhouse report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.tick<90?navigate('match'):void command({type:'StartMatch'})}/>}
-        {state&&screen==='squad'&&<SquadScreen bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId,state.tactics.formation))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
+        {state&&screen==='squad'&&<SquadScreen training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId,state.tactics.formation))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
         {state?.match&&screen==='match'&&<MatchScreen report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>

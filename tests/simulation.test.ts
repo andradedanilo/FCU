@@ -111,3 +111,12 @@ it('changes only AI mentality at minute 60 with identical chunked and saved cont
  const both=structuredClone(m);both.managedClubId=null;expect(advanceMatch(both,s.players,1).homeTactics.mentality).toBe('cautious');both.awayGoals=1;expect(advanceMatch(both,s.players,1).homeTactics.mentality).toBe('balanced');
  const final=advanceMatch(m,s.players,30);expect(advanceMatch(JSON.parse(canonical(next)),s.players,29)).toEqual(final);
 });
+
+it('retains fractional fatigue across ticks, substitutes and saved continuations and recovers by training',()=>{
+ const s=initial();const m=startMatch(s,s.fixtures[0]!);m.homeTactics={...m.homeTactics,tempo:'fast',pressing:'high'};
+ const whole=advanceMatch(m,s.players,45);const split=advanceMatch(JSON.parse(canonical(advanceMatch(m,s.players,17))),s.players,28);expect(split).toEqual(whole);
+ expect(whole.condition[m.homeLineup[0]!]).toBe(100000-45*276);expect(whole.condition[m.homeBench[0]!]).toBe(100000);
+ const changed=run({...s,match:whole},{type:'Substitute',out:whole.homeLineup[1]!,in:whole.homeBench.find(id=>s.players.find(p=>p.id===id)!.role!=='GK')!});const after=advanceMatch(changed.match!,s.players,1);expect(after.condition[whole.homeLineup[1]!]).toBe(whole.condition[whole.homeLineup[1]!]);
+ const tired=initial();tired.players=tired.players.map(p=>({...p,condition:10000}));tired.training='intense';let career=run(tired,{type:'StartMatch'});career=run(career,{type:'AdvanceMatch',minutes:90});career=run(career,{type:'AdvanceMatch',minutes:90});
+ expect(career.players.find(p=>p.id===tired.lineup[0])!.condition).toBe(28000);expect(career.players.find(p=>p.id===tired.bench[0])!.condition).toBe(38000);expect(career.players.every(p=>p.condition>=0&&p.condition<=100000&&p.morale>=0&&p.morale<=100)).toBe(true);
+});

@@ -1,6 +1,6 @@
 # Football Club Universe (FCU) - project contract
 
-Documentation edition 1.5 | Research cutoff: 11 September 2026 | Implementation status: v0.2 in progress on Windows; owner accepted the current match layout and authorized the next feature steps. Linux remains unverified. See ROADMAP evidence.
+Documentation edition 1.5 | Research cutoff: 11 September 2026 | Implementation status: v0.3 in progress on Windows. Owner authorizes autonomous development through successive roadmap milestones, retaining the accepted layout and recording unverified external checks. Linux remains unverified. See ROADMAP evidence.
 
 Owner-selected title: **Football Club Universe**, abbreviated **FCU**. Modes are **FCU Career** and **FCU Dream Club**. Keep the title in one configuration value so future branding changes do not rename save IDs or packages. This records the creative decision, not a trademark availability check.
 
@@ -8,7 +8,7 @@ Build a fast, offline football management game for Steam, inspired by the feelin
 
 ## Start here
 
-Extract this folder into the root of a new repository. `AGENTS.md` must be at the repository root, beside this project brief. Open that repository in Codex and use the starter request below. The repository now contains the v0.1 exhibition prototype with synthetic players. Real roster integration is deferred. Read the current ROADMAP status and keep the accepted match layout while implementing v0.2 in complete feature slices. `README.md` is the public game introduction shown on GitHub; keep agent setup instructions here.
+Extract this folder into the root of a new repository. `AGENTS.md` must be at the repository root, beside this project brief. Open that repository in Codex and use the starter request below. The repository now contains the v0.1 exhibition prototype with synthetic players. Real roster integration is deferred. Read the current ROADMAP status and keep the accepted match layout while progressing autonomously through ordered milestones in complete feature slices. `README.md` is the public game introduction shown on GitHub; keep agent setup instructions here.
 
 | File | Authority |
 | --- | --- |
@@ -27,7 +27,7 @@ Use `main` directly; no feature branches, worktrees, pull requests or GitHub Act
 
 The owner supplied https://github.com/andradedanilo/FCU.git during v0.1 setup. Verify the configured remote before backup. Keep local commits if a push cannot be completed, and state that remote backup is pending. Never force-push or change repository visibility. Keep all project guidance tracked as the owner requested; `.gitignore` does not exclude it.
 
-v0.2 now includes paused substitutions, three formation presets, mentality/tempo/pressing controls and manual bench selection, three saved tactical setups, minute-60 opponent mentality and migration from schema-1/2/3 checkpoints. The short result report and shared keyboard/standard-gamepad navigation foundation are implemented. Windows software acceptance is verified; Linux, low-end performance and physical controller checks keep the cross-platform gate open. Keep pressing fatigue costs for v0.3 and record that the current control affects midfield strength only.
+v0.2 now includes paused substitutions, three formation presets, mentality/tempo/pressing controls and manual bench selection, three saved tactical setups, minute-60 opponent mentality and migration from schema-1/2/3 checkpoints. The short result report and shared keyboard/standard-gamepad navigation foundation are implemented. Windows software acceptance is verified; Linux, low-end performance and physical controller checks keep the cross-platform gate open. v0.3 now applies condition loss, condition/morale strength and training recovery. Injuries, discipline, added time and availability are the next slice.
 
 Current owner match controls: Play/Pause, fixed 2x playback and optional continuous half-time. No instant finish or manual minute skip. Start fullscreen with F11 window toggle; prioritize readable original pixel sprites and short expressive highlights. The match screen uses a prominent scoreboard, a larger permanent highlight screen on the left and a right column split between commentary and compact statistics; a running MM:SS clock is retained; no separate Pixel art/Text modes or speed selector. Attacks move bottom-to-top in a close attacker-versus-keeper scene, with no defender. Show the approach and the outcome reaction in the same pitch view. Use the owner's ISS Deluxe references for athletic pixel proportions and connected limb poses. Curate repeated misses rather than changing match probabilities for spectacle; keep all attempts in commentary/statistics. See GAME and ARCHITECTURE for current pacing choices.
 
