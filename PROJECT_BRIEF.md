@@ -8,7 +8,7 @@ Build a fast, offline football management game for Steam, inspired by the feelin
 
 ## Start here
 
-Extract this folder into the root of a new repository. `AGENTS.md` must be at the repository root, beside this project brief. Open that repository in Codex and use the starter request below. The repository now contains the v0.1 exhibition prototype with synthetic players. Real roster integration is deferred. Read the current ROADMAP status and stop at v0.1 until the owner evaluates Three.js. `README.md` is the public game introduction shown on GitHub; keep agent setup instructions here.
+Extract this folder into the root of a new repository. `AGENTS.md` must be at the repository root, beside this project brief. Open that repository in Codex and use the starter request below. The repository now contains the v0.1 exhibition prototype with synthetic players. Real roster integration is deferred. Read the current ROADMAP status and keep v0.1 mechanics while iterating the owner-approved Three.js and retro game identity in reviewable visual batches. `README.md` is the public game introduction shown on GitHub; keep agent setup instructions here.
 
 | File | Authority |
 | --- | --- |
@@ -35,7 +35,7 @@ Windows/Linux launch, the FCU name, recognizable city-based fictional club names
 - Electron + React + TypeScript + Vite. Pure deterministic TypeScript simulation in a worker; local files for saves. No server components.
 - Use the city-based fictional club identity profile as the default direction, with the approved starter names in GAME.md. Preserve the five-league/current-roster data target and an optional real-name profile. Club display names are separate from source data and player identities. Rights/provider arrangements remain assumed handled. Each country also has a clearly fictional playable second division for promotion/relegation; this mixed-world choice is a recommended scope limit, not a claim of authentic lower leagues.
 - Real-data targets are **Premier League, LaLiga, Ligue 1, Serie A and Bundesliga**. This does not promise every youth, reserve, women's or lower-division squad. First-team senior roster membership is the target; completeness must be proven for each selected season.
-- Prototype stylized Three.js matches in v0.1 for owner evaluation. Keep an event-feed fallback immediately and a text/2D path by v0.2. Presentation can change without changing the simulation or saves. No photorealistic eleven-versus-eleven engine at launch.
+- The owner approved retaining Three.js on 12 September 2026 and prioritized original 1995-era retro presentation before new mechanics. Iterate the game shell, stadium, animations and audio in reviewable batches as recorded in GAME. Keep an event-feed fallback immediately and a text/2D path by v0.2. Presentation can change without changing the simulation or saves. No photorealistic eleven-versus-eleven engine at launch.
 - Custom simplified competition rules are displayed honestly. A real roster pack does not imply exact national registration, tax, transfer or competition rules.
 - Separate Dream Club mode: earn player-choice packs through completed fixtures and build a fantasy squad. No purchases or shared Career economy. See GAME section 11 for the initial experiment and complete rules.
 - Steam Deck Verified is a compatibility goal. Ship controller navigation and a handheld layout, test real hardware, and request Valve review; do not promise a badge before Valve grants it.

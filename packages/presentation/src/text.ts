@@ -1,5 +1,12 @@
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+  titleTag:'A whole season of possibilities', startGame:'Start a career', titleMenu:'Title screen', clubhouse:'Clubhouse', back:'Back',
+  chooseClub:'Choose your club', chooseHint:'Eight clubs. One trophy. Your story starts here.', prevClub:'Previous club', nextClub:'Next club',
+  ready:'Ready for the touchline?', beginHint:'Your eleven. Your season.', squadAction:'Pick the eleven', tableAction:'Chase the trophy',
+  seasonTag:'Exhibition season / 2026', gameNote:'Fictional exhibition / 14 rounds / offline',
+  speedLabels:{1:'Matchday',3:'Quick play',8:'Fast forward'}, music:'Music', effects:'SFX', on:'On', off:'Off', musicHint:'Original chiptune',
+  bench:'Squad list', starters:'Starting eleven', rosterShort:'22 players', broadcast:'FCU LIVE', goalBanner:'GOAL!', replayLabel:'Event celebration', skip:'Skip celebration',
+  fps:'Frame rate', retroMode:'RETRO EXHIBITION', scored:'Goal scorer',
   exhibition:'Development exhibition league', edition:'FIRST PLAYABLE / v0.1', home:'Home', squad:'Squad', table:'League table', match:'Match centre',
   newCareer:'New career', begin:'Begin career', club:'Your club', seed:'World seed', seedHint:'Whole number from 0 to 4294967295. Same seed and decisions, same football.',
   intro:'Eight clubs. One small football universe.', introBody:'Take the touchline for a 14-round exhibition season. Pick your eleven and see what happens next.',

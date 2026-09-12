@@ -10,7 +10,7 @@ Choose one of eight city-based clubs, select your starting eleven and play a 14-
 
 Matches run minute by minute in a deterministic worker. Watch stylized Three.js highlights or switch to text; both use the same match events and results. Pause, change playback speed, advance a minute or finish the current half. Half-time stops for your input. WebGL failure falls back to text without losing the career.
 
-Home, Squad, Match centre and League table are playable. Manual Save and Load support checkpoints during matches; completed rounds save automatically. Load lists previous checkpoints and identifies unreadable ones for recovery. Saves stay outside the installation folder, under Electron user data (`%APPDATA%\fcu\saves` on Windows, normally `~/.config/fcu/saves` on Linux). Save before closing to retain progress since the latest automatic checkpoint.
+The retro title screen leads to club selection and a clubhouse with large action tiles. Squad selection uses a lineup board, and the match broadcast has 1x/3x/8x speed buttons. The horizontal camera keeps the complete pitch visible. Goals trigger a short, skippable pixel celebration. Original synthesized music is optional; Music and SFX have independent toggles and pause while the game is hidden. Sound settings currently last for the session. Clubhouse, Squad, Match centre and League table are playable. Manual Save and Load support checkpoints during matches; completed rounds save automatically. Load lists previous checkpoints and identifies unreadable ones for recovery. Saves stay outside the installation folder, under Electron user data (`%APPDATA%\fcu\saves` on Windows, normally `~/.config/fcu/saves` on Linux). Save before closing to retain progress since the latest automatic checkpoint.
 
 The prototype stops after one small season. Transfers, tactics, injuries, cards, roster sync, Dream Club and advanced 3D are not implemented.
 
@@ -30,7 +30,7 @@ npm run build
 npm start
 ```
 
-Select a club and seed, then **Begin career**. Open **Squad** to edit the eleven and choose **Confirm lineup**. Return **Home**, choose **Kick off**, then **Play**. **Finish half** stops at minute 45 or 90; choose **Continue** after full time to reach the next fixture.
+Choose **Start a career**, select a club and seed, then **Begin career**. Open **Squad** to edit the eleven and choose **Confirm lineup**. Return to **Clubhouse**, choose **Kick off**, then **Play**. **Finish half** stops at minute 45 or 90; choose **Continue** after full time to reach the next fixture.
 
 ## Build a portable folder
 
@@ -64,7 +64,7 @@ The suite registers 10 unit/integration cases plus one Electron journey in four 
 
 ## Prototype limits
 
-- Three.js is an early visual experiment awaiting owner evaluation. It illustrates events rather than physically reconstructing football.
+- Three.js is retained for the retro direction. The first redesigned layout is ready for feedback; richer crowds, advertising boards and linked play animations are future visual batches. It illustrates events rather than physically reconstructing football.
 - The fixed 500-match probe produced 1.73 goals per match, below the later balance target. No artificial score correction is applied.
 - All immutable saves are retained in v0.1, including autosaves. Automatic pruning is not implemented yet.
 - Linux, low-end graphics, controllers and Steam Deck remain unverified. Reduced-motion preference starts in text mode.

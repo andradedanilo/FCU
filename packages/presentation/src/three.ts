@@ -4,7 +4,15 @@ import type { MatchEvent, PlayerId } from '../../contracts/src/index.ts';
 
 export function createThreePresenter(onFailure:()=>void):MatchPresenter & {shadows(value:boolean):void;fps(value:number):void} {
   const scene=new THREE.Scene();scene.background=new THREE.Color('#12332e');
-  const camera=new THREE.PerspectiveCamera(30,2,0.1,400);camera.position.set(20,75,100);camera.lookAt(0,0,0);
+  const camera=new THREE.OrthographicCamera(-70,70,50,-50,0.1,400);camera.position.set(0,95,100);camera.lookAt(0,0,0);camera.updateMatrixWorld();
+  function fitCamera(width:number,height:number) {
+    const footprint=new THREE.Box3(new THREE.Vector3(-63,-3,-50),new THREE.Vector3(63,11,50));
+    const projected=new THREE.Box3();
+    for(const x of [footprint.min.x,footprint.max.x])for(const y of [footprint.min.y,footprint.max.y])for(const z of [footprint.min.z,footprint.max.z])projected.expandByPoint(new THREE.Vector3(x,y,z).applyMatrix4(camera.matrixWorldInverse));
+    const aspect=width/Math.max(1,height);const halfHeight=Math.max((projected.max.y-projected.min.y)/2+2,65/aspect);
+    const center=(projected.min.y+projected.max.y)/2;
+    camera.left=-halfHeight*aspect;camera.right=halfHeight*aspect;camera.top=center+halfHeight;camera.bottom=center-halfHeight;camera.updateProjectionMatrix();
+  }
   let renderer:THREE.WebGLRenderer|null=null;let container:HTMLElement|null=null;let resize:ResizeObserver|null=null;
   let view:MatchView|null=null;let lastKey='';let speed=1;let frame=0;let start=0;let lastFrame=0;let frameRate=30;let active=false;let disposed=false;
   const figures=new Map<PlayerId,THREE.Group>();const allocatedGeometries:THREE.BufferGeometry[]=[];const allocatedMaterials:THREE.Material[]=[];
@@ -75,7 +83,7 @@ export function createThreePresenter(onFailure:()=>void):MatchPresenter & {shado
   function visibility(){if(document.hidden)pause();else draw(1);}
   function failed(event:Event){event.preventDefault();pause();onFailure();}
   return {
-    mount(target){container=target;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=false;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.domElement.setAttribute('aria-label','Stylized football pitch');renderer.domElement.addEventListener('webglcontextlost',failed);target.append(renderer.domElement);resize=new ResizeObserver(()=>{if(!renderer||!container)return;const width=container.clientWidth;const height=container.clientHeight;renderer.setSize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();draw(1);});resize.observe(target);document.addEventListener('visibilitychange',visibility);}catch{onFailure();}},
+    mount(target){container=target;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=false;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.domElement.setAttribute('aria-label','Stylized football pitch');renderer.domElement.addEventListener('webglcontextlost',failed);target.append(renderer.domElement);resize=new ResizeObserver(()=>{if(!renderer||!container)return;const width=container.clientWidth;const height=container.clientHeight;renderer.setSize(width,height);fitCamera(width,height);draw(1);});resize.observe(target);document.addEventListener('visibilitychange',visibility);}catch{onFailure();}},
     render(next:MatchView,_events:MatchEvent[]){if(disposed)return;if(figures.size===0)buildFigures(next);view=next;const key=`${next.fixtureId}/${next.event?.order??-1}`;if(key!==lastKey){lastKey=key;start=0;active=true;cancelAnimationFrame(frame);frame=requestAnimationFrame(animate);}else draw(1);},
     setSpeed(value){speed=value;},pause,
     shadows(value){if(renderer){renderer.shadowMap.enabled=value;draw(1);}},fps(value){frameRate=value;},

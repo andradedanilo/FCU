@@ -37,7 +37,15 @@ An alias changes presentation only, never strength, schedule, stable identity or
 
 ## 2. Main loop and interface
 
-Home shows next fixture, league position, cash, wage headroom, fitness/injury alerts and at most three decision cards. Sidebar: Home, Squad, Tactics, Transfers, Competitions, Club, Career. A persistent Continue button advances only until the next actionable decision or fixture. News that requires no decision goes into a digest; it must not require acknowledgement.
+The clubhouse shows the next fixture and league position, with large game action tiles for the squad and competition. Later gates add cash, wage headroom, fitness/injury alerts and at most three decision cards. Use a bounded game screen and action boards rather than a website sidebar. A persistent Continue action advances only until the next actionable decision or fixture. News that requires no decision goes into a digest; it must not require acknowledgement.
+
+### Retro presentation direction - owner feedback 12 September 2026
+
+The owner approved retaining Three.js and prioritizing visual identity before new mechanics. The reference is the warmth and readable spectacle of 1995-era 16-bit football: chunky buttons, original pixel illustrations, saturated but restrained colors, stadium atmosphere, simple melodic music and expressive event celebrations. This is an original FCU treatment, not a recreation of Konami assets, characters, music or interfaces. Avoid modern laser effects and generic web-portal layouts.
+
+Work in reviewable visual batches. Batch 1 implements the title screen, club selection, clubhouse tiles, squad board, broadcast match layout, speed buttons, horizontal full-pitch camera, optional original synthesized music/SFX and a brief dismissible goal celebration. Keep keyboard focus and reduced-motion support. Do not expand gameplay merely to demonstrate an animation.
+
+After owner feedback, the next visual batch can add a more recognizable stadium, original fictional advertising boards, instanced crowds and waving flags, plus short linked pass/run/shot/save sequences and small player movements. Review pacing and framing before richer artwork. A subsequent event-storytelling batch can introduce original 2D close-ups, such as a referee showing a card and a player's reaction, driven only by actual committed events when their rules arrive. Goals already exist; fouls/cards are a later mechanics gate, penalties follow cup support, and offside/cancelled-goal/VAR concepts remain future vision rather than implemented rules. Audio direction is original short chiptune phrases, football impacts, whistle/crowd textures and simple celebration fanfares, with independent controls and no copied recordings. Human listening and visual feedback decide the next iteration.
 
 Squad uses a sortable table: position, name, age, ability, condition, morale, injury/ban, wage, contract expiry. Click a row once for a side panel with attributes, recent form, career history and actions. Back restores filters and scroll position. Compare two players in the same panel. Search by name, position, affordability, contract status and previously played for club. Save lineup presets with automatic warnings when eligibility changes. Assistant suggestions explain their top two reasons and never silently change assignments.
 
