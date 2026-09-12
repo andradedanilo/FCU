@@ -2,8 +2,8 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.5 country leagues, promotion/relegation and repeatable seasons implemented; cups are next. Latest owner direction: finish v0.5 and stop before v0.6.
-- Last completed gate: v0.1 Windows prototype and owner layout review. Native Linux remains unverified; v0.2 is not marked complete.
+- Current milestone: v0.5 software implemented and verified on Windows. Stop here before v0.6 under the latest owner direction. Native Linux remains an open platform gate.
+- Latest verified software gate: v0.5 Windows competition world. Earlier native Linux, low-end and physical-controller requirements remain unverified; no cumulative cross-platform completion claim.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
 - Product assumptions awaiting optional revision: English, premium single-player, fictional second tiers, simplified rules. See README.
@@ -12,10 +12,10 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 52 registered cases in eleven files (51 Vitest, one Electron journey). Cup draw/qualification/aggregate rules: three cases passed in .202 seconds. Typecheck/lint pass. Prior country-world season/market/economy checks: 11 passed in 24.11 seconds, including fixed seed 2026 and 2,952 league fixtures. No full suite run for this foundation slice.
-- Evidence from latest change: deterministic domestic preliminary draws/byes, separated midweek reservations, unique continental qualification, reversed second legs and no away-goals tiebreak are covered. These pure cup rules are not yet exposed in Career; match resolution and persistence integration remain. Country-world Windows UI evidence remains work/world-selection-720.png, work/world-table-720.png and work/world-history-720.png.
-- Open issues/next action: national and continental cups, extra time/shootouts and qualification before the v0.5 milestone gate. Native Linux, low-end and physical-controller evidence remain unverified.
-- Build identity: app/engine 0.5.1, schema 15, world-1. Renderer build .187 seconds. Packaged baseline remains v0.4.5 at release/build-IWb5sy. Commit subject: Add deterministic cup draws and continental qualification.
+- Test inventory/runtime: 56 registered cases in eleven files (55 Vitest, one Electron journey), within 65/12/3 ceilings. Complete unit/integration suite: 55 passed in 24.77 seconds. Electron exhibition/transfer/loan/Save journey: one passed in 35.5 seconds. Full-world workload: fixed seed 2026, 3,152 fixtures, six cup winners, promotion and equivalent saved rollover/continuation, included in the registered season case. Typecheck/lint pass. The final shortlist change has its own save regression and final packaged smoke.
+- Evidence from latest change: offline 1280x720 extra-time Load/Play/Pause/Save, continental final, next season and archived domestic cup passed. Packaged Windows fullscreen/offline worker match and Save/process restart/Load passed; only smoke-created careers removed. Screenshots work/cup-final-720.png, work/cup-extra-time-720.png and work/cup-history-720.png. Calibration: 500 matches, seeds 1..500, 1.218 seconds; 2.288 goals, 27.6% draws, 4.046 yellows, .328 dismissals and .450 injuries per match, within existing bands.
+- Open issues/next action: native Linux package/launch, low-end measurement and physical-controller checks remain unverified. The owner requested a stop at v0.5; do not begin the v0.6 roster pipeline without a new instruction. Penalties currently use the committed commentary sequence and score, without a separate kick animation.
+- Build identity: app/engine 0.5.2, schema 16, world-2. Final renderer build .195 seconds; portable Windows folder release/build-mbQUtw/Football Club Universe-win32-x64, selected by npm run start:packaged. Final packaged smoke 9.21 seconds. Commit subject: Complete domestic and continental cup seasons.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
@@ -29,7 +29,7 @@ After each task replace the latest-evidence entry with build/commit identity, co
 
 | v0.4 (software implemented) | Wage estimates, budgets, operating ledger, Club finances, renewals, scouting, calendar, transfers, free agents, AI recruitment, loans, returns and news | Windows 46 registered cases, full exhibition journey with transfer and loan, packaged offline launch/Save/restart | Native Linux |
 
-| v0.5 (in progress) | Ten active divisions, promotion/relegation, dated fixtures, prizes, expiry, preseason and history | Targeted domain/save checks and offline manual UI | Cups and milestone journey |
+| v0.5 (software implemented) | Ten divisions, movement, domestic/continental cups, extra time, penalties, separate bans, qualification, prizes and history | Windows full-world command workload, 56 registered cases, offline UI and packaged persistence | Native Linux; earlier hardware checks |
 
 ## Gates and scope discipline
 

@@ -29,11 +29,15 @@ export function dealError(state:Career,offer:Offer,knownBudget?:ReturnType<typeo
  if(offer.loanShare!==null&&(loanEnd(state.date)<=state.date||offer.sellerId===null||offer.fee!==0||terms.bonus!==0||terms.wage!==state.economy.wages[player.id]||state.contracts[player.id]!.ends!<loanEnd(state.date)))return 'PLAYER_TERMS';
  if(offer.loanShare===null&&(terms.wage<desiredTerms(state,player).wage||terms.bonus<4*terms.wage||roles[terms.role]<roles[state.contracts[player.id]!.role]))return 'PLAYER_TERMS';
  if(offer.sellerId!==null&&state.economy.clubs.find(c=>c.clubId===offer.buyerId)!.reputation*100<80*state.economy.clubs.find(c=>c.clubId===offer.sellerId)!.reputation)return 'REPUTATION';
- const bank=knownBudget??budgets(state,offer.buyerId),weekly=bank.committed+(offer.loanShare===null?terms.wage:Math.floor(terms.wage*offer.loanShare/100));
- if(weekly>bank.wage)return 'WAGE_BUDGET';
- if(bank.cash-offer.fee-terms.bonus<13*weekly+4*bank.overhead)return 'INSUFFICIENT_FUNDS';
- return null;
+ return affordability(offer,knownBudget??budgets(state,offer.buyerId));
 }
+export function affordability(offer:Offer,bank:ReturnType<typeof budgets>):FailureCode|null{
+ const terms=offer.terms;if(!terms)return 'PLAYER_TERMS';
+ const weekly=bank.committed+(offer.loanShare===null?terms.wage:Math.floor(terms.wage*offer.loanShare/100));
+ if(weekly>bank.wage)return 'WAGE_BUDGET';
+ if(bank.cash-offer.fee-terms.bonus<13*weekly+4*bank.overhead)return 'INSUFFICIENT_FUNDS';return null;
+}
+
 export function register(state:Career,offer:Offer):FailureCode|null {
  const error=dealError(state,offer);if(error)return error;
  const feeId=`transfer/${offer.id}`,bonusId=`signing/${offer.id}`;

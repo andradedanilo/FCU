@@ -19,14 +19,15 @@ export function minuteDuration(events:MatchEvent[],tick:number):number {
  const before=events.filter(e=>e.tick<tick).at(-1)?.order??-1;
  return selectHighlight(events,before)?3000:600;
 }
-export function matchMinute(tick:number,firstAdded=0):string {
+export function matchMinute(tick:number,firstAdded=0,secondAdded=0,extraTime=false):string {
+ if(extraTime&&tick>90+firstAdded+secondAdded)return String(tick-firstAdded-secondAdded);
  if(tick>45&&tick<=45+firstAdded)return '45+'+(tick-45);
  const minute=tick>45+firstAdded?tick-firstAdded:tick;
  return minute>90?'90+'+(minute-90):String(minute).padStart(2,'0');
 }
-export function clockLabel(tick:number,elapsed:number,duration:number,match?:Pick<Match,'phase'|'addedTime'>):string {
- const seconds=(match?match.phase==='interval'||match.phase==='finished':tick===45||tick===90)?0:Math.min(59,Math.floor(Math.max(0,elapsed)/duration*60));
- return `${matchMinute(tick,match?.addedTime[0]??0)}:${String(seconds).padStart(2,'0')}`;
+export function clockLabel(tick:number,elapsed:number,duration:number,match?:Pick<Match,'phase'|'addedTime'>&Partial<Pick<Match,'extraTime'>>):string {
+ const seconds=(match?match.phase==='interval'||match.phase==='extraInterval'||match.phase==='finished':tick===45||tick===90)?0:Math.min(59,Math.floor(Math.max(0,elapsed)/duration*60));
+ return `${matchMinute(tick,match?.addedTime[0]??0,match?.addedTime[1]??0,match?.extraTime??false)}:${String(seconds).padStart(2,'0')}`;
 }
 export function sampleHighlight(kind:HighlightKind,progress:number) {
   const p=Math.max(0,Math.min(1,progress));

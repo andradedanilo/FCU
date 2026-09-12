@@ -1,10 +1,18 @@
+import {initialCups,cupFixtures,validateCups} from './cupSeason.ts';
+import {cupChampion} from './cups.ts';
 import {canonical,type Career,type FailureCode,type Division} from '../../contracts/src/index.ts';
-import {worldSchedule,standings,seasonEnd,seasonComplete} from './competition.ts';
+import {compareFixtures,worldSchedule,standings,seasonEnd,seasonComplete} from './competition.ts';
 import {returnLoans} from './loans.ts';
 import {callUp} from './academy.ts';
 import {autoPick,pickBench} from './selection.ts';
 import {post,settleDay,cash,carryLedger,financialProfile} from './economy.ts';
 function prizeFor(division:Division,rank:number){return (division.tier===1?10000000:2000000)*(division.clubs.length-rank);}
+function seasonPrizes(state:Pick<Career,'world'|'clubs'|'fixtures'|'cups'>){
+ const prizes:Record<string,number>=Object.fromEntries(state.clubs.map(c=>[c.id,0]));
+ for(const division of state.world.divisions)for(const [rank,row] of standings(state,division.id).entries())prizes[row.clubId]!+=prizeFor(division,rank);
+ for(const cup of state.cups){const winner=cupChampion(cup);if(!winner)continue;const final=cup.rounds.at(-1)!.ties[0]!.legs[0]!,runner=final.home===winner?final.away:final.home;prizes[winner]!+=cup.kind==='domestic'?50000000:200000000;prizes[runner]!+=cup.kind==='domestic'?25000000:100000000;}
+ return prizes;
+}
 function moveDivisions(world:Career['world'],table:Career['history'][number]['table']){
  if(world.kind==='exhibition')return;
  for(const country of ['ENG','ESP','FRA','ITA','DEU'] as const){
@@ -16,20 +24,20 @@ function moveDivisions(world:Career['world'],table:Career['history'][number]['ta
 export function closeSeason(state:Career):FailureCode|null {
  if(state.date!==seasonEnd(state.season)||!seasonComplete(state)||(state.match&&state.match.phase!=='finished')||state.season>=2100)return 'INVALID_COMMAND';
  returnLoans(state);
- const table=state.world.divisions.flatMap(d=>standings(state,d.id)),prizes:Career['history'][number]['prizes']={};
- for(const division of state.world.divisions)for(const [rank,row] of table.filter(r=>division.clubs.includes(r.clubId)).entries()){
-  const prize=prizeFor(division,rank);prizes[row.clubId]=prize;
+ const table=state.world.divisions.flatMap(d=>standings(state,d.id)),prizes=seasonPrizes(state);
+ for(const row of table){
+  const prize=prizes[row.clubId]!;
   if(!post(state.economy,{id:`prize/${state.season}/${row.clubId}`,date:state.date,kind:'prize',postings:[{account:row.clubId,amount:prize},{account:'external',amount:-prize}]}))return 'INVALID_COMMAND';
   state.economy.clubs.find(c=>c.clubId===row.clubId)!.lastPrizes=prize;
  }
- state.history.push({year:state.season,fixtures:structuredClone(state.fixtures),table,divisions:structuredClone(state.world.divisions),prizes,balances:Object.fromEntries(state.clubs.map(c=>[c.id,cash(state.economy,c.id)]))});
+ state.history.push({year:state.season,cups:structuredClone(state.cups),fixtures:structuredClone(state.fixtures),table,divisions:structuredClone(state.world.divisions),prizes,balances:Object.fromEntries(state.clubs.map(c=>[c.id,cash(state.economy,c.id)]))});
  moveDivisions(state.world,table);
  for(const player of state.players){
-  player.leagueYellows=0;const contract=state.contracts[player.id]!;
+  player.leagueYellows=0;const counters=state.cupDiscipline[player.id];if(counters){counters.domestic.yellows=0;counters.continental.yellows=0;}const contract=state.contracts[player.id]!;
   if(contract.ends!==null&&contract.ends<=state.date){player.clubId=null;contract.ownerId=null;contract.ends=null;contract.revision++;state.economy.wages[player.id]=0;}
  }
  for(const offer of state.offers)if(['submitted','countered','accepted','ready','queued'].includes(offer.status)){offer.status='expired';offer.activation=null;}
- state.season++;state.date=`${state.season}-07-01`;state.round=0;state.match=null;state.fixtures=worldSchedule(state.world,state.season);
+ state.season++;state.date=`${state.season}-07-01`;state.round=0;state.match=null;state.fixtures=worldSchedule(state.world,state.season);state.cups=initialCups(state);state.fixtures.push(...state.cups.flatMap(cupFixtures));state.fixtures.sort(compareFixtures);
  for(const club of state.clubs)while(callUp(state,club.id)){ /* At most eight active academy players per club. */ }
  for(const club of state.economy.clubs){const tier=state.world.divisions.find(d=>d.clubs.includes(club.clubId))!.tier;Object.assign(club,financialProfile(tier));}
  state.lineup=autoPick(state.players,state.clubId,state.tactics.formation,state.date);state.bench=pickBench(state.players,state.clubId,state.lineup,state.date);
@@ -51,10 +59,11 @@ export function validateSeasons(state:Career){
  for(const [index,history] of state.history.entries()){
   if(history.year!==2026+index)throw Error('INVALID_SAVE');
   const world={kind:state.world.kind,divisions:history.divisions};validateDivisions(world,state.clubs);
-  const expected=worldSchedule(world,history.year);
-  if(history.fixtures.length!==expected.length||history.fixtures.some((f,i)=>{const e=expected[i]!;return !f.score||f.id!==e.id||f.competitionId!==e.competitionId||f.date!==e.date||f.round!==e.round||f.home!==e.home||f.away!==e.away;}))throw Error('INVALID_SAVE');
+  const archived={...state,world,season:history.year,history:state.history.slice(0,index),fixtures:history.fixtures,cups:history.cups};validateCups(archived);
+  const expected=[...worldSchedule(world,history.year),...history.cups.flatMap(cupFixtures)].sort(compareFixtures);
+  if(history.fixtures.length!==expected.length||history.fixtures.some((f,i)=>{const e=expected[i]!;return !f.score||f.id!==e.id||f.competitionId!==e.competitionId||f.date!==e.date||f.round!==e.round||f.home!==e.home||f.away!==e.away||f.competitionClass!==e.competitionClass||f.neutral!==e.neutral||f.decider!==e.decider||f.cupTieId!==e.cupTieId;}))throw Error('INVALID_SAVE');
   if(Object.keys(history.balances).length!==state.clubs.length||Object.keys(history.prizes).length!==state.clubs.length||state.clubs.some(c=>history.balances[c.id]===undefined||history.prizes[c.id]===undefined))throw Error('INVALID_SAVE');
-  for(const division of history.divisions)for(const [rank,row] of history.table.filter(r=>division.clubs.includes(r.clubId)).entries())if(history.prizes[row.clubId]!==prizeFor(division,rank))throw Error('INVALID_SAVE');
+  if(canonical(history.prizes)!==canonical(seasonPrizes(archived)))throw Error('INVALID_SAVE');
   const table=world.divisions.flatMap(d=>standings({clubs:state.clubs,fixtures:history.fixtures,world},d.id));if(canonical(table)!==canonical(history.table))throw Error('INVALID_SAVE');
   const moved=structuredClone(world);moveDivisions(moved,history.table);const next=state.history[index+1]?.divisions??state.world.divisions;if(canonical(moved.divisions)!==canonical(next))throw Error('INVALID_SAVE');
  }

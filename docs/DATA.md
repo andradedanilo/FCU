@@ -127,4 +127,6 @@ v0.6 delivers the adapter, sync workflow and versioned data checks. Use controll
 
 ### Development world expansion
 
-v0.5.1 adds the fictional-world-2026-v1 development snapshot: 176 club identities, ten divisions and 3,884 generated players including twelve free agents. packages/contracts/src/world.ts centralizes city profiles and starting membership; original eight-club saves retain fictional-2026-v1 and the exhibition schedule. Identity profile version 2 adds countries without changing the approved starter IDs. This generated world is offline fixture content, not a provider integration or an authentic roster claim.
+v0.5.1 introduced the fictional-world-2026-v1 development snapshot: 176 club identities, ten divisions and 3,884 generated players including twelve free agents. packages/contracts/src/world.ts centralizes city profiles and starting membership; original eight-club saves retain fictional-2026-v1 and the exhibition schedule. Identity profile version 2 adds countries without changing the approved starter IDs. This generated world is offline fixture content, not a provider integration or an authentic roster claim.
+
+Cup schedules and qualification are career state, not mutable roster-provider data. v0.5.2 retains both development snapshot IDs. Schema-15 country saves enable cups next season; their frozen roster, current fixtures and archived results remain intact. No live provider response or imported roster is claimed by this milestone.

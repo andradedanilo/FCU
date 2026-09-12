@@ -17,7 +17,7 @@ export function commitments(state:Pick<Career,'economy'|'players'|'loans'>,club:
 function attendance(capacity:number,reputation:number,ratio:number){return Math.floor(capacity*Math.max(.30,Math.min(.98,.40+reputation/200+ratio/10)));}
 export function budgets(state:Pick<Career,'economy'|'players'|'fixtures'|'loans'>,club:ClubId){
  const account=state.economy.clubs.find(c=>c.clubId===club)!;
- const gate=state.fixtures.filter(f=>f.home===club).length*attendance(account.capacity,account.reputation,.5)*account.ticket;
+ const gate=state.fixtures.filter(f=>f.home===club&&f.competitionClass==='league').length*attendance(account.capacity,account.reputation,.5)*account.ticket;
  const wage=Math.floor(.60*(account.sponsorship+gate+account.lastPrizes)/52);
  const weekly=commitments(state,club),committed=commitments(state,club,true);const balance=cash(state.economy,club);
  return {cash:balance,weekly,committed,wage,transfer:Math.max(0,balance-13*committed-4*account.overhead),overhead:account.overhead};
@@ -63,8 +63,9 @@ export function settleDay(state:Pick<Career,'economy'|'players'|'loans'>,date:st
  const existing=new Set(state.economy.ledger.map(e=>e.id));
  state.economy.ledger.push(...batch.ledger.filter(e=>!existing.has(e.id)));
 }
-export function settleGate(state:Pick<Career,'economy'|'fixtures'>,club:ClubId,fixtureId:string,date:string){
+export function settleGate(state:Pick<Career,'economy'|'fixtures'>,club:ClubId,fixtureId:string,date:string,neutral=false){
  const account=state.economy.clubs.find(c=>c.clubId===club)!;
+ if(neutral){const fixture=state.fixtures.find(f=>f.id===fixtureId)!,other=state.economy.clubs.find(c=>c.clubId===fixture.away)!;const total=attendance(Math.max(account.capacity,other.capacity),Math.floor((account.reputation+other.reputation)/2),.5)*account.ticket;const half=Math.floor(total/2);external(state.economy,club,date,'gate',half,'gate/'+fixtureId+'/'+club);external(state.economy,fixture.away,date,'gate',total-half,'gate/'+fixtureId+'/'+fixture.away);return;}
  const previous=state.fixtures.filter(f=>f.score&&(f.home===club||f.away===club)).slice(-5);
  const points=previous.reduce((sum,f)=>{const home=f.home===club,own=f.score![home?0:1],other=f.score![home?1:0];return sum+(own>other?3:own===other?1:0);},0);
  const count=attendance(account.capacity,account.reputation,previous.length?points/(3*previous.length):.5);

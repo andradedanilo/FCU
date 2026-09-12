@@ -46,3 +46,5 @@
 .worldChoices{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-top:12px}.worldChoices label{min-width:150px;font-size:14px}.worldChoices button{font-size:14px;min-height:44px}.clubGrid{overflow:auto;align-content:start}
 
 .clubGrid{grid-template-rows:none;grid-auto-rows:140px;align-content:start}
+
+.cupBoard{padding:12px}.cupBoard h2,.cupBoard h3,.cupBoard details{margin-bottom:12px}.cupBoard select{max-width:350px;margin-bottom:14px}.cupBoard small{display:block;font-size:12px;line-height:1.5;color:#d7be8b}.cupBoard p{line-height:1.5}

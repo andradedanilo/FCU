@@ -23,3 +23,10 @@ it('stops at a report due before kickoff and rejects malformed saved scouting id
  s=act(s,{type:'AdvanceCalendar',target:'event'});expect(s.date).toBe('2026-07-10');expect(s.fixtures.filter(f=>f.score)).toHaveLength(matches);
  const broken=structuredClone(s);broken.scouting.shortlist=[s.players[22]!.id,s.players[22]!.id];expect(()=>validateCareer(broken)).toThrow();
 });
+it('retains a large-world shortlist through commands and save validation',()=>{
+ let s=createCareer('00000000-0000-4000-8000-000000000006',2026,clubs[0]!.id,'countries');
+ const candidates=s.players.filter(p=>p.clubId!==s.clubId).slice(0,300).map(p=>p.id);
+ s.scouting.shortlist=candidates.slice(0,299);s=act(s,{type:'SetShortlist',playerId:candidates[299]!,listed:true});
+ expect(validateCareer(JSON.parse(canonical(s))).scouting.shortlist).toEqual([...candidates].sort());
+ s=act(s,{type:'SetShortlist',playerId:candidates[299]!,listed:false});expect(s.scouting.shortlist).toHaveLength(299);
+});

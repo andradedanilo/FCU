@@ -58,12 +58,13 @@ export function continentalQualifiers(world:Career['world'],rankings:Record<stri
  qualified.push(champion&&!qualified.includes(champion)?champion:rankings[championCountry+'1']!.find(id=>!qualified.includes(id))!);
  if(new Set(qualified).size!==16)throw Error('INVALID_COMMAND');return qualified;
 }
-export type CupResult={score:[number,number];shootout:[number,number]|null};
+export type CupResult={score:[number,number];shootout:[number,number]|null;forfeit?:ClubId|null};
 export function tieWinner(tie:CupTie,results:Record<string,CupResult>):ClubId|null{
  const first=tie.legs[0]!,last=tie.legs.at(-1)!;
  let home=0,away=0;
  for(const leg of tie.legs){const result=results[leg.fixtureId];if(!result)return null;if(result.score.some(n=>!Number.isSafeInteger(n)||n<0))throw Error('INVALID_COMMAND');home+=result.score[leg.home===first.home?0:1];away+=result.score[leg.home===first.home?1:0];if(leg!==last&&result.shootout)throw Error('INVALID_COMMAND');}
- const penalties=results[last.fixtureId]!.shootout;
+ const final=results[last.fixtureId]!;if(final.forfeit){if(![last.home,last.away].includes(final.forfeit)||final.shootout)throw Error('INVALID_COMMAND');return final.forfeit===last.home?last.away:last.home;}
+ const penalties=final.shootout;
  if(home!==away){if(penalties)throw Error('INVALID_COMMAND');return home>away?first.home:first.away;}
  if(!penalties)return null;
  if(penalties.some(n=>!Number.isSafeInteger(n)||n<0)||penalties[0]===penalties[1])throw Error('INVALID_COMMAND');

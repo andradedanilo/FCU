@@ -4,6 +4,10 @@ import {countryWorld} from '../packages/contracts/src/world.ts';
 import {canonical} from '../packages/contracts/src/index.ts';
 import {worldSchedule} from '../packages/simulation/src/competition.ts';
 import {addDays} from '../packages/simulation/src/availability.ts';
+import {createCareer,migrateCountryCareer,startMatch,advanceMatch,validateCareer,applyCommand,autoPick,pickBench} from '../packages/simulation/src/engine.ts';
+import {selectionPlayers,competitionPlayers,cupBookings} from '../packages/simulation/src/discipline.ts';
+import {penalties,validatePenalties} from '../packages/simulation/src/penalties.ts';
+import {clockLabel} from '../packages/presentation/src/highlights.ts';
 
 it('draws all domestic entrants once, allocates seeded byes and reserves separated cup dates',()=>{
  const entrants=countryWorld.divisions.filter(d=>d.country==='ENG').flatMap(d=>d.clubs);
@@ -33,4 +37,33 @@ it('uses reversed second legs, no away-goals advantage and penalties only for le
  expect(tieWinner(tie,scores)).toBeNull();scores[last!.fixtureId]!.shootout=[3,4];expect(tieWinner(tie,scores)).toBe(first!.home);
  scores[first!.fixtureId]!.score=[3,1];expect(()=>tieWinner(tie,scores)).toThrow('INVALID_COMMAND');scores[last!.fixtureId]!.shootout=null;expect(tieWinner(tie,scores)).toBe(first!.home);
  const invalid=structuredClone(cup);invalid.rounds[0]!.ties[0]!.winner=countryWorld.divisions[0]!.clubs[0]!;expect(()=>advanceCup(invalid,2026,2026)).toThrow('INVALID_COMMAND');
+});
+it('resumes a saved domestic tie through both extra-time periods without added minutes',()=>{
+ const state=createCareer('00000000-0000-4000-8000-000000000003',2026,countryWorld.divisions[0]!.clubs[0]!,'countries');
+ const old=migrateCountryCareer({...state,engineVersion:'0.5.1',rulesetVersion:'world-1',fixtures:state.fixtures.filter(f=>f.competitionClass==='league')});expect(old.cups).toEqual([]);expect(old.cupStartSeason).toBe(2027);expect(old.fixtures).toHaveLength(2952);
+ const fixture=state.fixtures.find(f=>f.competitionClass==='domestic')!;
+ state.clubId=fixture.home;state.date=fixture.date;
+ for(const f of state.fixtures)if(f.date<state.date)f.score=[0,0];
+ state.round=state.fixtures.filter(f=>f.score&&(f.home===state.clubId||f.away===state.clubId)).length;
+ state.lineup=autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date);state.bench=pickBench(selectionPlayers(state),state.clubId,state.lineup,state.date);
+ state.match=startMatch(state,fixture);state.match.tick=90;state.match.phase='extraFirst';state.match.addedTime=[0,0];state.match.extraTime=true;
+ const loaded=validateCareer(JSON.parse(canonical(state))),command={type:'AdvanceMatch' as const,minutes:15,careerId:state.careerId,expectedRevision:state.revision,commandId:crypto.randomUUID()};
+ const first=applyCommand(state,command),replay=applyCommand(loaded,command);expect(canonical(first)).toBe(canonical(replay));if(!first.ok)throw Error(first.error);
+ expect(first.value.match).toMatchObject({tick:105,phase:'extraInterval'});expect(clockLabel(105,0,600,first.value.match!)).toBe('105:00');expect(validateCareer(first.value)).toEqual(first.value);
+ const last=advanceMatch(first.value.match!,state.players,15);expect(last).toMatchObject({tick:120,phase:'finished',extraTime:true});expect(clockLabel(120,0,600,last)).toBe('120:00');
+});
+it('draws repeatable penalties only from active players and rejects invalid kick records',()=>{
+ const state=createCareer('00000000-0000-4000-8000-000000000004',2026,countryWorld.divisions[0]!.clubs[0]!);
+ const match=startMatch(state,{...state.fixtures[0]!,competitionClass:'domestic',decider:true});
+ match.extraTime=true;match.tick=120;match.addedTime=[0,0];match.phase='finished';match.dismissed=[match.homeLineup[1]!];match.injuries=[{playerId:match.awayLineup[1]!,until:'2026-07-08'}];
+ const repeat=structuredClone(match);penalties(match,state.players);penalties(repeat,state.players);expect(canonical(match)).toBe(canonical(repeat));expect(match.homeGoals+match.awayGoals).toBe(0);expect(match.penalties.length).toBeGreaterThan(5);expect(()=>validatePenalties(match)).not.toThrow();
+ const invalid=structuredClone(match);invalid.penalties[0]!.playerId=match.homeBench[0]!;expect(()=>validatePenalties(invalid)).toThrow('INVALID_SAVE');
+});
+it('keeps domestic, continental and league eligibility and sanctions separate',()=>{
+ const state=createCareer('00000000-0000-4000-8000-000000000005',2026,countryWorld.divisions[0]!.clubs[0]!);
+ const player=state.players.find(p=>p.clubId===state.clubId&&p.role==='FWD')!;player.leagueBan=2;player.leagueYellows=4;
+ state.cupDiscipline[player.id]={domestic:{yellows:2,ban:0},continental:{yellows:1,ban:2}};
+ expect(competitionPlayers(state,'domestic').find(p=>p.id===player.id)!.leagueBan).toBe(0);expect(competitionPlayers(state,'continental').find(p=>p.id===player.id)!.leagueBan).toBe(2);
+ const match=startMatch(state,{...state.fixtures[0]!,competitionClass:'domestic',decider:true});match.events.push({tick:1,order:0,type:'yellow',clubId:player.clubId!,playerId:player.id,assistId:null,homeGoals:0,awayGoals:0});
+ cupBookings(state,player,match);expect(state.cupDiscipline[player.id]).toEqual({domestic:{yellows:0,ban:1},continental:{yellows:1,ban:2}});expect(player).toMatchObject({leagueBan:2,leagueYellows:4});
 });

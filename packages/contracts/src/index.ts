@@ -26,7 +26,7 @@ export const incidentEventSchema=eventSchema.extend({type:z.enum(['pass','shot',
 export type MatchEvent = z.infer<typeof incidentEventSchema>;
 const statsSchema = z.object({ shots: integer.max(90), onTarget: integer.max(90), quality: integer.max(900000), possession: integer.max(900000) });
 export const fixtureSchema = z.object({ id: z.string().regex(/^fixture-\d{2}-\d$/), round: integer.max(13), home: clubId, away: clubId, score: z.tuple([integer.max(90), integer.max(90)]).nullable() });
-export type Fixture = z.infer<typeof worldFixtureSchema>;
+export type Fixture = z.infer<typeof competitionFixtureSchema>;
 export const substitutionSchema=z.object({tick:integer.min(1).max(89),clubId,out:playerId,in:playerId});
 export const matchSchema = z.object({ fixtureId: z.string(), home: clubId, away: clubId, tick: integer.max(90), rng: integer.max(4294967295), homeLineup: z.array(playerId).length(11), awayLineup: z.array(playerId).length(11), homeGoals: integer.max(90), awayGoals: integer.max(90), homeStats: statsSchema, awayStats: statsSchema, events: z.array(eventSchema).max(600), homeBench:z.array(playerId).length(9),awayBench:z.array(playerId).length(9),substitutions:z.array(substitutionSchema).max(10),homeTactics:tacticsSchema,awayTactics:tacticsSchema });
 
@@ -46,7 +46,7 @@ export const availabilityCareerSchema=conditionCareerSchema.extend({engineVersio
 const timedEventSchema=incidentEventSchema.extend({tick:integer.max(100),homeGoals:integer.max(100),awayGoals:integer.max(100)});
 const timedStatsSchema=statsSchema.extend({shots:integer.max(100),onTarget:integer.max(100),quality:integer.max(1000000),possession:integer.max(1000000)});
 export const timedMatchSchema=incidentMatchSchema.extend({tick:integer.max(100),phase:z.enum(['first','interval','second','finished']),addedTime:z.tuple([integer.max(5).nullable(),integer.max(5).nullable()]),events:z.array(timedEventSchema).max(1400),homeGoals:integer.max(100),awayGoals:integer.max(100),homeStats:timedStatsSchema,awayStats:timedStatsSchema,substitutions:z.array(substitutionSchema.extend({tick:integer.min(1).max(99)})).max(10)});
-export type Match=z.infer<typeof historicalMatchSchema>;
+export type Match=z.infer<typeof knockoutMatchSchema>;
 export const timedCareerSchema=availabilityCareerSchema.extend({engineVersion:z.literal('0.3.2'),rulesetVersion:z.literal('exhibition-6'),match:timedMatchSchema.nullable(),fixtures:z.array(fixtureSchema.extend({score:z.tuple([integer.max(100),integer.max(100)]).nullable()})).length(56)});
 const postingSchema=z.object({account:z.union([clubId,z.literal('external')]),amount:z.number().int().min(-Number.MAX_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER)});
 export const economySchema=z.object({clubs:z.array(z.object({clubId,capacity:integer.max(200000),reputation:integer.max(100),ticket:integer.max(1000000),sponsorship:integer.max(1000000000000),overhead:integer.max(10000000000),lastPrizes:integer.max(1000000000000)})).length(8),wages:z.record(playerId,integer.max(10000000000)),ledger:z.array(z.object({id:z.string().min(1).max(120),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),kind:z.enum(['opening','sponsor','wages','overhead','gate']),postings:z.tuple([postingSchema,postingSchema])})).max(20000)});
@@ -84,14 +84,24 @@ export const worldSchema=z.object({kind:z.enum(['exhibition','countries']),divis
 export const worldFixtureSchema=seasonalFixtureSchema.extend({id:z.string().regex(/^fixture-(?:(?:\d{4}-)?\d{2}-\d{1,2}|\d{4}-(?:ENG|ESP|FRA|ITA|DEU)[12]-\d{2}-\d{1,2})$/),round:integer.max(99),competitionId:z.string().max(20)});
 const worldEconomySchema=seasonEconomySchema.extend({clubs:z.array(economySchema.shape.clubs.element).min(8).max(176),ledger:z.array(seasonEconomySchema.shape.ledger.element).max(100000)});
 const worldHistorySchema=seasonHistorySchema.extend({fixtures:z.array(worldFixtureSchema).max(10000),table:z.array(tableRowSchema).min(8).max(176),divisions:z.array(divisionSchema).min(1).max(10),balances:z.record(clubId,z.number().int().min(-Number.MAX_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER)),prizes:z.record(clubId,integer)});
-export const careerSchema=repeatingCareerSchema.extend({engineVersion:z.literal('0.5.1'),rulesetVersion:z.literal('world-1'),snapshotId:z.enum(['fictional-2026-v1','fictional-world-2026-v1']),identityProfileVersion:z.union([z.literal(1),z.literal(2)]),world:worldSchema,clubs:z.array(clubSchema).min(8).max(176),players:z.array(transferablePlayerSchema).min(176).max(20000),round:integer.max(100),fixtures:z.array(worldFixtureSchema).max(10000),economy:worldEconomySchema,history:z.array(worldHistorySchema).max(100)});
-export type Career = z.infer<typeof careerSchema>;
+export const countryCareerSchema=repeatingCareerSchema.extend({engineVersion:z.literal('0.5.1'),rulesetVersion:z.literal('world-1'),snapshotId:z.enum(['fictional-2026-v1','fictional-world-2026-v1']),identityProfileVersion:z.union([z.literal(1),z.literal(2)]),world:worldSchema,clubs:z.array(clubSchema).min(8).max(176),players:z.array(transferablePlayerSchema).min(176).max(20000),round:integer.max(100),fixtures:z.array(worldFixtureSchema).max(10000),economy:worldEconomySchema,history:z.array(worldHistorySchema).max(100)});
+
 export const cupLegSchema=z.object({fixtureId:z.string().max(90),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),home:clubId,away:clubId,neutral:z.boolean()});
 export const cupTieSchema=z.object({id:z.string().max(80),legs:z.array(cupLegSchema).min(1).max(2),winner:clubId.nullable()});
 export const cupRoundSchema=z.object({number:integer.max(5),byes:z.array(clubId).max(32),ties:z.array(cupTieSchema).min(1).max(16)});
 export const cupSchema=z.object({id:z.enum(['ENG-CUP','ESP-CUP','FRA-CUP','ITA-CUP','DEU-CUP','CONTINENTAL']),kind:z.enum(['domestic','continental']),entrants:z.array(clubId).min(16).max(36),rounds:z.array(cupRoundSchema).min(1).max(6)});
 export type Cup=z.infer<typeof cupSchema>;
 export type CupTie=z.infer<typeof cupTieSchema>;
+export const competitionClassSchema=z.enum(['league','domestic','continental']);
+export type CompetitionClass=z.infer<typeof competitionClassSchema>;
+const scoreSchema=z.tuple([integer.max(1000),integer.max(1000)]);
+export const competitionFixtureSchema=worldFixtureSchema.extend({id:z.string().max(90),score:scoreSchema.nullable(),forfeit:clubId.nullable(),competitionClass:competitionClassSchema,neutral:z.boolean(),decider:z.boolean(),cupTieId:z.string().max(80).nullable(),shootout:scoreSchema.nullable()});
+export const penaltyKickSchema=z.object({clubId,playerId,scored:z.boolean()});
+export const knockoutMatchSchema=historicalMatchSchema.extend({homeGoals:integer.max(130),awayGoals:integer.max(130),tick:integer.max(130),phase:z.enum(['first','interval','second','extraFirst','extraInterval','extraSecond','finished']),events:z.array(timedEventSchema.extend({tick:integer.max(130),homeGoals:integer.max(130),awayGoals:integer.max(130)})).max(1900),substitutions:z.array(substitutionSchema.extend({tick:integer.min(1).max(129)})).max(10),homeStats:timedStatsSchema.extend({possession:integer.max(1300000),shots:integer.max(130),onTarget:integer.max(130),quality:integer.max(1300000)}),awayStats:timedStatsSchema.extend({possession:integer.max(1300000),shots:integer.max(130),onTarget:integer.max(130),quality:integer.max(1300000)}),competitionClass:competitionClassSchema,neutral:z.boolean(),decider:z.boolean(),aggregate:scoreSchema,extraTime:z.boolean(),penalties:z.array(penaltyKickSchema).max(2048)});
+const disciplineCounter=z.object({yellows:integer.max(2),ban:integer.max(100)});
+export const careerSchema=countryCareerSchema.extend({scouting:scoutingSchema.extend({shortlist:z.array(playerId).max(20000)}),engineVersion:z.literal('0.5.2'),rulesetVersion:z.literal('world-2'),fixtures:z.array(competitionFixtureSchema).max(10000),match:knockoutMatchSchema.nullable(),cupStartSeason:integer.min(2026).max(2101),cups:z.array(cupSchema).max(6),cupDiscipline:z.record(playerId,z.object({domestic:disciplineCounter,continental:disciplineCounter})),history:z.array(worldHistorySchema.extend({fixtures:z.array(competitionFixtureSchema).max(10000),cups:z.array(cupSchema).max(6)})).max(100)});
+export type Career=z.infer<typeof careerSchema>;
+
 
 const commandBase = { commandId: z.string().uuid(), careerId: z.string().uuid(), expectedRevision: integer };
 export const commandSchema = z.discriminatedUnion('type', [

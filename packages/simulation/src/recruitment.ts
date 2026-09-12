@@ -1,6 +1,6 @@
 import {seasonComplete} from './competition.ts';
 import type {Career,ClubId,Player,Role,Offer} from '../../contracts/src/index.ts';
-import {marketCommand,askingPrice,activeOffer,dealError,register,windowOpen,nextWindow} from './market.ts';
+import {marketCommand,affordability,askingPrice,activeOffer,dealError,register,windowOpen,nextWindow} from './market.ts';
 import {desiredTerms,ageOn} from './contracts.ts';
 import {estimate} from './scouting.ts';
 import {monday,budgets} from './economy.ts';
@@ -35,7 +35,7 @@ export function recruit(state:Career){
    const candidates=state.players.filter(p=>p.clubId!==club.id&&p.clubId!==state.clubId&&!p.academy&&p.role===role&&ageOn(state.contracts[p.id]!.birthDate,state.date)<34&&!pending.some(o=>o.playerId===p.id)).map(player=>{const ability=estimate(view,player,3);return {player,ability:ability.low+ability.high,age:ageOn(state.contracts[player.id]!.birthDate,state.date)};}).sort((a,b)=>b.ability-a.ability||a.age-b.age||(a.player.id<b.player.id?-1:1)).map(entry=>entry.player);
    const id=identifier(state,club.id,slot);
    let selected:Player|undefined;
-   for(const player of candidates){const proposed:Offer={id:id as Offer['id'],playerId:player.id,buyerId:club.id,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee:askingPrice(state,player),loanShare:null,date:state.date,responseDate:state.date,expires:state.date,activation:null,buyerCounters:0,sellerCounters:0,status:'accepted',reason:null,terms:terms(state,player)};if(!dealError(state,proposed,bank)){selected=player;break;}}
+   for(const player of candidates){const proposed:Offer={id:id as Offer['id'],playerId:player.id,buyerId:club.id,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee:askingPrice(state,player),loanShare:null,date:state.date,responseDate:state.date,expires:state.date,activation:null,buyerCounters:0,sellerCounters:0,status:'accepted',reason:null,terms:terms(state,player)};if(!affordability(proposed,bank)&&!dealError(state,proposed,bank)){selected=player;break;}}
    if(!selected)break;
    const error=marketCommand(state,{type:'SubmitOffer',playerId:selected.id,fee:askingPrice(state,selected),careerId:state.careerId,expectedRevision:state.revision,commandId:id},club.id);
    if(error)break;
