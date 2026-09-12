@@ -7,7 +7,7 @@ export function createGameAudio() {
   let music = false;
   let effects = true;
   let step = 0;
-  const live = new Set<OscillatorNode>();
+  const live = new Set<AudioScheduledSourceNode>();
   function ready() {
     context ??= new AudioContext();
     if (context.state === 'suspended') void context.resume().catch(() => undefined);
@@ -29,6 +29,23 @@ export function createGameAudio() {
     if (step % 2 === 0) tone([40, 36, 33, 36][Math.floor(step / 8) % 4]!, 0.24, 0.055, 'triangle');
     step++; timer = setTimeout(loop, 225);
   }
+  function noise(length:number,volume:number,frequency:number,rise=.04){
+    if(document.hidden)return;
+    const c=ready(),at=c.currentTime,buffer=c.createBuffer(1,Math.ceil(c.sampleRate*length),c.sampleRate);
+    const samples=buffer.getChannelData(0);
+    // Audio-only noise never draws from or influences the match random stream.
+    for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
+    const source=c.createBufferSource(),filter=c.createBiquadFilter(),gain=c.createGain();
+    source.buffer=buffer;filter.type='bandpass';filter.frequency.value=frequency;filter.Q.value=.65;
+    gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(volume,at+rise);gain.gain.exponentialRampToValueAtTime(.001,at+length);
+    source.connect(filter);filter.connect(gain);gain.connect(c.destination);source.start();source.stop(at+length);
+    live.add(source);source.onended=()=>{live.delete(source);source.disconnect();filter.disconnect();gain.disconnect();};
+  }
+  function crowd(volume:number,length:number){
+    noise(length,volume,650,.25);noise(length,volume*.45,1600,.3);
+    // Low, distant vowel-like voices under the crowd wash.
+    tone(45,length*.65,volume*.035,'triangle');tone(50,length*.7,volume*.025,'triangle',.06);
+  }
   function stopNotes() {
     if (timer) clearTimeout(timer);
     timer = null;
@@ -38,9 +55,14 @@ export function createGameAudio() {
   document.addEventListener('visibilitychange', visibility);
   return {
     music(value: boolean) { music = value; stopNotes(); if (music) loop(); },
-    effects(value: boolean) { effects = value; },
+    effects(value: boolean) { effects = value;if(!value){stopNotes();if(music)loop();} },
     click() { if (effects) tone(72, 0.055, 0.025, 'triangle'); },
-    highlight(kind:'goal'|'save'|'shot') { if (effects) (kind==='goal'?[60,64,67,72]:kind==='save'?[67,72,79]:[64,60,55]).forEach((note,i)=>tone(note,.22,.035,kind==='shot'?'triangle':'square',i*.11)); },
+    highlight(kind:'goal'|'save'|'shot'|'anticipation'|'kick'|'whistle') {
+      if(!effects||document.hidden)return;
+      if(kind==='kick'){noise(.1,.24,180);tone(35,.08,.09,'sine');}
+      else if(kind==='whistle'){tone(101,.18,.025,'sine');tone(103,.28,.018,'sine',.2);}
+      else crowd(kind==='goal'?.28:kind==='save'?.2:kind==='shot'?.11:.065,kind==='goal'?1.8:1.1);
+    },
     dispose() { music = false; stopNotes(); document.removeEventListener('visibilitychange', visibility); void context?.close(); }
   };
 }

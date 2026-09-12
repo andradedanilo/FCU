@@ -1,6 +1,7 @@
 import type { Career, Match, MatchEvent } from '../../contracts/src/index.ts';
 export type HighlightKind='goal'|'save'|'shot';
-export type Highlight={kind:HighlightKind;player:string;color:string;tick:number;score:string};
+export type HighlightSide='blue'|'red';
+export type Highlight={kind:HighlightKind;player:string;color:string;side:HighlightSide;tick:number;score:string};
 export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEvent|undefined {
   let misses=0;
   const fresh=events.filter(event=>{
@@ -11,7 +12,12 @@ export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEven
 }
 export function projectHighlight(state:Career,event:MatchEvent):Highlight|null {
   if(event.type!=='goal'&&event.type!=='save'&&event.type!=='shot')return null;
-  return {kind:event.type,player:state.players.find(p=>p.id===event.playerId)!.name,color:state.clubs.find(c=>c.id===event.clubId)!.color,tick:event.tick,score:`${event.homeGoals} - ${event.awayGoals}`};
+  return {kind:event.type,player:state.players.find(p=>p.id===event.playerId)!.name,color:state.clubs.find(c=>c.id===event.clubId)!.color,side:event.clubId===state.clubId?'blue':'red',tick:event.tick,score:`${event.homeGoals} - ${event.awayGoals}`};
+}
+export function nextHighlight(previous:Career,state:Career):Highlight|null {
+  if(!previous.match||!state.match||previous.match.fixtureId!==state.match.fixtureId||state.match.tick!==previous.match.tick+1)return null;
+  const event=selectHighlight(state.match.events,previous.match.events.at(-1)?.order??-1);
+  return event?projectHighlight(state,event):null;
 }
 export const highlightDuration=4800;
 export const playbackSpeed=2;

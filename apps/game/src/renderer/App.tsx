@@ -94,8 +94,9 @@ export function App() {
     } else {setNotice(t.errors[result.error]);stop();}
     occupied.current=false;setBusy(false);return result.ok;
   }
-  const tick=async()=>{if(!running.current)return;await command({type:'AdvanceMatch',minutes:1});const match=latest.current?.match;if(running.current&&match)timer.current=setTimeout(()=>void tick(),minuteDuration(match.events,match.tick));};
-  const play=()=>{if(running.current){stop();return;}running.current=true;setPlaying(true);void tick();};
+  const presentationBusy=useRef(false);
+  const tick=async()=>{if(!running.current)return;if(presentationBusy.current){timer.current=setTimeout(()=>void tick(),50);return;}await command({type:'AdvanceMatch',minutes:1});const match=latest.current?.match;if(running.current&&match)timer.current=setTimeout(()=>void tick(),minuteDuration(match.events,match.tick));};
+  const play=()=>{if(running.current){stop();return;}if(latest.current?.match&&['interval','extraInterval'].includes(latest.current.match.phase))presentationBusy.current=false;running.current=true;setPlaying(true);void tick();};
   const navigate=(next:Screen)=>{stop();setNotice('');setScreen(next);};
   async function newCareer() {
     if(!/^\d+$/.test(seed)||Number(seed)>4294967295){setNotice(t.seedInvalid);return;}
@@ -132,7 +133,7 @@ export function App() {
         {state&&screen==='home'&&<Clubhouse closeSeason={()=>void command({type:'CloseSeason'})} history={()=>setHistoryOpen(true)} news={id=>{setNewsPlayer(id);setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
-        {state?.match&&screen==='match'&&<MatchScreen acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
+        {state?.match&&screen==='match'&&<MatchScreen hold={value=>{presentationBusy.current=value;}} acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>
       <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}<small title={t.controllerHint}>{t.inputHint}</small></span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>

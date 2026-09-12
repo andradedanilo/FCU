@@ -4,7 +4,7 @@ import {it,expect} from 'vitest';
 import {createCareer,startMatch,advanceMatch,applyCommand,standings} from '../packages/simulation/src/engine.ts';
 import {clubs} from '../packages/contracts/src/identity.ts';
 import {canonical} from '../packages/contracts/src/index.ts';
-import {projectHighlight,highlightFrame,selectHighlight,clockLabel,minuteDuration} from '../packages/presentation/src/highlights.ts';
+import {nextHighlight,projectHighlight,highlightFrame,selectHighlight,clockLabel,minuteDuration} from '../packages/presentation/src/highlights.ts';
 it('projects committed identity and score without changing the career or illustrating a pass',()=>{
  const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);state.match=advanceMatch(startMatch(state,state.fixtures[0]!),state.players,45);
  const before=canonical(state);const goal=state.match.events.find(e=>e.type==='goal')!;const pass=state.match.events.find(e=>e.type==='pass')!;
@@ -50,4 +50,14 @@ it('reports the managed side result and table consequences without changing care
  act({type:'StartMatch'});act({type:'AdvanceMatch',minutes:90});expect(matchReport(s)).toBeNull();while(s.match!.phase!=='finished'){if(s.match!.pendingDismissal||s.match!.pendingInjuries.length)act({type:'AcknowledgeMatch'});act({type:'AdvanceMatch',minutes:90});}const before=canonical(s);const report=matchReport(s)!;
  expect(report.scorers.length).toBe(s.match!.homeGoals+s.match!.awayGoals);expect(report.points).toBe(report.earned);expect(report.own).toEqual(s.match!.homeStats);expect(report.position).toBe(standings(s).findIndex(r=>r.clubId===s.clubId)+1);expect(canonical(s)).toBe(before);
  const away={...s,clubId:s.match!.away};expect(matchReport(away)!.own).toEqual(s.match!.awayStats);expect(matchReport(away)!.earned+report.earned).toBe(report.outcome==='draw'?2:3);
+});
+
+it('maps scene colors to the managed club and only stages newly delivered minutes',()=>{
+ const before=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);before.match=startMatch(before,before.fixtures[0]!);
+ const after=structuredClone(before);after.match!.tick=1;
+ const event={type:'goal' as const,tick:1,order:0,clubId:before.match.home,playerId:before.match.homeLineup[10]!,assistId:null,homeGoals:1,awayGoals:0};
+ after.match!.events=[event];after.match!.homeGoals=1;
+ expect(nextHighlight(before,after)?.side).toBe('blue');expect(projectHighlight({...after,clubId:after.match!.away},event)?.side).toBe('red');
+ expect(nextHighlight(after,after)).toBeNull();expect(nextHighlight(after,before)).toBeNull();
+ expect(before.match.homeGoals).toBe(0);expect(before.match.events).toHaveLength(0);
 });

@@ -40,3 +40,5 @@
 .clipLabel span{display:flex;flex-direction:column;gap:4px;padding-left:8px}
 .clipLabel strong{font:900 18px monospace;letter-spacing:1px}
 .clipLabel small{font:12px monospace}
+
+.quiet{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;padding:24px;text-align:center;background:#0d1c2f}.quiet>strong{font:900 clamp(18px,2vw,30px) monospace;color:#e6ca85}.quiet>p{max-width:32ch;line-height:1.6;color:#9faec0}.quiet>div{display:flex;gap:18px;font:13px monospace}.quiet span:first-child{border-bottom:4px solid #447ad5}.quiet span:last-child{border-bottom:4px solid #c54a4a}.previews label{font:12px monospace}.previews select{margin-left:8px;font-size:12px;padding:6px}
