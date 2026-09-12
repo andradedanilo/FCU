@@ -11,6 +11,7 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
   async function launch(){app=await electron.launch({args:['.'],timeout:15000,env:{...process.env,FCU_USER_DATA:data}});page=await app.firstWindow();page.on('pageerror',e=>errors.push(e.message));await page.context().setOffline(true);await page.clock.install({time:new Date(0)});await page.clock.pauseAt(new Date(1000));}
   const click=async(name:string)=>page.getByRole('button',{name,exact:true}).click();
   const save=async()=>{await click('Save');await expect(page.getByRole('status')).toHaveText('Saved to disk.');};
+  const advance=async()=>{const date=page.getByTestId('career-date'),before=await date.getAttribute('datetime');await page.getByRole('button',{name:'Advance to next event',exact:false}).click();await expect(date).not.toHaveAttribute('datetime',before!);};
   const entries=()=>page.evaluate(()=>window.fcu.list());
   const latest=async()=>{const list=await entries();if(!list.ok)throw new Error(list.error);const entry=list.value[0]!;const result=await page.evaluate(e=>window.fcu.load(e.careerId,e.commitId),entry);if(!result.ok)throw new Error(result.error);return result.value;};
   async function playUntil(_from:number,to:number){
@@ -77,12 +78,20 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
     await playUntil(0,1);await click('Pause');await substitute();await tactics();await playUntil(1,45);await playUntil(45,90);await save();const textState=await latest();
     expect(canonical(textState.match)).toBe(canonical(pixelState.match));expect(canonical(textState.fixtures)).toBe(canonical(pixelState.fixtures));
     await page.getByRole('button',{name:'Continue',exact:false}).click();
-    // One bounded full-season user journey, 13 remaining fixtures.
+    await click('Scouting');let market=page.getByRole('dialog',{name:'Scouting'});
+    await market.getByRole('button',{name:/Sam Bellwick/}).click();await market.getByRole('button',{name:'Assign scout (7 days)',exact:true}).click();await click('Negotiate');await click('Submit bid');await page.keyboard.press('Escape');
+    await advance();await page.getByRole('region',{name:'Club news'}).getByRole('button',{name:/Sam Bellwick/}).click();await click('Review final costs');await click('Confirm registration');await expect(market.getByRole('status')).toContainText('Signing completed');await page.keyboard.press('Escape');
+    await click('Scouting');market=page.getByRole('dialog',{name:'Scouting'});await market.getByRole('button',{name:/Morgan Bellwick/}).click();await click('Negotiate');await market.getByLabel('Deal type').selectOption('loan');await market.getByLabel('Your wage contribution').selectOption('50');await click('Request loan');await page.keyboard.press('Escape');
+    await advance();await page.getByRole('region',{name:'Club news'}).getByRole('button',{name:/Morgan Bellwick/}).click();await click('Review final costs');await click('Confirm registration');await expect(market.getByRole('status')).toContainText('Loan registered');await page.keyboard.press('Escape');await save();
+    const signed=await latest();expect(signed.players.filter(p=>p.clubId===signed.clubId)).toHaveLength(24);expect(signed.loans[0]?.share).toBe(50);
+    // One bounded full-season user journey, 13 remaining fixtures with real squad changes.
     for(let round=1;round<14;round++){
-      await page.getByRole('button',{name:'Advance to next event',exact:false}).click();await click('Squad');await click('Suggest lineup');await click('Confirm lineup');await click('Clubhouse');
-      await page.getByRole('button',{name:'Kick off'}).click();if(round===1){await page.getByRole('checkbox',{name:'Continue through half-time'}).check();await playUntil(0,90);await page.getByRole('button',{name:'Continue',exact:false}).click();continue;}await page.getByRole('checkbox',{name:'Continue through half-time'}).uncheck();await playUntil(0,45);await playUntil(45,90);await page.getByRole('button',{name:'Continue',exact:false}).click();
+      while(!await page.getByRole('button',{name:/Kick off/}).count())await advance();await click('Squad');await click('Suggest lineup');
+      if(round===1){const incoming=page.getByRole('checkbox',{name:'Start Sam Bellwick',exact:true});if(!await incoming.isChecked()){await page.locator('label').filter({has:page.getByRole('checkbox',{checked:true})}).filter({hasText:'DEF'}).first().getByRole('checkbox').uncheck();await incoming.check();}}
+      await click('Confirm lineup');await click('Clubhouse');
+      await page.getByRole('button',{name:'Kick off'}).click();if(round===1){await save();const changed=await latest();expect([...(changed.match?.homeLineup??[]),...(changed.match?.awayLineup??[])]).toContain(signed.players.find(p=>p.name==='Sam Bellwick')!.id);await page.getByRole('checkbox',{name:'Continue through half-time'}).check();await playUntil(0,90);await page.getByRole('button',{name:'Continue',exact:false}).click();continue;}await page.getByRole('checkbox',{name:'Continue through half-time'}).uncheck();await playUntil(0,45);await playUntil(45,90);await page.getByRole('button',{name:'Continue',exact:false}).click();
     }
     await expect(page.getByText('Season complete',{exact:true})).toBeVisible();await page.getByRole('button',{name:'League table',exact:true}).click();await expect(page.locator('tbody tr')).toHaveCount(8);expect((await latest()).round).toBe(14);expect(errors).toEqual([]);
-    await page.screenshot({path:'work/season-table.png'});
+    await page.screenshot({path:'work/season-table.png'});await click('Clubhouse');let end=await latest();while(end.loans[0]?.status==='active'){await advance();await save();end=await latest();}expect(end.date).toBe('2027-06-30');expect(end.players.find(p=>p.id===end.loans[0]!.playerId)!.clubId).toBe(end.loans[0]!.parent);expect(errors).toEqual([]);
   }finally{await app!.close();}
 });

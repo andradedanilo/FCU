@@ -31,7 +31,7 @@ export function renewalError(state:Career,action:Omit<Renewal,'careerId'|'comman
  const end=contractEnd(state.date,action.years),desired=desiredTerms(state,player);
  const roles={prospect:0,rotation:1,starter:2};
  if((contract.ends===null||end<=contract.ends)||action.wage<desired.wage||action.bonus<4*action.wage||roles[action.role]<roles[contract.role])return 'PLAYER_TERMS';
- const bank=budgets(state,state.clubId),weekly=bank.weekly-state.economy.wages[player.id]!+action.wage;
+ const bank=budgets(state,state.clubId),weekly=bank.committed-state.economy.wages[player.id]!+action.wage;
  if(weekly>bank.wage)return 'WAGE_BUDGET';
  if(bank.cash-action.bonus<13*weekly+4*bank.overhead)return 'INSUFFICIENT_FUNDS';
  return null;
@@ -47,6 +47,6 @@ export function renewContract(state:Career,action:Renewal):FailureCode|null {
 export function validateContracts(state:Career){
  if(Object.keys(state.contracts).length!==state.players.length)throw Error('INVALID_SAVE');
  for(const player of state.players){const contract=state.contracts[player.id];
-  if(!contract||contract.ownerId!==player.clubId||!validDate(contract.birthDate)||(player.clubId===null?contract.ends!==null||state.economy.wages[player.id]!==0:contract.ends===null||!validDate(contract.ends)||contract.ends<state.date)||ageOn(contract.birthDate,state.date)<15||ageOn(contract.birthDate,state.date)>60)throw Error('INVALID_SAVE');
+  if(!contract||(contract.ownerId!==player.clubId&&!state.loans.some(l=>l.playerId===player.id&&l.status==='active'&&l.parent===contract.ownerId&&l.borrower===player.clubId))||!validDate(contract.birthDate)||(player.clubId===null?contract.ends!==null||state.economy.wages[player.id]!==0:contract.ends===null||!validDate(contract.ends)||contract.ends<state.date)||ageOn(contract.birthDate,state.date)<15||ageOn(contract.birthDate,state.date)>60)throw Error('INVALID_SAVE');
  }
 }

@@ -66,15 +66,19 @@ export const offerId=z.string().uuid().brand<'OfferId'>();
 export type OfferId=z.infer<typeof offerId>;
 const offerTermsSchema=z.object({years:z.number().int().min(1).max(5),wage:integer.max(10000000000),bonus:integer.max(1000000000000),role:promisedRoleSchema});
 export const offerSchema=z.object({id:offerId,playerId,buyerId:clubId,sellerId:clubId.nullable(),contractRevision:integer,fee:integer.max(1000000000000),date:z.string(),responseDate:z.string(),expires:z.string(),activation:z.string().nullable(),buyerCounters:integer.max(2),sellerCounters:integer.max(2),status:z.enum(['submitted','countered','accepted','ready','queued','rejected','expired','withdrawn','completed']),reason:z.enum(['price','squad','ownership','funds','wages','reputation','competing']).nullable(),terms:offerTermsSchema.nullable()});
-export type Offer=z.infer<typeof offerSchema>;
+export const loanOfferSchema=offerSchema.extend({loanShare:z.union([z.literal(0),z.literal(50),z.literal(100)]).nullable()});
+export type Offer=z.infer<typeof loanOfferSchema>;
 export const transferEconomySchema=contractEconomySchema.extend({ledger:z.array(contractEconomySchema.shape.ledger.element.extend({kind:z.enum(['opening','sponsor','wages','overhead','gate','signingBonus','transferFee'])})).max(20000)});
 export const transferCareerSchema=scoutingCareerSchema.extend({date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),engineVersion:z.literal('0.4.3'),rulesetVersion:z.literal('exhibition-10'),players:z.array(transferablePlayerSchema).min(176).max(300),contracts:z.record(playerId,transferableContractSchema),match:historicalMatchSchema.nullable(),economy:transferEconomySchema,offers:z.array(offerSchema).max(5000)});
-export const careerSchema=transferCareerSchema.extend({engineVersion:z.literal('0.4.4'),rulesetVersion:z.literal('exhibition-11')});
+export const recruitingCareerSchema=transferCareerSchema.extend({engineVersion:z.literal('0.4.4'),rulesetVersion:z.literal('exhibition-11')});
+export const loanSchema=z.object({id:offerId,playerId,parent:clubId,borrower:clubId,ends:z.string().regex(/^\d{4}-06-30$/),share:z.union([z.literal(0),z.literal(50),z.literal(100)]),status:z.enum(['active','returned'])});
+export const careerSchema=recruitingCareerSchema.extend({engineVersion:z.literal('0.4.5'),rulesetVersion:z.literal('exhibition-12'),offers:z.array(loanOfferSchema).max(5000),loans:z.array(loanSchema).max(5000)});
 export type Career = z.infer<typeof careerSchema>;
 const commandBase = { commandId: z.string().uuid(), careerId: z.string().uuid(), expectedRevision: integer };
 export const commandSchema = z.discriminatedUnion('type', [
   z.object({ ...commandBase, type: z.literal('SelectLineup'), lineup: z.array(playerId).max(22) }),
   z.object({ ...commandBase, type: z.literal('StartMatch') }),
+  z.object({...commandBase,type:z.literal('SubmitLoan'),playerId,share:z.union([z.literal(0),z.literal(50),z.literal(100)])}),
   z.object({...commandBase,type:z.literal('SubmitOffer'),playerId,fee:integer.max(1000000000000)}),
   z.object({...commandBase,type:z.literal('CounterOffer'),offerId,fee:integer.max(1000000000000)}),
   z.object({...commandBase,type:z.literal('AcceptOffer'),offerId}),

@@ -8,14 +8,14 @@ import {useModal} from './input.ts';
 import s from './ContractsMenu.module.css';
 type Renewal=Omit<Extract<Command,{type:'RenewContract'}>,'careerId'|'commandId'|'expectedRevision'>;
 export function ContractsMenu({state,busy,confirm,close}:{state:Career;busy:boolean;confirm:(action:Renewal)=>Promise<boolean>;close:()=>void}){
- const players=state.players.filter(p=>p.clubId===state.clubId&&!p.academy);
+ const players=state.players.filter(p=>p.clubId===state.clubId&&state.contracts[p.id]!.ownerId===state.clubId&&!p.academy);
  const draftFor=(p:Player)=>({id:p.id,wage:String(desiredTerms(state,p).wage/100),years:Math.min(5,Number(state.contracts[p.id]!.ends!.slice(0,4))-Number(state.date.slice(0,4))+1),role:state.contracts[p.id]!.role});
  const [draft,setDraft]=useState(()=>draftFor(players[0]!));const [review,setReview]=useState(false);
  const dialog=useRef<HTMLDialogElement>(null);useModal(dialog);
  const player=players.find(p=>p.id===draft.id)!,contract=state.contracts[player.id]!,wage=parseEuro(draft.wage);
  const action:Renewal={type:'RenewContract',playerId:player.id,contractRevision:contract.revision,years:draft.years,wage:wage??0,bonus:4*(wage??0),role:draft.role};
  const error=wage===null?'PLAYER_TERMS':renewalError(state,action),bank=budgets(state,state.clubId);
- const weekly=bank.weekly-state.economy.wages[player.id]!+(wage??0);
+ const weekly=bank.committed-state.economy.wages[player.id]!+(wage??0);
  return <dialog ref={dialog} className={s.dialog} aria-label={t.contracts} onCancel={close}><header><h2>{t.contracts}</h2><button disabled={busy} onClick={close}>{t.close}</button></header>
   <div className={s.body}><div className={s.players} role="group" aria-label={t.contractPlayers}>{players.map(p=><button key={p.id} disabled={busy||review} aria-pressed={p.id===draft.id} onClick={()=>setDraft(draftFor(p))}><strong>{p.name}</strong><small>{p.role} / {state.contracts[p.id]!.ends}</small><span>{money(state.economy.wages[p.id]!)}</span></button>)}</div>
   <section className={s.terms}><h3>{player.name}</h3><p>{t.age}: {ageOn(contract.birthDate,state.date)} / {t.contractUntil}: {contract.ends}</p><p>{t.currentWage}: {money(state.economy.wages[player.id]!)}</p>

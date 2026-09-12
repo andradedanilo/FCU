@@ -2,7 +2,7 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.4 transfers, weekly AI recruitment and actionable Club news implemented; loans are next. Continue through authorized milestones without routine approval pauses.
+- Current milestone: v0.4 transfer/loan/finance software implemented and accepted on Windows. Continue through authorized milestones without routine approval pauses.
 - Last completed gate: v0.1 Windows prototype and owner layout review. Native Linux remains unverified; v0.2 is not marked complete.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
@@ -12,10 +12,10 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 44 registered cases in nine files (43 Vitest, one Electron journey). One recruitment milestone case adds deterministic choices, weekly limits, financial registration and managed-squad protection. Relevant market/save/scouting 13 cases passed in 1.10 seconds. Typecheck/lint pass. Full milestone suite remains scheduled after loans.
-- Evidence from latest change: offline 1280x720 signing news opens the correct negotiation; registration and Save still work. Screenshot work/club-news-720.png. AI transactions retain historical match membership and pass save validation.
-- Open issues/next action: loans and return, then v0.4 acceptance journey. Match probability formulas unchanged. Native Linux, low-end and physical-controller evidence remain unverified.
-- Build identity: app/engine 0.4.4, schema 12, exhibition-11. Renderer build .225 seconds. Last packaged baseline remains v0.3.2. Commit subject: Add bounded AI recruitment and actionable club news.
+- Test inventory/runtime: 46 registered cases in nine files (45 Vitest, one Electron journey). Two loan milestone scenarios cover ownership, split wages, dated return, lineup repair, malformed ownership and duplicate registration. Full unit/integration suite passed 45 cases in 2.86 seconds; typecheck/lint pass. The old-economy migration fixture was corrected to exclude free agents that did not exist in schema 7. The return scenario now honors an earlier queued January registration event before June. After the endpoint guard, eight relevant cases passed in 1.03 seconds and the affected full Electron journey passed again in 33.8 seconds; no second successful full unit run.
+- Evidence from latest change: offline 1280x720 100% loan review, registration, squad availability and Save passed. Manual helper corrected its checkbox label from Starting to Start; application behavior was valid. Screenshot work/loan-review-720.png. Full Windows journey passed in 33.8 seconds after fixing a test race by waiting for the displayed calendar date. Packaged Windows offline fullscreen launch, worker match, Save and process restart/Load passed. Smoke cleanup accounted for Windows packaged-app filesystem virtualization and removed only the verified generated career; pre-existing saves were preserved.
+- Open issues/next action: v0.5 scheduling/season world. The exhibition calendar ends June 30, 2027; future versions will replace that boundary with rollover. Match probability formulas unchanged. Native Linux, low-end and physical-controller evidence remain unverified.
+- Build identity: app/engine 0.4.5, schema 13, exhibition-12. Renderer gate build .184 seconds. Windows package release/build-IWb5sy; native Linux unavailable. Commit subject: Add shared-wage loans and automatic player returns.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
@@ -27,7 +27,7 @@ After each task replace the latest-evidence entry with build/commit identity, co
 
 | v0.3 (software implemented) | Condition, morale, training, injuries, discipline, eligibility, academy cover, added time and migrations | Windows: 33 cases in five files, full-season offline Electron journey, fixed 500-match calibration and manual half-time/injury UI | Native Linux and packaged save smoke for this build |
 
-| v0.4 (in progress) | Wage estimates, budgets, operating ledger, Club finances, renewals, scouting, calendar, transfers, free agents, AI recruitment and news | Relevant domain/save checks and offline manual UI | Loans and milestone journey |
+| v0.4 (software implemented) | Wage estimates, budgets, operating ledger, Club finances, renewals, scouting, calendar, transfers, free agents, AI recruitment, loans, returns and news | Windows 46 registered cases, full exhibition journey with transfer and loan, packaged offline launch/Save/restart | Native Linux |
 
 ## Gates and scope discipline
 

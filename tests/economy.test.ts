@@ -18,7 +18,7 @@ it('preserves operating cash through save validation and gives older careers onl
  const s=initial();const command={type:'StartMatch' as const,careerId:s.careerId,commandId:crypto.randomUUID(),expectedRevision:s.revision};const result=applyCommand(s,command);if(!result.ok)throw Error(result.error);
  expect(validateCareer(JSON.parse(canonical(result.value)))).toEqual(result.value);
  expect(applyCommand(result.value,command)).toEqual({ok:false,error:'STALE_STATE'});expect(result.value.economy).toEqual(s.economy);
- const old={...s,engineVersion:'0.3.2',rulesetVersion:'exhibition-6'};const migrated=migrateTimedCareer(old);
+ const old={...s,players:s.players.filter(p=>p.clubId!==null),engineVersion:'0.3.2',rulesetVersion:'exhibition-6'};const migrated=migrateTimedCareer(old);
  expect(migrated.economy.ledger).toHaveLength(8);expect(cash(migrated.economy,s.clubId)).toBe(250000000);expect(migrated.players).toEqual(s.players);
  const broken=structuredClone(result.value);delete broken.economy.wages[s.players[0]!.id];expect(()=>validateCareer(broken)).toThrow();
 });

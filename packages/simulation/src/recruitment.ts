@@ -36,7 +36,7 @@ export function recruit(state:Career){
    });
    const id=identifier(state,club.id,slot);
    let selected:Player|undefined;
-   for(const player of candidates){const proposed:Offer={id:id as Offer['id'],playerId:player.id,buyerId:club.id,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee:askingPrice(state,player),date:state.date,responseDate:state.date,expires:state.date,activation:null,buyerCounters:0,sellerCounters:0,status:'accepted',reason:null,terms:terms(state,player)};if(!dealError(state,proposed)){selected=player;break;}}
+   for(const player of candidates){const proposed:Offer={id:id as Offer['id'],playerId:player.id,buyerId:club.id,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee:askingPrice(state,player),loanShare:null,date:state.date,responseDate:state.date,expires:state.date,activation:null,buyerCounters:0,sellerCounters:0,status:'accepted',reason:null,terms:terms(state,player)};if(!dealError(state,proposed)){selected=player;break;}}
    if(!selected)break;
    const error=marketCommand(state,{type:'SubmitOffer',playerId:selected.id,fee:askingPrice(state,selected),careerId:state.careerId,expectedRevision:state.revision,commandId:id},club.id);
    if(error)break;

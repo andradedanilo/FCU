@@ -7,16 +7,19 @@ type World=Pick<Career,'players'|'clubs'|'fixtures'|'date'>;
 export function cash(economy:Career['economy'],club:ClubId):number {
  return economy.ledger.reduce((sum,entry)=>sum+entry.postings.reduce((value,p)=>value+(p.account===club?p.amount:0),0),0);
 }
-export function commitments(state:Pick<Career,'economy'|'players'>,club:ClubId):number {
- return state.players.filter(p=>p.clubId===club).reduce((sum,p)=>sum+state.economy.wages[p.id]!,0);
+export function commitments(state:Pick<Career,'economy'|'players'|'loans'>,club:ClubId,reserved=false):number {
+ return state.players.reduce((sum,p)=>{const wage=state.economy.wages[p.id]!,loan=state.loans.find(l=>l.playerId===p.id&&l.status==='active');
+  if(!loan)return sum+(p.clubId===club?wage:0);const share=Math.floor(wage*loan.share/100);
+  return sum+(loan.parent===club?(reserved?wage:wage-share):loan.borrower===club?share:0);
+ },0);
 }
 function attendance(capacity:number,reputation:number,ratio:number){return Math.floor(capacity*Math.max(.30,Math.min(.98,.40+reputation/200+ratio/10)));}
-export function budgets(state:Pick<Career,'economy'|'players'|'fixtures'>,club:ClubId){
+export function budgets(state:Pick<Career,'economy'|'players'|'fixtures'|'loans'>,club:ClubId){
  const account=state.economy.clubs.find(c=>c.clubId===club)!;
  const gate=state.fixtures.filter(f=>f.home===club).length*attendance(account.capacity,account.reputation,.5)*account.ticket;
  const wage=Math.floor(.60*(account.sponsorship+gate+account.lastPrizes)/52);
- const weekly=commitments(state,club);const balance=cash(state.economy,club);
- return {cash:balance,weekly,wage,transfer:Math.max(0,balance-13*weekly-4*account.overhead),overhead:account.overhead};
+ const weekly=commitments(state,club),committed=commitments(state,club,true);const balance=cash(state.economy,club);
+ return {cash:balance,weekly,committed,wage,transfer:Math.max(0,balance-13*committed-4*account.overhead),overhead:account.overhead};
 }
 // Signed postings represent equal debits and credits; generated money uses the external account.
 export function post(economy:Career['economy'],entry:LedgerEntry):boolean {
@@ -48,7 +51,7 @@ export function monday(date:string){
  const before=[0,31,59,90,120,151,181,212,243,273,304,334][month-1]!;
  return (365*y+Math.floor(y/4)-Math.floor(y/100)+Math.floor(y/400)+before+day+(leap&&month>2?1:0))%7===1;
 }
-export function settleDay(state:Pick<Career,'economy'|'players'>,date:string){
+export function settleDay(state:Pick<Career,'economy'|'players'|'loans'>,date:string){
  for(const club of state.economy.clubs){
   if(date.endsWith('-01'))external(state.economy,club.clubId,date,'sponsor',Math.floor(club.sponsorship/12)+(date.slice(5,7)==='06'?club.sponsorship%12:0));
   if(monday(date)){

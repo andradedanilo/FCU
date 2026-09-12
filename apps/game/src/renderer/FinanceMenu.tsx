@@ -13,7 +13,7 @@ export function FinanceMenu({state,close}:{state:Career;close:()=>void}){
  return <dialog ref={dialog} className={s.dialog} aria-label={t.finances} onCancel={close}>
   <header><div><p>{state.clubs.find(c=>c.id===state.clubId)!.name}</p><h2>{t.finances}</h2></div><button onClick={close}>{t.close}</button></header>
   <div className={s.metrics}>{[[t.cash,bank.cash],[t.transferBudget,bank.transfer],[t.weeklyWages,bank.weekly],[t.wageBudget,bank.wage]].map(([label,value])=><div key={label}><span>{label}</span><strong>{money(Number(value))}</strong></div>)}</div>
-  <p className={s.explanation}>{t.financeEstimate}</p><p>{t.reserveFormula}: {money(bank.cash)} - 13 x {money(bank.weekly)} - 4 x {money(bank.overhead)}.</p>
+  <p className={s.explanation}>{t.financeEstimate}</p><p>{t.reserveFormula}: {money(bank.cash)} - 13 x {money(bank.committed)} - 4 x {money(bank.overhead)}.</p><p>{t.loanReserve}</p>
   <section className={s.history}><h3>{t.ledger}</h3><table><thead><tr><th>{t.date}</th><th>{t.transaction}</th><th>{t.amount}</th><th>{t.balance}</th></tr></thead><tbody>{history.map(entry=><tr key={entry.id}><td>{entry.date}</td><td>{t.ledgerKind[entry.kind]}</td><td className={entry.amount<0?s.cost:s.income}>{money(entry.amount)}</td><td>{money(entry.balance)}</td></tr>)}</tbody></table></section>
  </dialog>;
 }
