@@ -3,7 +3,7 @@
 ## Status - update this block, do not create new status files
 
 - Current milestone: v0.1, implementation in progress.
-- Last completed gate: none; domain slice implemented, playable interface pending.
+- Last completed gate: none; text-mode desktop playable, Three.js and final platform checks pending.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; early Three.js experiment with a later text/2D alternative.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
 - Product assumptions awaiting optional revision: English, premium single-player, fictional second tiers, simplified rules. See README.
@@ -12,9 +12,9 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 5 registered domain cases in 1 file, 0 E2E; Vitest 1.12 seconds. Cold npm install: 19 seconds. Ceilings live only in AGENTS.md.
-- Evidence from latest change: TypeScript upgraded to 7.0.2 at owner request; typecheck/lint passed in under 3 seconds with the official lint API compatibility alias. Domain commit 7ea2649 verified on origin/main. deterministic domain, 176 fictional players, complete 56-fixture schedule, lineup validation and season accounting. Fixed probe: seeds 1..500, fixture-00-0, 500 matches in 149 ms; 1.73 goals/match, 33.6% draws, 21.992 shots/match. Goals below future v0.3 band; no silent balance adjustment. Cards/injuries intentionally deferred.
-- Open issues/next action: implement worker, desktop persistence and playable UI; then visual experiment. Linux and owner visual evaluation remain unverified.
+- Test inventory/runtime: 9 registered cases in 2 files, 0 E2E; domain 1.12 seconds, save suite 0.232 seconds. Cold npm install 19 seconds; reproducible npm ci 5 seconds after one diagnosed open-executable retry. Ceilings live only in AGENTS.md.
+- Evidence from latest change: worker-owned career, Home/Squad/Match/Table, manual save/load and round autosaves. Typecheck 7.0.2 and lint pass; save suite 4/4; text build 1.1 seconds plus main bundling. Actual Electron new-career-to-Home check succeeded; screenshot work/home.png inspected. Initial startup deadlock fixed by moving readiness out of top-level ESM await. Fixed 500-match probe previously recorded: seeds 1..500, 1.73 goals/match, 33.6% draws, 21.992 shots/match in 149 ms; below future goal band, no tuning.
+- Open issues/next action: add Three.js highlights and fallback; final Windows packaging/E2E. Linux and owner visual evaluation unverified. v0.1 retains all immutable autosaves; no pruning yet.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, empty remote fetched successfully. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
