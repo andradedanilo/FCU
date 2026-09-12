@@ -1,3 +1,4 @@
+import {recruit} from './recruitment.ts';
 import {nextMarketDate,processMarket} from './market.ts';
 import type {Career,FailureCode} from '../../contracts/src/index.ts';
 import {addDays} from './availability.ts';
@@ -16,7 +17,7 @@ export function advanceCalendar(state:Career,target:'day'|'event'):FailureCode|n
   state.date=addDays(state.date,1);
   state.players=state.players.map(p=>({...p,condition:Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>state.date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced']))}));
   settleDay(state,state.date);
-  const report=finishScouting(state),market=processMarket(state);if(report||market)break;
+  const report=finishScouting(state),market=processMarket(state);recruit(state);if(report||market)break;
  }
  return null;
 }

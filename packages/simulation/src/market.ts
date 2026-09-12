@@ -1,4 +1,4 @@
-import type {Career,Player,PlayerId,Offer,OfferId,Command,FailureCode} from '../../contracts/src/index.ts';
+import type {Career,ClubId,Player,PlayerId,Offer,OfferId,Command,FailureCode} from '../../contracts/src/index.ts';
 import {addDays,validDate} from './availability.ts';
 import {marketValue,desiredTerms,contractEnd} from './contracts.ts';
 import {budgets,post} from './economy.ts';
@@ -31,7 +31,7 @@ export function dealError(state:Career,offer:Offer):FailureCode|null {
  if(bank.cash-offer.fee-terms.bonus<13*weekly+4*bank.overhead)return 'INSUFFICIENT_FUNDS';
  return null;
 }
-function register(state:Career,offer:Offer):FailureCode|null {
+export function register(state:Career,offer:Offer):FailureCode|null {
  const error=dealError(state,offer);if(error)return error;
  const feeId=`transfer/${offer.id}`,bonusId=`signing/${offer.id}`;
  if(state.economy.ledger.some(e=>e.id===feeId||e.id===bonusId))return 'OFFER_CHANGED';
@@ -45,13 +45,13 @@ function register(state:Career,offer:Offer):FailureCode|null {
  return null;
 }
 type MarketCommand=Extract<Command,{type:'SubmitOffer'|'CounterOffer'|'AcceptOffer'|'OfferTerms'|'ConfirmDeal'|'WithdrawOffer'}>;
-export function marketCommand(state:Career,action:MarketCommand):FailureCode|null {
+export function marketCommand(state:Career,action:MarketCommand,buyer:ClubId=state.clubId):FailureCode|null {
  if(action.type==='SubmitOffer'){
   const player=state.players.find(p=>p.id===action.playerId);
-  if(!player||player.clubId===state.clubId||player.academy||state.offers.length>=5000||state.offers.some(o=>o.playerId===player.id&&o.buyerId===state.clubId&&activeOffer(o))||(player.clubId===null&&action.fee!==0))return 'INVALID_COMMAND';
-  state.offers.push({id:action.commandId as OfferId,playerId:player.id,buyerId:state.clubId,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee:action.fee,date:state.date,responseDate:addDays(state.date,1),expires:addDays(state.date,7),activation:null,buyerCounters:0,sellerCounters:0,status:player.clubId===null?'accepted':'submitted',reason:null,terms:null});return null;
+  if(!player||player.clubId===buyer||player.academy||state.offers.length>=5000||state.offers.some(o=>o.playerId===player.id&&o.buyerId===buyer&&activeOffer(o))||(player.clubId===null&&action.fee!==0))return 'INVALID_COMMAND';
+  state.offers.push({id:action.commandId as OfferId,playerId:player.id,buyerId:buyer,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee:action.fee,date:state.date,responseDate:addDays(state.date,1),expires:addDays(state.date,7),activation:null,buyerCounters:0,sellerCounters:0,status:player.clubId===null?'accepted':'submitted',reason:null,terms:null});return null;
  }
- const offer=state.offers.find(o=>o.id===action.offerId&&o.buyerId===state.clubId);
+ const offer=state.offers.find(o=>o.id===action.offerId&&o.buyerId===buyer);
  if(!offer||!activeOffer(offer)||!ownership(state,offer)||(offer.status!=='queued'&&state.date>=offer.expires))return 'OFFER_CHANGED';
  if(action.type==='WithdrawOffer'){offer.status='withdrawn';offer.activation=null;return null;}
  if(action.type==='CounterOffer'){

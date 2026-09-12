@@ -2,7 +2,7 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.4 staged club transfers and free-agent registration implemented; loans and weekly recruitment are next. Continue through authorized milestones without routine approval pauses.
+- Current milestone: v0.4 transfers, weekly AI recruitment and actionable Club news implemented; loans are next. Continue through authorized milestones without routine approval pauses.
 - Last completed gate: v0.1 Windows prototype and owner layout review. Native Linux remains unverified; v0.2 is not marked complete.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
@@ -12,10 +12,10 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 43 registered cases in nine files (42 Vitest, one Electron journey). Three transfer milestone scenarios cover negotiations, atomic fees/ownership, historical membership, free agents, expiry, window queues and migration. Relevant simulation/save/contracts/scouting 27 cases passed in 1.58 seconds; transfer scenarios three cases in .411 seconds. Typecheck/lint pass. Full milestone suite remains scheduled after loans and AI/news.
-- Evidence from latest change: offline 1280x720 free-agent player terms, full cost review, registration and Save passed. Screenshot work/transfer-review-720.png. Club-transfer domain checks preserve a completed match across an opponent signing and reject repeat confirmation.
-- Open issues/next action: loans and return, weekly AI recruitment, actionable news and v0.4 acceptance journey. Match probability formulas unchanged. Native Linux, low-end and physical-controller evidence remain unverified.
-- Build identity: app/engine 0.4.3, schema 11, exhibition-10. Renderer build .227 seconds. Last packaged baseline remains v0.3.2. Commit subject: Add staged transfers and free-agent registration.
+- Test inventory/runtime: 44 registered cases in nine files (43 Vitest, one Electron journey). One recruitment milestone case adds deterministic choices, weekly limits, financial registration and managed-squad protection. Relevant market/save/scouting 13 cases passed in 1.10 seconds. Typecheck/lint pass. Full milestone suite remains scheduled after loans.
+- Evidence from latest change: offline 1280x720 signing news opens the correct negotiation; registration and Save still work. Screenshot work/club-news-720.png. AI transactions retain historical match membership and pass save validation.
+- Open issues/next action: loans and return, then v0.4 acceptance journey. Match probability formulas unchanged. Native Linux, low-end and physical-controller evidence remain unverified.
+- Build identity: app/engine 0.4.4, schema 12, exhibition-11. Renderer build .225 seconds. Last packaged baseline remains v0.3.2. Commit subject: Add bounded AI recruitment and actionable club news.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
@@ -27,7 +27,7 @@ After each task replace the latest-evidence entry with build/commit identity, co
 
 | v0.3 (software implemented) | Condition, morale, training, injuries, discipline, eligibility, academy cover, added time and migrations | Windows: 33 cases in five files, full-season offline Electron journey, fixed 500-match calibration and manual half-time/injury UI | Native Linux and packaged save smoke for this build |
 
-| v0.4 (in progress) | Wage estimates, budgets, operating ledger, Club finances, renewals, scouting, calendar, transfers and free agents | Relevant domain/save checks and offline manual UI | Loans, AI, news and milestone journey |
+| v0.4 (in progress) | Wage estimates, budgets, operating ledger, Club finances, renewals, scouting, calendar, transfers, free agents, AI recruitment and news | Relevant domain/save checks and offline manual UI | Loans and milestone journey |
 
 ## Gates and scope discipline
 

@@ -1,6 +1,6 @@
 import {OfferPanel,type MarketAction} from './OfferPanel.tsx';
 import {useRef,useState} from 'react';
-import type {Career,Command,Role} from '../../../../packages/contracts/src/index.ts';
+import type {Career,Command,Role,PlayerId} from '../../../../packages/contracts/src/index.ts';
 import {knownAbility} from '../../../../packages/simulation/src/scouting.ts';
 import {overall} from '../../../../packages/simulation/src/ratings.ts';
 import {ageOn} from '../../../../packages/simulation/src/contracts.ts';
@@ -8,12 +8,12 @@ import {text as t} from '../../../../packages/presentation/src/text.ts';
 import {useModal} from './input.ts';
 import s from './ContractsMenu.module.css';
 type ScoutAction=Omit<Extract<Command,{type:'ScoutPlayer'}>,'careerId'|'commandId'|'expectedRevision'>|Omit<Extract<Command,{type:'SetShortlist'}>,'careerId'|'commandId'|'expectedRevision'>;
-export function ScoutingMenu({state,busy,command,close}:{state:Career;busy:boolean;command:(action:ScoutAction|MarketAction)=>Promise<boolean>;close:()=>void}){
+export function ScoutingMenu({state,initialPlayer,busy,command,close}:{state:Career;initialPlayer:PlayerId|null;busy:boolean;command:(action:ScoutAction|MarketAction)=>Promise<boolean>;close:()=>void}){
  const dialog=useRef<HTMLDialogElement>(null);useModal(dialog);
- const [marketView,setMarketView]=useState('all');
- const [negotiating,setNegotiating]=useState(false);
- const [role,setRole]=useState<Role|'all'>('all'),[shortlisted,setShortlisted]=useState(false),[selected,setSelected]=useState(state.players.find(p=>p.clubId!==state.clubId)!.id);
- const candidates=state.players.filter(p=>(p.clubId!==state.clubId||state.offers.some(o=>o.playerId===p.id))&&!p.academy&&(marketView==='all'||(marketView==='free'?p.clubId===null:state.offers.some(o=>o.playerId===p.id)))&&(role==='all'||p.role===role)&&(!shortlisted||state.scouting.shortlist.includes(p.id)));
+ const [marketView,setMarketView]=useState(initialPlayer&&state.offers.some(o=>o.buyerId===state.clubId&&o.playerId===initialPlayer)?'offers':'all');
+ const [negotiating,setNegotiating]=useState(!!initialPlayer&&state.offers.some(o=>o.buyerId===state.clubId&&o.playerId===initialPlayer));
+ const [role,setRole]=useState<Role|'all'>('all'),[shortlisted,setShortlisted]=useState(false),[selected,setSelected]=useState(initialPlayer??state.players.find(p=>p.clubId!==state.clubId)!.id);
+ const candidates=state.players.filter(p=>(p.clubId!==state.clubId||state.offers.some(o=>o.buyerId===state.clubId&&o.playerId===p.id))&&!p.academy&&(marketView==='all'||(marketView==='free'?p.clubId===null:state.offers.some(o=>o.buyerId===state.clubId&&o.playerId===p.id)))&&(role==='all'||p.role===role)&&(!shortlisted||state.scouting.shortlist.includes(p.id)));
  const player=candidates.find(p=>p.id===selected)??candidates[0];
  const report=player?state.scouting.reports[player.id]:null;
  const own=player?state.players.filter(p=>p.clubId===state.clubId&&p.role===player.role).sort((a,b)=>overall(b)-overall(a))[0]:null;

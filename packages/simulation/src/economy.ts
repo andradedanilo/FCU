@@ -42,7 +42,7 @@ export function createEconomy(world:World,rating:(p:Player)=>number):Economy {
  for(const player of world.players)if(player.clubId===null)economy.wages[player.id]=0;
  return economy;
 }
-function monday(date:string){
+export function monday(date:string){
  const [year,month,day]=date.split('-').map(Number) as [number,number,number];const y=year-1;
  const leap=year%4===0&&(year%100!==0||year%400===0);
  const before=[0,31,59,90,120,151,181,212,243,273,304,334][month-1]!;

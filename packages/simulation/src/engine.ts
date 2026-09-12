@@ -7,7 +7,7 @@ export {overall,effectiveRating} from './ratings.ts';
 import {createEconomy,settleDay,settleGate,validateEconomy} from './economy.ts';
 import {halfBoundary,completeMinute} from './matchTime.ts';
 import {available,activeLineup,needsDecision,incidents,settleAvailability,addDays,validDate} from './availability.ts';
-import { careerSchema, scoutingCareerSchema, renewalCareerSchema, financialCareerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
+import { careerSchema, transferCareerSchema, scoutingCareerSchema, renewalCareerSchema, financialCareerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
 import { clubs } from '../../contracts/src/identity.ts';
 import { draw, stream } from './rng.ts';
 
@@ -53,7 +53,7 @@ export function createCareer(careerId: string, seed: number, club: ClubId): Care
   }));
   players.push(...freePlayers());
   if (!clubs.some(c => c.id === club)) throw new Error('INVALID_COMMAND');
-  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.4.3',training:'balanced', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null };
+  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], engineVersion:'0.4.4',training:'balanced', rulesetVersion:rules.version, snapshotId:'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:1, date:'2026-07-01', clubs, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:schedule(clubs.map(c=>c.id)), round:0, match:null };
   const state=careerSchema.parse({...base,economy:createEconomy(base,overall),contracts:createContracts(base),scouting:{shortlist:[],active:null,reports:{}},offers:[]});settleDay(state,state.date);return state;
 }
 const emptyStats = () => ({shots:0,onTarget:0,quality:0,possession:0});
@@ -103,8 +103,9 @@ export function migrateRenewalCareer(input:unknown):Career {
 }
 export function migrateScoutingCareer(input:unknown):Career {
  const old=scoutingCareerSchema.parse(input),free=freePlayers();
- return validateCareer({...old,engineVersion:'0.4.3',rulesetVersion:rules.version,players:[...old.players,...free],contracts:{...old.contracts,...createContracts({players:free,date:old.date})},economy:{...old.economy,wages:{...old.economy.wages,...Object.fromEntries(free.map(p=>[p.id,0]))}},offers:[],match:old.match?{...old.match,participants:Object.fromEntries(old.players.filter(p=>p.clubId===old.match!.home||p.clubId===old.match!.away).map(p=>[p.id,p.clubId]))}:null});
+ return migrateTransferCareer({...old,engineVersion:'0.4.3',rulesetVersion:'exhibition-10',players:[...old.players,...free],contracts:{...old.contracts,...createContracts({players:free,date:old.date})},economy:{...old.economy,wages:{...old.economy.wages,...Object.fromEntries(free.map(p=>[p.id,0]))}},offers:[],match:old.match?{...old.match,participants:Object.fromEntries(old.players.filter(p=>p.clubId===old.match!.home||p.clubId===old.match!.away).map(p=>[p.id,p.clubId]))}:null});
 }
+export function migrateTransferCareer(input:unknown):Career {const old=transferCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.4.4',rulesetVersion:rules.version});}
 export function validBench(players:Player[],club:ClubId,lineup:PlayerId[],bench:PlayerId[]):boolean {
  return bench.length<=9&&new Set(bench).size===bench.length&&bench.every(id=>!lineup.includes(id)&&players.some(p=>p.id===id&&p.clubId===club));
 }

@@ -1,3 +1,4 @@
+import {recruit} from '../packages/simulation/src/recruitment.ts';
 import {it,expect} from 'vitest';
 import {createCareer,applyCommand,validateCareer,migrateScoutingCareer} from '../packages/simulation/src/engine.ts';
 import {askingPrice,processMarket,windowOpen} from '../packages/simulation/src/market.ts';
@@ -41,4 +42,14 @@ it('queues outside the window, rechecks reserves on opening and migrates match m
  const drained=structuredClone(s);post(drained.economy,{id:'test-cost',date:drained.date,kind:'overhead',postings:[{account:drained.clubId,amount:-cash(drained.economy,drained.clubId)},{account:'external',amount:cash(drained.economy,drained.clubId)}]});drained.date='2027-01-01';processMarket(drained);expect(drained.offers[0]!.status).toBe('rejected');expect(drained.offers[0]!.reason).toBe('funds');
  s.date='2027-01-01';processMarket(s);expect(s.offers[0]!.status).toBe('completed');expect(validateCareer(s)).toEqual(s);
  expect(windowOpen('2026-08-31')).toBe(true);expect(windowOpen('2026-09-01')).toBe(false);expect(windowOpen('2027-01-31')).toBe(true);expect(windowOpen('2027-02-01')).toBe(false);
+});
+
+it('recruits deterministically within weekly limits and protects the managed squad',()=>{
+ const s=fixture(initial());s.date='2026-07-06';const club=clubs[1]!.id;
+ const released=s.players.filter(p=>p.clubId===club&&p.role==='DEF').slice(0,2);
+ for(const p of released){p.clubId=null;s.contracts[p.id]={...s.contracts[p.id]!,ownerId:null,ends:null,revision:1};s.economy.wages[p.id]=0;}
+ const original=validateCareer(structuredClone(s)),human=s.players.filter(p=>p.clubId===s.clubId).map(p=>p.id),history=canonical(s.match),before=canonical(s.economy.ledger);
+ recruit(s);recruit(original);expect(canonical(s)).toBe(canonical(original));expect(s.offers.length).toBeGreaterThan(0);expect(s.offers.filter(o=>o.buyerId===club).length).toBeLessThanOrEqual(2);expect(s.offers.some(o=>o.sellerId===s.clubId||o.buyerId===s.clubId)).toBe(false);
+ const repeated=canonical(s);recruit(s);expect(canonical(s)).toBe(repeated);expect(s.players.filter(p=>p.clubId===s.clubId).map(p=>p.id)).toEqual(human);expect(canonical(s.match)).toBe(history);expect(validateCareer(s)).toEqual(s);
+ s.date='2026-07-07';processMarket(s);recruit(s);expect(s.offers.some(o=>o.status==='completed')).toBe(true);expect(canonical(s.economy.ledger)).not.toBe(before);expect(validateCareer(s)).toEqual(s);
 });
