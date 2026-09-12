@@ -4,17 +4,17 @@ import {it,expect} from 'vitest';
 import {createCareer,startMatch,advanceMatch,applyCommand,standings} from '../packages/simulation/src/engine.ts';
 import {clubs} from '../packages/contracts/src/identity.ts';
 import {canonical} from '../packages/contracts/src/index.ts';
-import {projectHighlight,sampleHighlight,selectHighlight,clockLabel,minuteDuration} from '../packages/presentation/src/highlights.ts';
+import {projectHighlight,highlightFrame,selectHighlight,clockLabel,minuteDuration} from '../packages/presentation/src/highlights.ts';
 it('projects committed identity and score without changing the career or illustrating a pass',()=>{
  const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);state.match=advanceMatch(startMatch(state,state.fixtures[0]!),state.players,45);
  const before=canonical(state);const goal=state.match.events.find(e=>e.type==='goal')!;const pass=state.match.events.find(e=>e.type==='pass')!;
  const h=projectHighlight(state,goal)!;expect(h.player).toBe(state.players.find(p=>p.id===goal.playerId)!.name);expect(h.color).toBe(state.clubs.find(c=>c.id===goal.clubId)!.color);expect(h.score).toBe(`${goal.homeGoals} - ${goal.awayGoals}`);expect(projectHighlight(state,pass)).toBeNull();expect(canonical(state)).toBe(before);
 });
-it('places a goal inside the drawn goal before its celebration',()=>{
- const shot=sampleHighlight('goal',.59);expect(shot.phase).toBe('shot');expect(shot.ballX).toBeGreaterThan(43);expect(shot.ballX).toBeLessThan(277);expect(shot.ballY).toBeGreaterThan(32);expect(shot.ballY).toBeLessThan(91);expect(sampleHighlight('goal',.7).phase).toBe('reaction');expect(sampleHighlight('goal',.59)).toEqual(shot);
+it('holds preparation until the result cut, then holds the goal celebration',()=>{
+ expect(highlightFrame('goal',0)).toBe('prepare');expect(highlightFrame('goal',.39)).toBe('prepare');expect(highlightFrame('goal',.4)).toBe('goal');expect(highlightFrame('goal',1)).toBe('goal');
 });
-it('separates a held save from a miss outside the drawn posts',()=>{
- const saved=sampleHighlight('save',1);expect(saved.ballX).toBe(saved.keeperX);expect(saved.ballY).toBe(saved.keeperY);const missed=sampleHighlight('shot',1);expect(missed.ballX).toBeGreaterThan(281);expect(missed.ballY).toBeGreaterThan(32);expect(missed.ballY).toBeLessThan(95);
+it('uses distinct saved-shot and missed-shot reaction stills',()=>{
+ expect(highlightFrame('save',0)).toBe('prepare');expect(highlightFrame('shot',0)).toBe('prepare');expect(highlightFrame('save',.4)).toBe('save');expect(highlightFrame('shot',.4)).toBe('shot');expect(highlightFrame('save',1)).toBe('save');expect(highlightFrame('shot',1)).toBe('shot');
 });
 it('curates misses without changing or dropping recorded match outcomes',()=>{
  const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);
@@ -34,9 +34,9 @@ it('curates misses without changing or dropping recorded match outcomes',()=>{
  expect(selectHighlight(match.events,match.events.at(-1)!.order)).toBeUndefined();
 });
 
-it('keeps the visual clock inside its committed minute and draws attacks toward the top',()=>{
+it('keeps the visual clock inside its committed minute without changing still-frame selection',()=>{
  expect(clockLabel(12,300,600)).toBe('12:30');expect(clockLabel(12,900,600)).toBe('12:59');expect(clockLabel(45,300,600)).toBe('45:00');expect(clockLabel(90,999,600)).toBe('90:00');expect(clockLabel(47,300,600,{phase:'first',addedTime:[3,null]})).toBe('45+2:30');expect(clockLabel(94,300,600,{phase:'finished',addedTime:[3,1]})).toBe('90+1:00');expect(minuteDuration([],0)).toBe(600);
- expect(sampleHighlight('goal',.25).runnerY).toBeLessThan(sampleHighlight('goal',0).runnerY);expect(sampleHighlight('goal',.58).ballY).toBeLessThan(sampleHighlight('goal',.3).ballY);
+ expect(highlightFrame('goal',.2)).toBe(highlightFrame('goal',.3));
 });
 
 it('uses common keyboard and controller actions with a neutral stick dead zone',()=>{

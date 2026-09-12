@@ -12,7 +12,7 @@
 .commentary li.goal{color:#ffe2a0;background:#364e4c}
 .analysis{min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:14px}
 .highlight{min-height:0;display:flex;flex-direction:column;justify-content:center;background:#081021;border:2px solid #7286a0;padding:14px}
-.highlight canvas{display:block;width:100%;aspect-ratio:16/9;image-rendering:pixelated}
+.highlight img{display:block;width:100%;aspect-ratio:16/9;image-rendering:pixelated}
 .clipLabel{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:8px 10px;background:#091c35;color:#ffdd90}
 .clipLabel span{font:13px monospace}
 .clipLabel button{font-size:12px;min-height:32px;padding:5px 9px;flex-shrink:0}
@@ -23,7 +23,7 @@
 .notice{font-size:14px;padding:8px;color:#e7c880}
 
 .picture{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden}
-.highlight canvas{height:100%;object-fit:contain}
+.highlight img{height:100%;object-fit:contain}
 .analysis>section{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;padding:10px 16px;border:2px solid #7286a0}
 .analysis>section>h3,.analysis>section>header{grid-column:1/-1}
 .analysis>section>h3{font-size:16px;margin:4px 0 10px}
@@ -35,3 +35,8 @@
 @media(max-width:750px){.stage{grid-template-columns:1fr;overflow:auto}.highlight{min-height:260px}.analysis{min-height:520px}.commentary{min-height:240px}}
 
 .commentary li.yellow{border-left:5px solid #e8cd61;color:#fff0b5}.commentary li.incident{border-left:5px solid #de675c;color:#ffd2c5;background:#523a43}
+
+.highlight img[hidden]{display:none}
+.clipLabel span{display:flex;flex-direction:column;gap:4px;padding-left:8px}
+.clipLabel strong{font:900 18px monospace;letter-spacing:1px}
+.clipLabel small{font:12px monospace}

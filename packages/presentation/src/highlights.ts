@@ -29,9 +29,7 @@ export function clockLabel(tick:number,elapsed:number,duration:number,match?:Pic
  const seconds=(match?match.phase==='interval'||match.phase==='extraInterval'||match.phase==='finished':tick===45||tick===90)?0:Math.min(59,Math.floor(Math.max(0,elapsed)/duration*60));
  return `${matchMinute(tick,match?.addedTime[0]??0,match?.addedTime[1]??0,match?.extraTime??false)}:${String(seconds).padStart(2,'0')}`;
 }
-export function sampleHighlight(kind:HighlightKind,progress:number) {
-  const p=Math.max(0,Math.min(1,progress));
-  const flight=Math.max(0,Math.min(1,(p-.28)/.32));
-  const finish=kind==='goal'?{x:92,y:76}:kind==='save'?{x:200,y:84}:{x:305,y:82};
-  return {phase:p<.28?'approach':p<.6?'shot':'reaction',runnerX:142,runnerY:170-Math.min(1,p/.28)*20,ballX:151+(finish.x-151)*flight,ballY:140+(finish.y-140)*flight-Math.sin(flight*Math.PI)*9,keeperX:160+40*flight,keeperY:84};
+export type HighlightFrame='prepare'|HighlightKind;
+export function highlightFrame(kind:HighlightKind,progress:number):HighlightFrame {
+  return progress<.4?'prepare':kind;
 }
