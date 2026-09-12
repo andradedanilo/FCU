@@ -1,0 +1,75 @@
+# Dependencies and generated builds (including nested workspace packages)
+node_modules/
+dist/
+dist-electron/
+out/
+release/
+coverage/
+playwright-report/
+test-results/
+.vite/
+.cache/
+.turbo/
+*.tsbuildinfo
+
+# Repository-local scratch and generated deliverables
+/work/
+/outputs/
+/artifacts/
+/tmp/
+/temp/
+
+# Local environment and credentials; track only sanitized templates
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+/secrets/
+/.secrets/
+/private/
+
+# Private roster source material and publisher state
+/data/raw/
+/data/private/
+/data/staging/
+/data/provider-cache/
+/data/editorial-private/
+/data/contracts/
+/data/signing-keys/
+/data/release-packs/
+/apps/roster-tool/.local/
+/apps/roster-tool/private/
+
+# Local gameplay state, never source fixtures
+/saves/
+/userdata/
+/user-data/
+/logs/
+*.log
+*.dmp
+
+# Steam developer SDK/tools/local app ID (runtime files packaged separately)
+/vendor/steamworks-sdk/
+/tools/steamcmd/
+steam_appid.txt
+
+# Local editor/agent state
+.idea/
+.vscode/
+.vs/
+.codex/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Deliberately NOT ignored: source, assets/original, data/fictional,
+# package.json, package-lock.json, build configs and sanitized env examples.
+# Also tracked: README.md, PROJECT_BRIEF.md, AGENTS.md, docs/ and .gitignore.

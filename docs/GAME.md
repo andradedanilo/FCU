@@ -1,0 +1,168 @@
+# Football Club Universe - game design and behavior contract
+
+Use Football Club Universe on the title screen and FCU in compact branding. Mode labels are FCU Career and FCU Dream Club. Store these strings centrally; never use display branding as entity/save identity.
+
+## 1. Experience and scope
+
+One more match, one more signing, one more season. Favor visible consequences, readable numbers and a living career over administrative detail. Target a first match within five minutes of New Career; normal match presentation 60-120 seconds, adjustable speed and instant finish; experienced play with delegated routines should complete a season in two to four hours. These are playtest targets, not measurements already achieved.
+
+Single-player club management only. One user-controlled club at a time; career never depends on an internet service. Choose any playable club, save slot, published roster snapshot and a seed. Date starts 1 July of the roster's season start year. A later real-world snapshot is an alternate starting database, not a replay of already played real results. Say this on New Career. Normal is the sole competitive ruleset at launch. An optional "cannot be fired" setting marks the career assisted; it does not change match probabilities.
+
+Launch includes five country systems: England, Spain, France, Italy and Germany. Top-division membership comes from the licensed selected season, not a permanently hardcoded club list. Each has a 16-club fictional second division. In a development world the top divisions contain 20/20/18/20/18 clubs respectively; these are fixture parameters, not a guarantee of current real league sizes. Keep all ten divisions active; do not create loaded-versus-unloaded competitive advantages. No third tier at launch; bottom of tier two stays there. Clearly label the simplified mixed football world.
+
+City-based fictional club identities are the owner-selected default direction, with real senior roster data still targeted for launch. Assume rights/provider availability are handled. Keep real-name identities as an optional profile. Fictional development players are temporary fixtures, separate from club branding. Legal reference notes in DATA are not additional gates.
+
+### Approved city-based club identity direction
+
+Keep the city or regional connection recognizable and give the club a believable alternate football identity. Avoid one-letter spelling jokes and exaggerated mascot names. Humor is optional in nicknames, chants and commentary. The owner approved the following starter names creatively; they are not a claim of trademark availability. Use original badges, kit artwork and sponsor designs rather than copying existing assets.
+
+| Source club reference (publisher/editorial only) | FCU display name |
+| --- | --- |
+| Manchester United | Manchester Redside |
+| Manchester City | Manchester Sky FC |
+| Liverpool | Liverpool Dockside |
+| Everton | Mersey Blue FC |
+| Arsenal | North London Athletic |
+| Chelsea | West London Royal |
+| Real Madrid | Madrid Imperial |
+| Atletico Madrid | Madrid Metropolitan |
+| Barcelona | Barcelona Sporting |
+| Bayern Munich | Munich Royal |
+| Inter Milan | Milano International |
+| AC Milan | Milano Rossonero |
+
+For v0.1 use the first eight names above in a clearly labeled development exhibition league with fictional players and balanced generated abilities. This cross-country fixture exists only to demonstrate the 14-round loop; do not present it as an actual national league. Barcelona Sporting, Munich Royal and the Milan clubs are reserved starter identities for later world expansion. At v0.5 place mapped clubs in the appropriate country systems. Complete other club identities in the same city-based style; do not randomly rename approved entries.
+
+An alias changes presentation only, never strength, schedule, stable identity or match outcomes. Switching profiles inside existing saves is out of scope; select and freeze it at new-game creation. Names shown in news, history, cards, achievements, diagnostics intended for players and menus must all resolve through the same profile. Changing club names does not automatically resolve player-name, likeness, artwork or underlying dataset questions; do not make that claim in the product or documents.
+
+## 2. Main loop and interface
+
+Home shows next fixture, league position, cash, wage headroom, fitness/injury alerts and at most three decision cards. Sidebar: Home, Squad, Tactics, Transfers, Competitions, Club, Career. A persistent Continue button advances only until the next actionable decision or fixture. News that requires no decision goes into a digest; it must not require acknowledgement.
+
+Squad uses a sortable table: position, name, age, ability, condition, morale, injury/ban, wage, contract expiry. Click a row once for a side panel with attributes, recent form, career history and actions. Back restores filters and scroll position. Compare two players in the same panel. Search by name, position, affordability, contract status and previously played for club. Save lineup presets with automatic warnings when eligibility changes. Assistant suggestions explain their top two reasons and never silently change assignments.
+
+Provide full UI scaling 100/125/150/175%, resizable layouts at 1280*720 through 1920*1080 and 200% OS scaling. At large zoom allow explicit horizontal table scrolling; never hide primary actions offscreen. Keyboard navigation, visible focus, tooltips on focus, status icons with text, color-independent card/injury indicators, reduced motion, captions and separate music/effects volume are mandatory. Escape closes the top modal; a modal can never trap the user. Confirm spending with a summary of immediate and ongoing cost; avoid confirmation dialogs for routine navigation.
+
+## 3. Players, squads and tactics
+
+Persistent player attributes, all integer 1-100: goalkeeping, tackling, passing, shooting, pace, stamina, discipline. Store primary position GK/DEF/MID/FWD and optional secondary positions; real detailed positions map to these broad roles with provenance. Overall is the rounded mean of role weights: GK .70 goalkeeping/.15 passing/.15 stamina; DEF .60 tackling/.20 pace/.20 passing; MID .60 passing/.20 stamina/.20 tackling; FWD .60 shooting/.20 pace/.20 passing. This is an original game rating, not a provider's scouting assessment.
+
+Condition and morale are 0-100. Hidden potential 1-100 bounds development. Own attributes are exact; scouted opponents have estimated overall ranges until fully scouted. Never expose potential as a guaranteed outcome. Players also have DOB, nationality, current club registration, owning club, contract, season statistics and stable history IDs. A loan has a different owner and playing club. Active registration limit is 30 contracted/loan-in players, with an additional academy list of at most eight. Imported senior players above that limit remain contracted but inactive, as specified in DATA; buying/loaning in another player requires an active vacancy. Warnings precede expiry and loss of eligibility.
+
+Supported formations: 4-4-2, 4-3-3, 4-2-3-1. Exactly one GK and ten outfield starters, up to nine substitutes. Formation determines broad role slots: 4-2-3-1 is four DEF, five MID and one FWD. A secondary role has no penalty; playing outside either listed role applies 0.80 effectiveness, and an outfield emergency GK uses actual goalkeeping. Controls: mentality cautious/balanced/attacking; tempo slow/normal/fast; pressing low/normal/high. No per-player tactical sliders in 1.0. Save up to three presets.
+
+Any unavailable player prevents kickoff and links to the affected slot. Offer auto-pick but require the user's choice. If fewer than eleven eligible seniors exist, offer temporary generated academy call-ups within academy/squad limits; their fictional identity is explicit. If fewer than seven remain, forfeit 0-3. AI obeys the same constraints. No silently healed players or duplicated roster members.
+
+## 4. Match rules and presentation
+
+The engine resolves discrete one-minute ticks for 90 minutes, half-time after 45. Added time starts at zero in v0.1; by v0.3 it is min(5, floor((substitutions + injuries + goals)/2)) for each half, decided at the half's normal end. No extra injury risk during half-time. League draws stand. Cup ties use two 15-minute periods with no added time, then alternating five penalties and sudden death. In two-legged ties only the second leg uses this tiebreak, based on aggregate score. Penalty conversion is clamp(.75 + (shooting - opposing goalkeeping)/500, .55, .90), drawn independently from match RNG; stop once a five-kick result is mathematically decided, or after a decisive completed sudden-death pair. Shooters must be on the pitch and cycle through all eligible players before repeating; use an emergency GK if needed. Fewer than seven players abandons a match; opponent awarded at least 3-0, retaining a better actual goal difference.
+
+Five substitutions, at most three stoppage windows; half-time changes do not use a window. No re-entry. Substitution/tactical commands take effect at the next tick boundary. Pause at half-time, injuries requiring removal and red cards; allow changes at any pause. Instant finish continues the same engine from the current tick with existing tactics and a deterministic assistant substitution policy. No precomputed final score: earlier commands must be able to change future play.
+
+Match events include tick, order, club/player IDs, event type, score after event, and any chance/shot result. The text feed and visual scenes are derived from those events. Provide score, time, possession, shots, shots on target and generated chance quality total. Possession is the running mean of each team's effective M/(both teams' M total), normalized to 100%; it is a simplified control estimate. Chance quality adds each attempt's on-target probability multiplied by its conditional goal probability. Call it "chance quality", not a scientifically calibrated xG model. Rendered ball or player collisions never decide events.
+
+AI match policy: auto-pick highest effective rating per valid slot, then ID; prefer 4-4-2, normal tempo/pressing and balanced mentality. At minute 60 become attacking if behind and cautious if ahead. Substitute an injured player immediately, otherwise the lowest-condition player below 55 from minute 60, using the best eligible role replacement; at most one routine substitution per ten minutes and respect windows/limits. Never remove a red-carded slot by replacing that player. Reassign a GK after a dismissal using a valid substitution or best emergency keeper. Human instant-finish uses this same substitution policy but retains chosen mentality/tempo/pressing. No AI inspection of future random draws.
+
+**Three.js first-look scope:** one original low-poly pitch, two teams of simple figures, ball, fixed elevated camera, shadows toggle, and short pass/shot/save/goal sequences. Clearly describe the view as stylized event highlights rather than a continuous physical reconstruction. No motion capture, player faces, kit editor or stadium builder. A deterministic presentation seed generates paths separately from gameplay. A scorer and score must agree with the event stream; a dismissed figure leaves the scene. Text fallback remains accessible throughout. Owner evaluates the prototype at v0.1; full 2D fallback arrives by v0.2. Either presenter can be disabled without save migration or a different result.
+
+## 5. Initial engine calibration contract
+
+These are implementable initial design parameters, to be tuned only through recorded balance changes. They are not claims about Elifoot or real football. Round probabilities to basis points before drawing seeded random integers 0-9999. Round effective ratings to hundredths. Keep all constants in one versioned ruleset, not in UI components.
+
+At each tick recompute effective player rating from role rating * (0.75 + condition/400) * (0.90 + morale/500) * position factor. Compute A as mean effective FWD rating, M as mean MID rating, D as mean DEF rating, K as effective GK rating; empty outfield groups use 10. Team with fewer players multiplies A/M/D by min(1, on-pitch count/11).
+
+Each minute independently allow at most one shot attempt per team. Chance probability = clamp(0.12 * (A+M)/(opponent D+opponent M) * home factor * mentality * tempo, .04, .24). Home factor is 1.08 at home, otherwise 1; neutral cups use 1. Mentality is .90/1/1.12 and applies .95/1/1.08 to opponent chance probability too. Tempo is .95/1/1.05. High pressing multiplies own M by 1.06 but costs condition; low pressing multiplies M by .97. Both teams' attempts are ordered by seeded initiative, never by who the user controls. Shot taker is selected from eligible outfielders weighted shooting * role weight (FWD 3, MID 2, DEF 1).
+
+Attempt on-target probability = clamp(.32 + (shooter shooting - opponent D)/250, .20, .60). Conditional goal probability = clamp(.30 + (shooter shooting - opponent K)/250, .12, .55). Classify a goal as on-target. Attribute an assist to a distinct teammate, weighted passing, in 70% of open-play goals. No own goals, offside or VAR until post-1.0; do not display commentary for an unimplemented rule.
+
+Per team per minute draw a foul with probability .12; choose an outfielder weighted (101-discipline). A foul yields yellow with .18 probability, otherwise direct red with .015 probability. Second yellow dismisses immediately; do not count it as an additional straight red. Cards precede attempts for that tick. League five-yellow accumulation means a one-league-match ban; second yellow one match, direct red three. Cup yellows accumulate separately with a three-yellow threshold and one-cup-match ban. Apply bans to the next eligible fixture of that competition class and clear accumulated yellows at season end; unserved bans carry. Same-match dismissal and future bans are separate fields.
+
+Match injury probability per team-minute = .002 * (1 + (100-average condition)/100), *1.15 for high pressing. Select active player weighted low condition. All match injuries require removal. Severity duration is 3-7 days (70%), 14-28 days (25%), 56-112 days (5%), uniform integer within band. An injury blocks play until the stored recovery date. Daily condition recovery is +12 on rest/light days, +8 balanced, +4 intense; injured players recover +6. Match condition loss is 18 per full 90 minutes, scaled by actual minutes and tempo .90/1/1.15, pressing .90/1/1.20; clamp to 0. Apply proportionally each tick, using accumulated fractional units so minute rounding does not erase losses.
+
+Match result morale changes: win +4, draw 0, loss -4; all clamp to 0-100. Probability tuning must not favor the player club. v0.3 calibration bands across the fixed batch: 2.0-3.6 goals per match, 15-35% draws, 2-7 total yellows per match, .05-.40 dismissals per match, and .10-.70 injury removals per match. They are coarse sanity bands, not an excuse to force any individual match's score. Report deviations; revise a parameter only with an explanation and version bump.
+
+## 6. Calendar and competitions
+
+Game year is 1 July-30 June. Preseason lasts six weeks. League round robin is home and away, three points win/one draw; ranking is points, goal difference, goals scored, head-to-head points, then stable club ID. Display the final fallback as a draw-lot tiebreak. All teams play each opponent exactly twice. Bottom two of tier one exchange with top two of tier two, no playoffs. Moves take effect only in the new season transaction.
+
+Each country has one knockout cup including both tiers. Seeded random draw; preliminary round removes excess entrants to the next lower power of two, randomly allocating byes. Single legs at first-drawn club, neutral final. One 16-club continental cup: top three from each country's completed top division plus defending champion; if already qualified, next best finisher from champion's country; inaugural wildcard fourth in England. Straight knockout, two legs through semifinals without away-goals rule; neutral one-match final. Domestic and continental cups have separate suspension classes.
+
+Reserve weekly weekend league slots and midweek cup slots; never two fixtures on the same date for a club, aim for >=3 days between fixtures. Schedule continental dates before domestic cup dates and defer conflicting domestic games to the next free midweek. Validate full calendar before committing it. If it cannot fit by 30 June, fail season generation with a diagnostic, not silently drop a match. National-team call-ups, real rule exceptions and postponed weather fixtures are out of scope.
+
+Daily processing order: recover players; expire/activate contracts and loans; settle scheduled financial postings; resolve offers; training on non-match days; play scheduled matches; standings/news/board assessment; autosave at stable boundary. Ties in any processing list use stable IDs. June 30 closing transaction: complete all competitions, pay prizes, award records, resolve expiring contracts, compute movement, age/develop/retire players, generate youth, set next budgets and July 1 calendar. If any step fails, retain the previous complete state.
+
+## 7. Transfers, contracts and scouting
+
+Transfer windows: 1 July-31 August and 1-31 January inclusive. This deliberately shared calendar is a game rule. Club-to-club bids outside a window may be negotiated but register at the next opening; free agents may join year-round. All dates use simulation calendar, not wall clock.
+
+Market flow: shortlist -> scout -> offer fee -> selling-club acceptance -> player terms -> final cost confirmation -> registration. Recheck funds, squad space, ownership and window on final commit. Offer statuses are submitted/countered/accepted/rejected/expired/withdrawn/completed. Club responds next day; offers expire seven days after submission or last counter; at most two counters per side. Accepted bids alone never transfer ownership. Competing completed deals invalidate other pending bids.
+
+Support upfront fees, free transfers, renewals and one-season loans. No installments, agent fees, release clauses, buyback or sell-on clauses in 1.0. Contract terms: weekly wage, 1-5 year end date rounded to June 30, signing bonus and promised role starter/rotation/prospect. Loan terms: end June 30 and wage contribution 0/50/100%, no purchase obligation or recall. Parent owns player, borrower registers player; return occurs before new-season eligibility checks. Do not transfer a player already loaned without ending that loan by its normal rule.
+
+Initial market value = roundToNearest1000EUR(1000 * overall^2 * age factor * contract factor). Age factor 1.2 under 24, 1 from 24-29, .65 at 30+; contract factor .65 for under 12 months, otherwise 1. Asking price value *1.2 for starters, value otherwise. Minimum desired weekly wage = roundToNearest100EUR(max(500, value/500)); signing bonus four weeks wage. AI accepts fee >=asking price if remaining senior squad >=18 or player is transfer-listed; player accepts adequate wage and a club at least 80% of current club reputation, or free agency. These are first-pass rules; keep the thresholds visible in internal diagnostics and tune at v0.7.
+
+AI weekly recruits at most two targets by position deficit, age, affordability and scouted strength; retains at least two GKs and 18 senior players. Apply the same cash and wages checks as human deals. No arbitrary asking-price multiplier only for human clubs. Display rejection reason as money, squad need, reputation, role or competing deal, not random hostility.
+
+Scouting: one scout slot initially, seven days per player; initial estimate overall +/-15, completed report +/-3 using a stable player/scout/season seed. No reroll by reopening UI. Filters use known estimates, not hidden true ratings. Reports show uncertainty and date. Assistant weekly suggests three affordable candidates and two squad weaknesses, linking to underlying data. No paid AI/LLM calls.
+
+## 8. Training, development and personnel
+
+One weekly training focus (balanced/defence/attack/fitness) and intensity (light/balanced/intense). Balanced distributes gains equally; other focuses allocate half to the corresponding tackling/shooting/stamina attribute and half across the remainder. Non-match daily training injury chance per player is .0002/.0004/.0008 by intensity, same severity table as matches. No individual training schedules or staff hiring simulation at launch; assistant/scout/physio are fixed service roles.
+
+Annual development: ages <24 gain an attribute-growth budget of 0-28 points, 24-29 0-7, 30-33 lose 0-14, 34+ lose 7-28. Draw integer within range using development stream; positive budget is halved if <900 senior minutes and multiplied by season mean training intensity factor .75/1/1.20, then rounded once. Allocate one attribute point at a time using focus weights; stop gains if recomputed overall reaches potential. Losses allocate equally across attributes. Clamp every attribute 1-100. Overall is recomputed, never independently edited. Retire at 38+, with annual probability .25 at 38, .50 at 39, and 1 at 40; keep history. Each club receives four fictional age-17 prospects on July 1, role templates yielding overall 30-50, potential max(overall, uniform 45-90). Retain at most eight academy players; release lowest potential then oldest then ID when overflowing, with prior season-end notice. These parameters must be checked for ten-season population and strength drift.
+
+Role dissatisfaction checks every 28 days: starter expects >=60% eligible match starts, rotation >=25%, prospect no threshold. Injuries/bans exclude fixtures from the denominator. Missing target causes -5 morale once per period and a factual notification; meeting target +2. Repeated identical messages are grouped. No branching press conferences or misleading promises with invisible rules.
+
+## 9. Finances, board and career
+
+All money in euro cents with EUR display; no floating currency conversion. Weekly wages every Monday; signing costs immediately. Gate receipts = attendance * ticket price, paid to home club; neutral finals split equally. Attendance = capacity * clamp(.40 + reputation/200 + recentPointsRatio/10, .30, .98). Default ticket EUR20, capacity 20,000 top division/8,000 second division unless licensed field or editorial configuration overrides. Unknown finances are explicitly generated game estimates.
+
+Initial annual sponsorship is EUR5m top division/EUR1m second, paid in 12 equal monthly installments with remainder on last payment. Initial cash is sponsorship/2. Weekly overhead is EUR20k/EUR5k respectively. League prize EUR100k * (N-rank+1) in top division, one fifth that in tier two. Domestic cup winner EUR500k and runner-up EUR250k; continental winner EUR2m, runner-up EUR1m. No other prize payments at launch. These are fictional game economics, not real payouts.
+
+Wage budget is 0.60 * (projected annual sponsorship + projected annual gate + last season prizes) / 52, rounded down to cents; for a new career use zero previous prizes. Project gate income from scheduled home league matches with recentPointsRatio=.5; unqualified future cup income is zero. Initial generated wages are proportionally scaled down if needed so total commitments are <=80% of this budget; show them as game estimates, never actual salary data. Store initial sponsorship for that season; do not raise it to rescue a later overspend. Transfer budget is max(0, cash - 13 weeks existing wage commitments - four weeks overhead). Reject deals exceeding either budget or cash; display the calculation. All money movements post once to a ledger with a unique transaction ID and equal debit/credit totals, using an external-world account for generated revenues/costs.
+
+At negative cash, block new paid signings and show a recovery warning. After 28 consecutive days negative, compulsory board loan covers the deficit, capped at one annual sponsorship amount, repaid over 52 weeks at zero interest. One outstanding loan maximum. If still insolvent after another 28 days, dismiss the manager unless assisted mode; AI board applies the same financial constraints. This is a simplified failure rule, not real insolvency law.
+
+One season objective based on initial squad-strength rank: top third finish top half, middle third avoid bottom four, bottom third avoid relegation. Board confidence starts 60; after each league fixture add +1 if on target or -1 otherwise; end-season objective +15/-15. First ten league fixtures cannot cause performance dismissal. Dismiss below 20 confidence; debt rule can also dismiss. Never sack for an unrelated minor news event.
+
+Dismissal offers three eligible lower/equal-reputation vacancies immediately (generated vacancy at weakest eligible club if none), or retirement. Club changes preserve manager history, former player links and trophies. Facilities offer only academy and recovery upgrades, three levels each, EUR250k/500k/1m per level, 30 days construction; academy adds +2 initial youth overall per level, recovery +1 daily condition per level. Cash reserve rules apply.
+
+At season end show final placing, key transfers, top scorer, best youth, finances, promotion/trophies and permanent career records. Retain per-season standings, club records and player season totals indefinitely; detailed minute events only for latest 20 user matches. Milestones link to actual history. Ten years of success must remain visible after changing clubs.
+
+## 10. Explicitly out of 1.0
+
+Multiplayer/hotseat, national management, women's competitions, authentic second tiers, real tax/registration/financial-fair-play rules, huge scouting networks, manager personal spending, stadium construction, sports betting, photorealism, motion-captured matches, licensed music, runtime generative AI, subscriptions, cloud accounts, public mod hosting and Workshop. Revisit after the compact game proves enjoyable. Owner-requested scope changes must name what they displace and update the corresponding gate.
+
+## 11. Dream Club: earned player packs
+
+Owner-selected direction: a separate optional Dream Club mode, selectable beside Career on the title screen. This section overrides Career's world/economy rules only inside Dream Club. First prototype at v0.7; target a compact playable mode for 1.0 after its playtest gate. Do not expand to an online Ultimate Team service. The prototype is a complete small loop, not a second full management game.
+
+### Mode identity and shared systems
+
+Create a custom fantasy club, select a frozen roster snapshot and play an eight-club, 14-round double round robin against seven AI fantasy squads. Standings use Career's tiebreaks. No promotion/relegation, domestic or continental cups in this mode. A new season resets the table and fixtures; collection and squad persist. Start with 22 position-balanced players from the selected roster's lowest eligible ability band (50-64); if insufficient, expand to the nearest lower then higher ratings. Ensure two GKs and valid starters for all three supported formations. Starting players are unlocked and cannot be chosen again as new rewards.
+
+Share the match engine, tactics, discipline, short injuries, accessibility and presenters. No transfer market, wages, contracts, scouting delays, board dismissals, facility management, youth intake or player aging in this first mode. Player ratings stay at their snapshot values; rarity is presentation of ability, never a hidden stat multiplier. Condition resets to 100 between rounds. Injuries use the match injury trigger but last one Dream Club fixture; bans follow league card rules. Between rounds the calendar advances one week, but Career training/development/economic processes do not run.
+
+Collection stores unlocked canonical player IDs; active squad up to 30, remaining unlocked players in unlimited reserves. Recruit/swap from collection at no cost between fixtures. You can field only one instance of each person on your team. AI teams may feature the same real player because they are explicitly independent fantasy lineups, not the Career football world. AI teams receive no hidden match bonuses. Lock their rosters for the season.
+
+### Earning and opening
+
+One earned pack for each three completed scheduled league fixtures, plus one for finishing the season. Counter carries across seasons. Wins and losses count equally; forfeits, friendlies and abandoned/restarted fixtures do not count. Instant finish is allowed and counts: avoid forcing players to watch animations to earn rewards. A completed fixture ID earns progress once. No calendar-day bonuses, login streaks, expiring events or pack expiry. No paid packs, premium currency, paid acceleration, trading, cash-out, advertising rewards or purchasable eligibility.
+
+A pack presents three different unowned players; choose one to unlock permanently. No fee or wage negotiation afterwards in this fantasy mode. Pack opening can be skipped straight to the three choices and must be accessible with controller/keyboard and reduced motion. Display the source roster version and rating on each card. Do not use real-money shop conventions, store prices or purchase buttons.
+
+Initial draw bands: Standard 50-64 (70%), Strong 65-79 (25%), Elite 80-100 (5%). These are project tuning values, not borrowed FC probabilities. Choose each slot's band, then a uniformly random eligible unowned player in that band, without replacement within the pack. Exclude sub-50 players from pack rewards. When a band is exhausted redistribute its probability proportionally across nonempty bands and show the effective odds before earning/opening the next pack. Every fifth earned pack guarantees at least one Strong-or-Elite candidate if any remain; guaranteed slot draws proportionally from the remaining higher bands. The other slots use normal weights.
+
+Duplicate protection: do not offer an already unlocked player. If fewer than three unowned eligible players remain, show those remaining choices with a clear label. If the eligible pool is exhausted, show Collection Complete and stop awarding packs; do not create filler currency or duplicates. A pack entitlement is earned and saved at fixture commit time. Candidate IDs are drawn and committed before revealing the pack. Only one pack can be revealed awaiting a choice; other earned packs queue unrevealed and are drawn after the prior choice, preserving duplicate protection. Reloading never rerolls a revealed pack. Closing the app leaves its choice pending.
+
+### Competition and pacing
+
+Choose a disclosed opponent tier at each season start: Starter squad mean 55-64, Club 65-74, Elite 75-84. Default Starter. Build role-balanced AI squads from the same snapshot near that band; nearest available ratings are an explicit fallback. Do not secretly scale opponents to the current user squad or improve pack odds after losses. Higher tiers add challenge but no better pack rewards in the first version, avoiding mandatory grind. A full collection can continue playing seasons.
+
+Career and Dream Club use separate saves, rewards and statistics. No card carries into Career, no Career win earns Dream Club packs, and no card duplicates or removes a player in a Career world. Steam achievements identify mode where relevant; Career progression achievements are not unlocked by Dream Club shortcuts.
+
+### Experiment acceptance
+
+At v0.7 build one season and a developer-only accelerated pack preview. Observe at least three of the existing five testers choosing between a Career session and a Dream Club session; ask whether choosing a new player creates a meaningful next-match decision. Verify that rewards do not require winning, repeated match IDs do not pay again, pending choices survive save/load, and a near-complete collection resolves cleanly. Fit these into the existing test ceilings by combining related scenarios; no separate test matrix or new documentation file.
+
+The mode proceeds to polish only after the owner sees the actual pack flow and accepts its pace. If it distracts from the core game, keep the prototype disabled and explicitly revise the release scope rather than silently shipping a partial mode. No further systems such as chemistry, duplicate crafting, seasonal resets, online trading or power-boost consumables in 1.0.

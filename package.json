@@ -1,0 +1,24 @@
+{
+  "name": "fcu", "version": "0.1.0", "private": true, "type": "module",
+  "description": "Football Club Universe offline exhibition prototype",
+  "author": "FCU", "main": "dist-electron/main.js",
+  "workspaces": ["apps/game", "packages/*"],
+  "scripts": {
+    "dev": "node scripts/dev.mjs", "start": "electron .",
+    "typecheck": "tsc --noEmit", "lint": "eslint .",
+    "test": "vitest run", "test:e2e": "playwright test",
+    "check:docs": "node scripts/check-docs.mjs", "probe": "node --experimental-strip-types scripts/probe.ts",
+    "build": "vite build && node scripts/build.mjs",
+    "package:win": "electron-builder --win --dir", "package:linux": "electron-builder --linux --dir"
+  },
+  "dependencies": {"react": "19.3.0", "react-dom": "19.3.0", "three": "0.186.0", "zod": "4.6.2"},
+  "devDependencies": {
+    "@playwright/test": "1.63.0", "@types/node": "22.20.2", "@types/react": "19.3.0", "@types/react-dom": "19.3.0", "@types/three": "0.186.0",
+    "electron": "44.3.0", "electron-builder": "26.15.3", "esbuild": "0.28.2", "eslint": "10.10.0", "typescript-eslint": "8.70.0", "typescript": "5.9.3", "vite": "8.3.0", "vitest": "5.0.0"
+  },
+  "build": {
+    "appId": "com.fcu.game", "productName": "Football Club Universe", "directories": {"output": "release"},
+    "files": ["dist/**/*", "dist-electron/**/*", "package.json"],
+    "asar": true, "win": {"target": "dir", "signAndEditExecutable": false}, "linux": {"target": "dir", "category": "Game"}
+  }
+}
