@@ -2,9 +2,9 @@ import type {Career,ClubId,Economy,Player} from '../../contracts/src/index.ts';
 import {validDate} from './availability.ts';
 
 export const economicRules={sponsorship:500000000,capacity:20000,ticket:2000,overhead:2000000,reputation:50} as const;
-type LedgerEntry=Economy['ledger'][number];
+type LedgerEntry=Career['economy']['ledger'][number];
 type World=Pick<Career,'players'|'clubs'|'fixtures'|'date'>;
-export function cash(economy:Economy,club:ClubId):number {
+export function cash(economy:Career['economy'],club:ClubId):number {
  return economy.ledger.reduce((sum,entry)=>sum+entry.postings.reduce((value,p)=>value+(p.account===club?p.amount:0),0),0);
 }
 export function commitments(state:Pick<Career,'economy'|'players'>,club:ClubId):number {
@@ -19,12 +19,12 @@ export function budgets(state:Pick<Career,'economy'|'players'|'fixtures'>,club:C
  return {cash:balance,weekly,wage,transfer:Math.max(0,balance-13*weekly-4*account.overhead),overhead:account.overhead};
 }
 // Signed postings represent equal debits and credits; generated money uses the external account.
-export function post(economy:Economy,entry:LedgerEntry):boolean {
+export function post(economy:Career['economy'],entry:LedgerEntry):boolean {
  if(economy.ledger.some(e=>e.id===entry.id))return false;
  if(entry.postings[0].amount+entry.postings[1].amount!==0||entry.postings.some(p=>!Number.isSafeInteger(p.amount)))throw Error('INVALID_SAVE');
  economy.ledger.push(entry);return true;
 }
-function external(economy:Economy,club:ClubId,date:string,kind:LedgerEntry['kind'],amount:number,id=kind+'/'+date+'/'+club){
+function external(economy:Career['economy'],club:ClubId,date:string,kind:LedgerEntry['kind'],amount:number,id=kind+'/'+date+'/'+club){
  post(economy,{id,date,kind,postings:[{account:club,amount},{account:'external',amount:-amount}]});
 }
 export function createEconomy(world:World,rating:(p:Player)=>number):Economy {

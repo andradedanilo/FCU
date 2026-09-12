@@ -2,7 +2,7 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.4 financial foundation implemented; contracts and transfer flow are next. v0.3 software gate passed on Windows. Owner authorizes autonomous progress; unavailable external checks remain open.
+- Current milestone: v0.4 contracts and renewals implemented; scouting and transfer flow are next. Continue autonomous implementation across slices and milestones; only genuine owner decisions require a pause.
 - Last completed gate: v0.1 Windows prototype and owner layout review. Native Linux remains unverified; v0.2 is not marked complete.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
@@ -12,10 +12,10 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 35 registered cases in six files (34 Vitest, one Electron journey). Two new finance scenarios in this v0.4 slice; five earlier new cases completed v0.3. Relevant simulation/availability/economy cases passed; save migration assertions now distinguish new opening balances from historical data. Save follow-up: seven cases in .419 seconds; finance boundary follow-up: two cases in .229 seconds. Typecheck/lint pass. Prior v0.3 full Electron journey: 19.5 seconds; no redundant full-suite run for this slice.
-- Evidence from latest change: operating ledger, generated affordable wages, cash/reserve calculations and Club finances. Home gates and daily Monday/monthly transactions settle once for all clubs inside round completion. Manual offline 1280x720 finance view, keyboard close/focus restoration and Save passed: work/finances-720.png and work/finance-clubhouse-720.png. Current app is a development build; packaged baseline remains v0.3.2.
-- Open issues/next action: v0.4 contracts/renewals, scouting, staged deals, loans, transfer AI and their acceptance journey. No deal controls are exposed early. Match probabilities unchanged by finance; v0.3 fixed 500-match final batch remains 2.288 goals, 27.6% draws, 4.046 yellows, .328 dismissals and .450 injuries per match in 1.997 seconds, inside planned bands. Native Linux, low-end and physical-controller evidence remains unverified.
-- Build identity: app/engine 0.4.0, schema 8, exhibition-7. Renderer build .166 seconds. Last packaged Windows baseline: v0.3.2 at release/build-nEhrUp/Football Club Universe-win32-x64. Commit subject: Add club finances and operating transactions.
+- Test inventory/runtime: 38 registered cases in seven files (37 Vitest, one Electron journey). Three new contract scenarios this task. Relevant contracts/economy/saves/availability run: 15 cases passed in .979 seconds. Typecheck/lint pass. Manual offline 1280x720 renewal review, confirmation and Save passed after correcting compressed list rows. No repeated full suite for this slice.
+- Evidence from latest change: fictional contract metadata, age-based requested terms, cost review, atomic signing bonus/wage/expiry update and duplicate-confirmation protection. Schema-8 migration preserves existing wages and ledger. Manual UI evidence: work/contracts-720.png.
+- Open issues/next action: scouting, staged deals, calendar responses, free agents, loans, transfer AI and the v0.4 acceptance journey. Match probabilities unchanged. Native Linux, low-end and physical-controller evidence remains unverified.
+- Build identity: app/engine 0.4.1, schema 9, exhibition-8. Renderer build .183 seconds. Last packaged baseline remains v0.3.2. Commit subject: Add reviewed player contract renewals.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
@@ -27,7 +27,7 @@ After each task replace the latest-evidence entry with build/commit identity, co
 
 | v0.3 (software implemented) | Condition, morale, training, injuries, discipline, eligibility, academy cover, added time and migrations | Windows: 33 cases in five files, full-season offline Electron journey, fixed 500-match calibration and manual half-time/injury UI | Native Linux and packaged save smoke for this build |
 
-| v0.4 (in progress) | Wage estimates, budgets, balanced operating ledger and Club finances | Relevant domain/save checks and offline manual UI | Contracts, transfers, scouting, loans, AI and milestone journey |
+| v0.4 (in progress) | Wage estimates, budgets, operating ledger, Club finances and reviewed contract renewals | Relevant domain/save checks and offline manual UI | Transfers, scouting, loans, AI and milestone journey |
 
 ## Gates and scope discipline
 

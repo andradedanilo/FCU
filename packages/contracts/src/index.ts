@@ -50,12 +50,18 @@ export const timedCareerSchema=availabilityCareerSchema.extend({engineVersion:z.
 const postingSchema=z.object({account:z.union([clubId,z.literal('external')]),amount:z.number().int().min(-Number.MAX_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER)});
 export const economySchema=z.object({clubs:z.array(z.object({clubId,capacity:integer.max(200000),reputation:integer.max(100),ticket:integer.max(1000000),sponsorship:integer.max(1000000000000),overhead:integer.max(10000000000),lastPrizes:integer.max(1000000000000)})).length(8),wages:z.record(playerId,integer.max(10000000000)),ledger:z.array(z.object({id:z.string().min(1).max(120),date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),kind:z.enum(['opening','sponsor','wages','overhead','gate']),postings:z.tuple([postingSchema,postingSchema])})).max(20000)});
 export type Economy=z.infer<typeof economySchema>;
-export const careerSchema=timedCareerSchema.extend({engineVersion:z.literal('0.4.0'),rulesetVersion:z.literal('exhibition-7'),economy:economySchema});
+export const financialCareerSchema=timedCareerSchema.extend({engineVersion:z.literal('0.4.0'),rulesetVersion:z.literal('exhibition-7'),economy:economySchema});
+export const promisedRoleSchema=z.enum(['starter','rotation','prospect']);
+export const contractSchema=z.object({ownerId:clubId,ends:z.string().regex(/^\d{4}-06-30$/),birthDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),role:promisedRoleSchema,revision:integer});
+export type Contract=z.infer<typeof contractSchema>;
+export const contractEconomySchema=economySchema.extend({ledger:z.array(economySchema.shape.ledger.element.extend({kind:z.enum(['opening','sponsor','wages','overhead','gate','signingBonus'])})).max(20000)});
+export const careerSchema=financialCareerSchema.extend({engineVersion:z.literal('0.4.1'),rulesetVersion:z.literal('exhibition-8'),economy:contractEconomySchema,contracts:z.record(playerId,contractSchema)});
 export type Career = z.infer<typeof careerSchema>;
 const commandBase = { commandId: z.string().uuid(), careerId: z.string().uuid(), expectedRevision: integer };
 export const commandSchema = z.discriminatedUnion('type', [
   z.object({ ...commandBase, type: z.literal('SelectLineup'), lineup: z.array(playerId).max(22) }),
   z.object({ ...commandBase, type: z.literal('StartMatch') }),
+  z.object({...commandBase,type:z.literal('RenewContract'),playerId,contractRevision:integer,years:z.number().int().min(1).max(5),wage:integer.max(10000000000),bonus:integer.max(1000000000000),role:promisedRoleSchema}),
   z.object({...commandBase,type:z.literal('SetTraining'),training:trainingSchema}),
   z.object({...commandBase,type:z.literal('AcknowledgeMatch')}),
   z.object({...commandBase,type:z.literal('CallUp')}),
@@ -73,7 +79,7 @@ export const requestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('Command'), command: commandSchema })
 ]);
 export type Request = z.infer<typeof requestSchema>;
-export type FailureCode = 'UNAVAILABLE_PLAYER' | 'MATCH_DECISION' | 'INVALID_BENCH' | 'INVALID_SUBSTITUTION' | 'INVALID_LINEUP' | 'STALE_STATE' | 'DUPLICATE_COMMAND' | 'INVALID_COMMAND' | 'INVALID_SAVE' | 'FUTURE_SAVE' | 'IO_ERROR' | 'WORKER_FAILED';
+export type FailureCode = 'CONTRACT_CHANGED' | 'INSUFFICIENT_FUNDS' | 'WAGE_BUDGET' | 'PLAYER_TERMS' | 'UNAVAILABLE_PLAYER' | 'MATCH_DECISION' | 'INVALID_BENCH' | 'INVALID_SUBSTITUTION' | 'INVALID_LINEUP' | 'STALE_STATE' | 'DUPLICATE_COMMAND' | 'INVALID_COMMAND' | 'INVALID_SAVE' | 'FUTURE_SAVE' | 'IO_ERROR' | 'WORKER_FAILED';
 export type Result<T> = { ok: true; value: T } | { ok: false; error: FailureCode };
 export type SaveEntry = { careerId: string; commitId: string; club: string; round: number; tick: number; savedAtUTC: string; kind: 'manual' | 'auto'; valid: boolean; engineVersion:string|null; error: FailureCode | null };
 export interface DesktopBridge {

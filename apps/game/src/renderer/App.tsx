@@ -1,3 +1,4 @@
+import {ContractsMenu} from './ContractsMenu.tsx';
 import {FinanceMenu} from './FinanceMenu.tsx';
 import {needsDecision} from '../../../../packages/simulation/src/availability.ts';
 import { useRef, useState, useEffect } from 'react';
@@ -17,7 +18,7 @@ import { MatchScreen } from './MatchScreen.tsx';
 import s from './App.module.css';
 
 type Screen = 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match';
-type Action = {type:'ForfeitMatch'} | {type:'CallUp'} | {type:'AcknowledgeMatch'} | {type:'SetTraining';training:Career['training']} | {type:'StartMatch'} | {type:'SelectLineup';lineup:PlayerId[]} | {type:'AdvanceMatch';minutes:number} | {type:'Substitute';out:PlayerId;in:PlayerId} | {type:'SetTactics';tactics:Tactics} | {type:'SelectBench';bench:PlayerId[]} | {type:'StoreTacticPreset';slot:number;tactics:Tactics|null};
+type Action = Omit<Extract<Command,{type:'RenewContract'}>,'careerId'|'commandId'|'expectedRevision'> | {type:'ForfeitMatch'} | {type:'CallUp'} | {type:'AcknowledgeMatch'} | {type:'SetTraining';training:Career['training']} | {type:'StartMatch'} | {type:'SelectLineup';lineup:PlayerId[]} | {type:'AdvanceMatch';minutes:number} | {type:'Substitute';out:PlayerId;in:PlayerId} | {type:'SetTactics';tactics:Tactics} | {type:'SelectBench';bench:PlayerId[]} | {type:'StoreTacticPreset';slot:number;tactics:Tactics|null};
 export function App() {
   const [state, setState] = useState<Career|null>(null);
   const latest = useRef<Career|null>(null);
@@ -25,6 +26,7 @@ export function App() {
   const [tacticsOpen,setTacticsOpen]=useState(false);
   const [screen, setScreen] = useState<Screen>('title');
   useGameInput(screen);
+  const [contractsOpen,setContractsOpen]=useState(false);
   const [financeOpen,setFinanceOpen]=useState(false);
   const [reportOpen,setReportOpen]=useState(false);
   const [club, setClub] = useState<ClubId>(clubs[0]!.id);
@@ -67,12 +69,13 @@ export function App() {
     occupied.current=true;setBusy(true);setNotice('');
     const result=await request({type:'Command',command:{...action,careerId:current.careerId,expectedRevision:current.revision,commandId:crypto.randomUUID()} as Command});
     if(result.ok) {
-      accept(result.value,action.type==='SetTactics'||action.type==='StoreTacticPreset'||action.type==='SelectBench'||action.type==='SetTraining');setDirty(true);
+      accept(result.value,action.type==='SetTactics'||action.type==='StoreTacticPreset'||action.type==='SelectBench'||action.type==='SetTraining'||action.type==='RenewContract');setDirty(true);
       if(result.value.round>current.round)await save(result.value,'auto');
       if(action.type==='StartMatch')setScreen('match');
       if(action.type==='SelectLineup')setNotice(t.confirmed);
       if(action.type==='SelectBench')setNotice(t.benchConfirmed);
       if(action.type==='Substitute')setNotice(t.subConfirmed);
+      if(action.type==='RenewContract')setNotice(t.renewed);
       if(action.type==='SetTactics')setNotice(t.tacticsConfirmed);
       if(result.value.match&&needsDecision(result.value.match))stop();
       if((result.value.match?.phase==='interval'&&!continuousRef.current)||result.value.match?.phase==='finished')stop();
@@ -115,13 +118,14 @@ export function App() {
         {screen==='title'&&<TitleScreen start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
         {screen==='setup'&&<ClubSelect club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
         {state&&screen==='home'&&<Clubhouse finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
-        {state&&screen==='squad'&&<SquadScreen forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
+        {state&&screen==='squad'&&<SquadScreen contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(state.players,state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
         {state?.match&&screen==='match'&&<MatchScreen acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>
       <footer className={s.footer}><span>{t.edition} / {t.fullscreenHint}<small title={t.controllerHint}>{t.inputHint}</small></span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>
     {state&&tacticsOpen&&<TacticsMenu store={(slot,tactics)=>command({type:'StoreTacticPreset',slot,tactics})} draftLineup={screen==='squad'?lineup:state.lineup} state={state} busy={busy} close={()=>setTacticsOpen(false)} confirm={tactics=>command({type:'SetTactics',tactics})}/>}
+    {state&&contractsOpen&&<ContractsMenu state={state} busy={busy} confirm={command} close={()=>setContractsOpen(false)}/>}
     {state&&financeOpen&&<FinanceMenu state={state} close={()=>setFinanceOpen(false)}/>}
     {state&&reportOpen&&<MatchReport state={state} close={()=>setReportOpen(false)}/>}
     {state&&benchOpen&&<BenchMenu state={state} busy={busy} close={()=>setBenchOpen(false)} confirm={bench=>command({type:'SelectBench',bench})}/>}

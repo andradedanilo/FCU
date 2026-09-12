@@ -1,0 +1,10 @@
+import type {Player,Role} from '../../contracts/src/index.ts';
+export function overall(p: Player): number {
+  if (p.role === 'GK') return Math.round((70*p.goalkeeping+15*p.passing+15*p.stamina)/100);
+  if (p.role === 'DEF') return Math.round((60*p.tackling+20*p.pace+20*p.passing)/100);
+  if (p.role === 'MID') return Math.round((60*p.passing+20*p.stamina+20*p.tackling)/100);
+  return Math.round((60*p.shooting+20*p.pace+20*p.passing)/100);
+}
+export function effectiveRating(p:Player,role:Role=p.role):number {
+ return Math.round(overall({...p,role})*(.75+p.condition/400000)*(.90+p.morale/500)*(p.role===role?1:.8)*100)/100;
+}

@@ -1,10 +1,10 @@
+import {money} from '../../../../packages/presentation/src/money.ts';
 import {useRef} from 'react';
 import type {Career} from '../../../../packages/contracts/src/index.ts';
 import {budgets} from '../../../../packages/simulation/src/economy.ts';
 import {text as t} from '../../../../packages/presentation/src/text.ts';
 import {useModal} from './input.ts';
 import s from './FinanceMenu.module.css';
-const money=(cents:number)=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'EUR'}).format(cents/100);
 export function FinanceMenu({state,close}:{state:Career;close:()=>void}){
  const dialog=useRef<HTMLDialogElement>(null);useModal(dialog);
  const bank=budgets(state,state.clubId);
