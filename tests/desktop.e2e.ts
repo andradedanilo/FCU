@@ -3,7 +3,7 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { canonical } from '../packages/contracts/src/index.ts';
-test('offline career, lineup, pixel/text equivalence, canvas recovery and full exhibition season',async()=>{
+test('offline career, lineup, commentary clock, highlight recovery and full exhibition season',async()=>{
   const data=await mkdtemp(join(tmpdir(),'fcu-e2e-'));
   let app!:ElectronApplication;
   let page!:Page;
@@ -18,7 +18,7 @@ test('offline career, lineup, pixel/text equivalence, canvas recovery and full e
     // Advance the presentation clock only; every minute still goes through the real worker.
     for(let minute=from+1;minute<=to;minute++){
       if(minute>from+1)await page.clock.fastForward(6001);
-      await expect(page.getByTestId('minute')).toHaveText(minute===45?'Half-time':minute===90?'Full time':minute+"'");
+      await expect(page.getByTestId('minute')).toHaveAttribute('data-tick',String(minute));
       if(minute!==90)await expect(page.getByRole('button',{name:minute===to&&to===45?'Continue':'Pause',exact:true})).toBeEnabled();
     }
   }
@@ -28,25 +28,24 @@ test('offline career, lineup, pixel/text equivalence, canvas recovery and full e
     await expect(page.getByRole('checkbox')).toHaveCount(22);const selected=page.getByRole('checkbox').filter({visible:true});
     const first=await selected.evaluateAll(nodes=>nodes.findIndex(n=>(n as HTMLInputElement).checked));await selected.nth(first).uncheck();await click('Confirm lineup');await expect(page.getByRole('status')).toContainText('eleven distinct');
     await click('Suggest 4-4-2');await click('Confirm lineup');await page.getByRole('button',{name:'Clubhouse'}).click();await page.getByRole('button',{name:'Kick off'}).click();
-    await expect(page.locator('canvas')).toHaveCount(1);await page.getByRole('group',{name:'Speed',exact:true}).getByRole('button',{name:'2x Brisk'}).click();await expect(page.getByRole('button',{name:'2x Brisk'})).toHaveAttribute('aria-pressed','true');await page.getByRole('button',{name:'1x Matchday'}).click();await save();const initialEntries=await entries();if(!initialEntries.ok)throw new Error();const checkpoint=initialEntries.value[0]!;
+    await expect(page.locator('canvas')).toHaveCount(0);await expect(page.getByRole('group',{name:'Speed',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Pixel art',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Text',exact:true})).toHaveCount(0);await page.locator('summary').click();await save();const initialEntries=await entries();if(!initialEntries.ok)throw new Error();const checkpoint=initialEntries.value[0]!;
     const beforePreview=await latest();await click('Preview goal');await expect(page.getByText('Art preview - does not affect your match',{exact:true})).toBeVisible();await page.clock.runFor(3500);await page.screenshot({path:'work/match-pixel.png'});await click('Skip highlight');await save();const afterPreview=await latest();expect(canonical(afterPreview)).toBe(canonical(beforePreview));
-    await expect(page.getByRole('button',{name:'Finish half',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Next minute',exact:true})).toHaveCount(0);await click('Play');await expect(page.getByTestId('minute')).toHaveText("1'");await click('Pause');await page.clock.fastForward(20000);await expect(page.getByTestId('minute')).toHaveText("1'");await playUntil(1,45);await save();await app.close();
-    await launch();await click('Load');await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await expect(page.getByTestId('minute')).toHaveText('Half-time');await expect(page.getByRole('button',{name:'Skip highlight',exact:true})).toHaveCount(0);
+    await expect(page.getByRole('button',{name:'Finish half',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Next minute',exact:true})).toHaveCount(0);await click('Play');await expect(page.getByTestId('minute')).toHaveAttribute('data-tick','1');await page.clock.runFor(200);expect(await page.getByTestId('minute').textContent()).not.toBe('01:00');await click('Pause');const pausedClock=await page.getByTestId('minute').textContent();await page.clock.fastForward(20000);await expect(page.getByTestId('minute')).toHaveText(pausedClock!);await playUntil(1,45);await save();await app.close();
+    await launch();await click('Load');await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await expect(page.getByTestId('minute')).toHaveText('45:00');await expect(page.getByRole('button',{name:'Skip highlight',exact:true})).toHaveCount(0);
     await playUntil(45,90);await save();const pixelState=await latest();
     await click('Load');
     // Pick the exact immutable checkpoint through the same public load operation, then its visible row.
     const saveList=await entries();if(!saveList.ok)throw new Error();const index=saveList.value.findIndex(e=>e.commitId===checkpoint.commitId);
-    await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).nth(index).click();await expect(page.getByTestId('minute')).toHaveText("0'");
-    await click('Text');await playUntil(0,45);await playUntil(45,90);await save();const textState=await latest();
+    await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).nth(index).click();await expect(page.getByTestId('minute')).toHaveText('00:00');
+    // Missing Canvas leaves the same commentary-led match playable.
+    await page.evaluate(()=>{HTMLCanvasElement.prototype.getContext=()=>null;});await page.locator('summary').click();await click('Preview goal');
+    await expect(page.getByText('Highlights are unavailable. Live commentary continues.')).toBeVisible();await expect(page.locator('canvas')).toHaveCount(0);
+    await playUntil(0,45);await playUntil(45,90);await save();const textState=await latest();
     expect(canonical(textState.match)).toBe(canonical(pixelState.match));expect(canonical(textState.fixtures)).toBe(canonical(pixelState.fixtures));
-    await click('Pixel art');await expect(page.locator('canvas')).toHaveCount(1);
-    // A Canvas initialization failure must preserve the same text-only career flow.
-    await click('Text');await page.evaluate(()=>{HTMLCanvasElement.prototype.getContext=()=>null;});await click('Pixel art');
-    await expect(page.getByText('Pixel art is unavailable. Text play remains available.')).toBeVisible();await expect(page.locator('canvas')).toHaveCount(0);
     await page.getByRole('button',{name:'Continue',exact:false}).click();
     // One bounded full-season user journey, 13 remaining fixtures.
     for(let round=1;round<14;round++){
-      await page.getByRole('button',{name:'Kick off'}).click();await click('Text');if(round===1){await page.getByRole('checkbox',{name:'Continue through half-time'}).check();await playUntil(0,90);await page.getByRole('button',{name:'Continue',exact:false}).click();continue;}await page.getByRole('checkbox',{name:'Continue through half-time'}).uncheck();await playUntil(0,45);await playUntil(45,90);await page.getByRole('button',{name:'Continue',exact:false}).click();
+      await page.getByRole('button',{name:'Kick off'}).click();if(round===1){await page.getByRole('checkbox',{name:'Continue through half-time'}).check();await playUntil(0,90);await page.getByRole('button',{name:'Continue',exact:false}).click();continue;}await page.getByRole('checkbox',{name:'Continue through half-time'}).uncheck();await playUntil(0,45);await playUntil(45,90);await page.getByRole('button',{name:'Continue',exact:false}).click();
     }
     await expect(page.getByText('Season complete',{exact:true})).toBeVisible();await page.getByRole('button',{name:'League table',exact:true}).click();await expect(page.locator('tbody tr')).toHaveCount(8);expect((await latest()).round).toBe(14);expect(errors).toEqual([]);
     await page.screenshot({path:'work/season-table.png'});

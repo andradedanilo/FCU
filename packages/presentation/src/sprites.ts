@@ -9,7 +9,7 @@ const gait:ReadonlyArray<readonly [Point,Point,Point,Point]>=[
   [[7,-13],[4,-7],[-5,-11],[-8,0]],
   [[5,-15],[1,-10],[-2,-12],[-2,-1]]
 ];
-export function paintFootballer(c:CanvasRenderingContext2D,x:number,y:number,kit:string,pose:Pose,time:number,scale=1) {
+export function paintFootballer(c:CanvasRenderingContext2D,x:number,y:number,kit:string,pose:Pose,time:number,scale=1,back=false) {
   const ink='#17283c',skin='#dfad7d',skinDark='#a96e51',sock='#e0e7d1';
   const shade=`#${[1,3,5].map(i=>Math.round(parseInt(kit.slice(i,i+2),16)*.6).toString(16).padStart(2,'0')).join('')}`;
   c.save();c.translate(Math.round(x),Math.round(y));c.scale(scale,scale);
@@ -32,7 +32,7 @@ export function paintFootballer(c:CanvasRenderingContext2D,x:number,y:number,kit
   c.translate(running?2:0,bob);
   let leftKnee:Point=[-4,-11],leftFoot:Point=[-5,0],rightKnee:Point=[4,-11],rightFoot:Point=[5,0];
   if(running)[leftKnee,leftFoot,rightKnee,rightFoot]=gait[Math.floor(time*9)%6]!;
-  if(pose==='kick'){leftKnee=[-4,-10];leftFoot=[-6,0];rightKnee=[8,-18];rightFoot=time<1.65?[18,-17]:[12,-9];}
+  if(pose==='kick'){leftKnee=[-4,-10];leftFoot=[-6,0];rightKnee=back?[5,-15]:[8,-18];rightFoot=back?[7,-8]:time<1.65?[18,-17]:[12,-9];}
   function leg(hip:Point,knee:Point,foot:Point){bone(hip,knee,5,ink);bone(hip,knee,3,skinDark);bone(knee,foot,5,ink);bone(knee,foot,3,sock);r(foot[0]-2,foot[1]-1,7,3,ink);r(foot[0]+2,foot[1]-1,3,1,'#65767c');}
   leg([-3,-19],leftKnee,leftFoot);leg([3,-19],rightKnee,rightFoot);
   const shoulderLeft:Point=[-5,-31],shoulderRight:Point=[5,-31];
@@ -47,6 +47,7 @@ export function paintFootballer(c:CanvasRenderingContext2D,x:number,y:number,kit
   r(-1,-36,3,4,skinDark);
   poly([[-3,-43],[1,-45],[5,-42],[5,-39],[6,-38],[4,-35],[0,-35],[-3,-38]],ink);
   poly([[-2,-41],[1,-43],[4,-41],[4,-38],[5,-38],[3,-36],[0,-36],[-2,-38]],skin);
+  if(back){r(-2,-43,6,7,'#302737');r(-1,-29,2,6,sock);c.restore();return;}
   r(-2,-41,2,4,skinDark);r(-2,-44,6,3,'#302737');r(3,-40,1,1,ink);r(3,-37,2,1,skinDark);
   c.restore();
 }

@@ -4,29 +4,27 @@ import { sampleHighlight } from './highlights.ts';
 import { text as t } from './text.ts';
 
 // Original 320x180 pixel scene; all sprites and scenery are authored here.
-export function paintHighlight(c:CanvasRenderingContext2D,h:Highlight|null,progress:number,time:number) {
+export function paintHighlight(c:CanvasRenderingContext2D,h:Highlight,progress:number,time:number) {
   c.imageSmoothingEnabled=false;
   const rect=(x:number,y:number,w:number,height:number,color:string)=>{c.fillStyle=color;c.fillRect(Math.round(x),Math.round(y),w,height);};
   const line=(x:number,y:number,x2:number,y2:number,color:string)=>{c.strokeStyle=color;c.lineWidth=1;c.beginPath();c.moveTo(Math.round(x)+.5,Math.round(y)+.5);c.lineTo(Math.round(x2)+.5,Math.round(y2)+.5);c.stroke();};
   const label=(message:string,y:number,size=15,color='#fff2b0')=>{c.font=`bold ${size}px monospace`;c.textAlign='center';c.fillStyle='#10213b';c.fillText(message,162,y+2);c.fillStyle=color;c.fillText(message,160,y);};
-  rect(0,0,320,180,'#75aec0');rect(0,17,320,57,'#162d50');
-  rect(0,19,320,4,'#e5c883');rect(0,24,320,3,'#485675');
-  for(let row=0;row<5;row++)for(let col=0;col<64;col++){
-    const x=col*5,y=29+row*7;const wave=Math.sin(time*4+col*.4+row)>.5;
-    rect(x,y,3,3,'#dab184');rect(x-1,y+3,5,3,(col+row)%3===0?(h?.color??'#d95653'):'#dfd6ac');
+  rect(0,0,320,180,'#75aec0');rect(0,12,320,33,'#162d50');
+  rect(0,10,320,3,'#e5c883');rect(0,14,320,2,'#485675');
+  for(let row=0;row<4;row++)for(let col=0;col<64;col++){
+    const x=col*5,y=17+row*6;const wave=Math.sin(time*4+col*.4+row)>.5;
+    rect(x,y,3,3,'#dab184');rect(x-1,y+3,5,3,(col+row)%3===0?h.color:'#dfd6ac');
     if(wave){rect(x-2,y,1,4,'#dab184');rect(x+4,y,1,4,'#dab184');}
   }
-  rect(0,66,320,13,'#f0d399');label(t.pixelBoards,75,8,'#193349');
-  for(let row=0;row<7;row++)rect(0,79+row*15,320,15,row%2?'#4c914e':'#548f45');
-  line(0,169,320,116,'#d4e4b5');line(189,180,203,96,'#d4e4b5');line(203,96,320,96,'#d4e4b5');
-  // Goal mouth and diagonal net are static, so the ball outcome is easy to read.
-  if(h&&sampleHighlight(h.kind,progress).phase!=='reaction'){
-  for(let x=247;x<=304;x+=6)line(x,62,x-7,119,'#b0c7bb');
-  for(let y=62;y<=119;y+=6)line(240,y,304,y-5,'#b0c7bb');
-  rect(238,60,3,63,'#fff4d3');rect(238,59,62,3,'#fff4d3');rect(297,59,3,55,'#fff4d3');line(300,59,315,72,'#fff4d3');line(300,114,315,124,'#fff4d3');
+  rect(0,42,320,10,'#f0d399');label(t.pixelBoards,49,7,'#193349');
+  for(let row=0;row<9;row++)rect(0,52+row*15,320,15,row%2?'#4c914e':'#548f45');
+  line(62,179,101,78,'#d4e4b5');line(258,179,219,78,'#d4e4b5');line(101,78,219,78,'#d4e4b5');line(83,130,237,130,'#d4e4b5');
+  if(sampleHighlight(h.kind,progress).phase!=='reaction'){
+    for(let x=104;x<217;x+=7)line(x,45,x,79,'#b0c7bb');
+    for(let y=45;y<=79;y+=6)line(103,y,217,y,'#b0c7bb');
+    rect(102,44,3,38,'#fff4d3');rect(102,43,116,3,'#fff4d3');rect(215,44,3,38,'#fff4d3');
   }
-  const player=(x:number,y:number,kit:string,pose:Parameters<typeof paintFootballer>[4],scale=1)=>paintFootballer(c,x,y,kit,pose,time,scale);
-  if(!h){label(t.matchday,110,22);label(t.waitingHighlight,131,9);label(t.pixelTag,155,9,'#e4d38f');return;}
+  const player=(x:number,y:number,kit:string,pose:Parameters<typeof paintFootballer>[4],scale=1,back=false)=>paintFootballer(c,x,y,kit,pose,time,scale,back);
   const pose=sampleHighlight(h.kind,progress);
   if(pose.phase==='reaction') {
     rect(0,79,320,101,'#183451');rect(0,82,320,2,'#e1b758');
@@ -37,10 +35,10 @@ export function paintHighlight(c:CanvasRenderingContext2D,h:Highlight|null,progr
     if(h.kind==='save'){rect(146,133,8,8,'#fff2cc');rect(149,135,3,3,'#283748');}
     return;
   }
-  player(183,145,h.opponentColor,'run',.8);player(pose.runnerX,143,h.color,pose.phase==='approach'?'run':'kick');
-  // In the dive pose the gloves extend twenty pixels ahead of the body origin.
-  player(pose.keeperX-(pose.phase==='shot'?20:0),pose.keeperY+17,'#eabf54',pose.phase==='shot'?'dive':'stand');
-  const ballX=pose.phase==='approach'?pose.runnerX+15:pose.ballX;
-  const ballY=pose.phase==='approach'?138:pose.ballY;
+  player(pose.keeperX-(pose.phase==='shot'?14:0),pose.keeperY+12,'#eabf54',pose.phase==='shot'?'dive':'stand',.7);
+  player(180-Math.min(1,progress/.4)*13,108,h.opponentColor,'stand',.72);
+  player(pose.runnerX,pose.runnerY,h.color,pose.phase==='approach'?'run':'kick',.95,true);
+  const ballX=pose.phase==='approach'?153:pose.ballX;
+  const ballY=pose.phase==='approach'?pose.runnerY-8:pose.ballY;
   rect(ballX-3,ballY-3,6,6,'#fff4d6');rect(ballX-1,ballY-1,2,2,'#25374c');
 }

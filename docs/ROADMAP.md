@@ -2,7 +2,7 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.1 athletic pixel sprites and curated highlight revision ready for owner review.
+- Current milestone: v0.1 central commentary, fixed 2x, live clock and upward highlight revision ready for owner review.
 - Last completed gate: Windows pixel presentation, preview isolation, dependency cleanup and packaged build checked. Native Linux remains unverified.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
@@ -12,17 +12,17 @@
 - Dream Club: owner selected a separate earned-player-pack mode; rules in GAME section 11, prototype at v0.7 and polish at v0.8.
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
-- Test inventory/runtime: 14 registered cases in 4 files (13 Vitest, 1 Electron journey). Relevant presentation suite: 4 passed in 0.182 seconds, including one new selection/invariance case. E2E passed in 14.9 seconds with full season, pixel/text equivalence, save/load and preview isolation. Typecheck/lint passed under 2 seconds. No probability calibration rerun: engine/rules unchanged.
-- Evidence from latest change: original slimmer shaded sprites, connected hip/knee/ankle and shoulder/elbow/hand joints, six-pose running cycle, planted kicking foot and dedicated dive. Windows 1280x720 goal/save/miss and shot screenshots inspected in work/pixel-*.png; no page errors. Default seed 2026 fixture-00-0 resolves 21 attempts: 18 misses, 2 saves, 1 goal. New selector yields 9 cutaways for that fixture (6 misses, 2 saves, 1 goal) without changing its recorded events. All attempts remain in commentary/statistics. Off Target avoids claiming every miss was narrow.
-- Open issues/next action: owner evaluates anatomy, animation timing and event selection. Current engine has passes and three shot outcomes only; fouls, cards, offsides and set pieces are not implemented. Sprite backgrounds/crowd detail and richer poses may be refined after review. One cutaway per delivered minute, goals take priority if outcomes coincide. Linux, low-end hardware, human audio preference and autosave pruning remain unverified/deferred. Prior calibration unchanged: 1.73 goals/match.
-- Build identity: app 0.1.0, engine 0.1.0, exhibition-1. Windows app.asar SHA-256 2ba13c905be5166d3d5e6acb44b3af2ca1f0d60a21d48d98e8559781f5951e42. Final renderer build 0.155 seconds; Windows packaging completed within budget. Launch using npm run start:packaged. Commit subject: Refine football sprites and reduce repetitive miss highlights.
+- Test inventory/runtime: 15 registered cases in 4 files (14 Vitest, 1 Electron journey). Relevant presentation suite 5 passed in 0.222 seconds, including new clock bounds/pause-boundary and upward-motion assertions. Updated E2E passed in 14.0 seconds: live clock advances then freezes, removed mode/speed controls, normal/fallback match equivalence, full season, Save/Load and preview isolation. Typecheck/lint passed under 2 seconds. No probability calibration rerun; engine/rules unchanged.
+- Evidence from latest change: central live commentary and event history, compact statistics below, optional pixel overlay and automatic return; no idle Match Day image or Pixel art/Text/speed selectors. Fixed 2x pacing, MM:SS display with cosmetic seconds. New goal-at-top composition, attacker back view and defender ahead. Windows actual seed-2026 minute-27 goal inspected, overlay returned automatically before minute 29; pause held at 29:30. Screenshots at 1920x1080 and 1280x720 in work/vertical-live.png and central-commentary*.png.
+- Open issues/next action: owner evaluates central commentary and bottom-to-top composition. Clock seconds are transient, clamp inside the current committed minute, and reset to tick:00 on load; no subminute simulation decisions. Defender blocks, post hits, narrow-miss distances, fouls/cards and substitutions remain unimplemented. Linux, low-end hardware, audio preference and autosave pruning remain unverified/deferred.
+- Build identity: app 0.1.0, engine 0.1.0, exhibition-1. Windows app.asar SHA-256 1e2e3ed64788e5cb26237dd5f472ccf6a162c8f43892e81edb7fd3cb1920680a. Final renderer build 0.151 seconds; Windows packaging within budget. Launch using npm run start:packaged. Commit subject: Center match commentary and add a running clock.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
 
 | Milestone | Implemented | Verified | Remaining gate |
 | --- | --- | --- | --- |
-| v0.1 | Eight approved clubs, 176 synthetic players, squad selection, deterministic worker league/matches, table, Save/Load, pixel art/text, packaging configuration | Windows 11: 14 registered cases; packaged offline launch/play/save | Native Linux build/launch and reproducibility; owner pixel-art audition feedback |
+| v0.1 | Eight approved clubs, 176 synthetic players, squad selection, deterministic worker league/matches, table, Save/Load, pixel art/text, packaging configuration | Windows 11: 15 registered cases; packaged offline launch/play/save | Native Linux build/launch and reproducibility; owner pixel-art audition feedback |
 
 ## Gates and scope discipline
 

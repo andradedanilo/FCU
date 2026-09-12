@@ -27,7 +27,7 @@ Use `main` directly; no feature branches, worktrees, pull requests or GitHub Act
 
 The owner supplied https://github.com/andradedanilo/FCU.git during v0.1 setup. Verify the configured remote before backup. Keep local commits if a push cannot be completed, and state that remote backup is pending. Never force-push or change repository visibility. Keep all project guidance tracked as the owner requested; `.gitignore` does not exclude it.
 
-Current owner match controls: Play/Pause, 1x/2x/3x and optional continuous half-time. No instant finish or manual minute skip. Start fullscreen with F11 window toggle; prioritize readable original pixel sprites and short expressive highlights. Use the owner's ISS Deluxe references for athletic pixel proportions and connected limb poses. Curate repeated misses rather than changing match probabilities for spectacle; keep all attempts in commentary/statistics. See GAME and ARCHITECTURE for current pacing choices.
+Current owner match controls: Play/Pause, fixed 2x playback and optional continuous half-time. No instant finish or manual minute skip. Start fullscreen with F11 window toggle; prioritize readable original pixel sprites and short expressive highlights. Live commentary is central with a running MM:SS clock and temporary highlights; no separate Pixel art/Text modes or speed selector. Attacks move bottom-to-top toward the goal. Use the owner's ISS Deluxe references for athletic pixel proportions and connected limb poses. Curate repeated misses rather than changing match probabilities for spectacle; keep all attempts in commentary/statistics. See GAME and ARCHITECTURE for current pacing choices.
 
 ## Working defaults
 

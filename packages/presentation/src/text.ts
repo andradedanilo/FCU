@@ -1,11 +1,11 @@
 import { brand, type Career, type MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
-  pixelBoards:`${brand.short}  /  HALF TIME SODA  /  ONE MORE MATCH`, pixelMode:'Pixel art', artPreview:'Art preview', previewGoal:'Preview goal', previewSave:'Preview save', previewMiss:'Preview miss', previewNote:'Art preview - does not affect your match', matchday:'MATCHDAY', waitingHighlight:'Waiting for the next big moment', pixelTag:'THE BEAUTIFUL GAME / 16-BIT HIGHLIGHTS', saveBanner:'WHAT A SAVE!', missBanner:'OFF TARGET', skipHighlight:'Skip highlight', canvasFailed:'Pixel art is unavailable. Text play remains available.',
+  pixelBoards:`${brand.short}  /  HALF TIME SODA  /  ONE MORE MATCH`, artPreview:'Art preview', previewGoal:'Preview goal', previewSave:'Preview save', previewMiss:'Preview miss', previewNote:'Art preview - does not affect your match', saveBanner:'WHAT A SAVE!', missBanner:'OFF TARGET', skipHighlight:'Skip highlight', canvasFailed:'Highlights are unavailable. Live commentary continues.',
   titleTag:'A whole season of possibilities', startGame:'Start a career', titleMenu:'Title screen', clubhouse:'Clubhouse', back:'Back',
   chooseClub:'Choose your club', chooseHint:'Eight clubs. One trophy. Your story starts here.', prevClub:'Previous club', nextClub:'Next club',
   ready:'Ready for the touchline?', beginHint:'Your eleven. Your season.', squadAction:'Pick the eleven', tableAction:'Chase the trophy',
   seasonTag:'Exhibition season / 2026', gameNote:'Fictional exhibition / 14 rounds / offline',
-  speedLabels:{1:'Matchday',2:'Brisk',3:'Quick play'}, music:'Music', effects:'SFX', on:'On', off:'Off', musicHint:'Original chiptune',
+  matchClock:'Match clock', fixedSpeed:'Match pace: 2x', matchStats:'Match statistics', noChance:'Play continues. Waiting for the next chance.', music:'Music', effects:'SFX', on:'On', off:'Off', musicHint:'Original chiptune',
   bench:'Squad list', starters:'Starting eleven', rosterShort:'22 players', broadcast:'FCU LIVE', goalBanner:'GOAL!',
   retroMode:'RETRO EXHIBITION', scored:'Goal scorer',
   exhibition:'Development exhibition league', edition:'FIRST PLAYABLE / v0.1', home:'Home', squad:'Squad', table:'League table', match:'Match centre',
@@ -21,7 +21,7 @@ export const text = {
   selection:'selected', confirmLineup:'Confirm lineup', autoPick:'Suggest 4-4-2', position:'Role', player:'Player', ability:'Ability', starting:'Start', confirmed:'Lineup confirmed.',
   matchLocked:'Your lineup is locked during this match.', clubName:'Club', played:'P', won:'W', drawn:'D', lost:'L', goalsFor:'GF', goalsAgainst:'GA', difference:'GD', points:'Pts',
   ranking:'Ranking: points, goal difference, goals scored, head-to-head points, then stable club ID (draw-lot fallback).',
-  matchIntro:'Your next ninety minutes', matchEmpty:'Kick off from Home to enter the match centre.', events:'Live commentary', noEvents:'The teams are settling into the match.', highlights:'Stylized event highlights', textMode:'Text',
+  matchIntro:'Your next ninety minutes', matchEmpty:'Kick off from Home to enter the match centre.', events:'Live commentary', noEvents:'The teams are settling into the match.', highlights:'Stylized event highlights',
   visualNote:'Short pixel-art scenes illustrate committed chances. The simulation decides results.',
   speed:'Speed', shots:'Shots', onTarget:'On target', possession:'Possession', quality:'Chance quality', currentPosition:'League position', record:'Season record', playedRounds:'Rounds played',
   welcome:'THE TOUCHLINE IS YOURS', versus:'vs', live:'LIVE', final:'FINAL', season:'EXHIBITION 2026', roster:'22 fictional players', profile:'City identity profile', next:'Up next',
