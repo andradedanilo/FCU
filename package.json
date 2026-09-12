@@ -20,8 +20,9 @@
     "check:docs": "node scripts/check-docs.mjs",
     "probe": "node --experimental-strip-types scripts/probe.ts",
     "build": "vite build && node scripts/build.mjs",
-    "package:win": "electron-builder --win --dir",
-    "package:linux": "electron-builder --linux --dir"
+    "package:win": "node scripts/package.mjs win32",
+    "package:linux": "node scripts/package.mjs linux",
+    "start:packaged": "node scripts/start-packaged.mjs"
   },
   "dependencies": {
     "react": "19.3.0",
@@ -30,6 +31,7 @@
     "zod": "4.6.2"
   },
   "devDependencies": {
+    "@electron/packager": "20.3.0",
     "@playwright/test": "1.63.0",
     "@types/node": "22.20.2",
     "@types/react": "19.3.0",
@@ -37,7 +39,6 @@
     "@types/three": "0.186.0",
     "@typescript/native": "npm:typescript@7.0.2",
     "electron": "44.3.0",
-    "electron-builder": "26.15.3",
     "esbuild": "0.28.2",
     "eslint": "10.10.0",
     "typescript": "npm:@typescript/typescript6@6.0.2",
@@ -45,25 +46,12 @@
     "vite": "8.3.0",
     "vitest": "5.0.0"
   },
-  "build": {
-    "appId": "com.fcu.game",
-    "productName": "Football Club Universe",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "dist-electron/**/*",
-      "package.json"
-    ],
-    "asar": true,
-    "win": {
-      "target": "dir",
-      "signAndEditExecutable": false
-    },
-    "linux": {
-      "target": "dir",
-      "category": "Game"
-    }
+  "packageManager": "npm@12.0.2",
+  "engines": {
+    "node": ">=26.0.0",
+    "npm": ">=12.0.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }

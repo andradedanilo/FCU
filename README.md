@@ -16,7 +16,7 @@ The prototype stops after one small season. Transfers, tactics, injuries, cards,
 
 ## Run from source
 
-Tested development tools: Node.js 26.8.2 and npm 11.19.1. Dependencies are pinned in the lockfile. The first launch may download Electron; installed gameplay is offline.
+Tested development tools: Node.js 26.8.2 and npm 12.0.2. Dependencies are pinned in the lockfile. The first launch may download Electron; installed gameplay is offline.
 
 ```sh
 npm ci
@@ -43,9 +43,11 @@ npm run package:win
 npm run package:linux
 ```
 
-Windows executable: `release/win-unpacked/Football Club Universe.exe`.
-Linux executable: `release/linux-unpacked/fcu` (configured; unverified on Linux).
+Run `npm run start:packaged` to open the most recently built native folder.
+The packaging command prints its unique `release/build-*` folder. Windows uses `Football Club Universe.exe`; Linux uses `fcu` (configured; unverified on Linux).
 Keep the complete output folder together. These are unsigned local prototype builds, not published installers. No GitHub Actions or hosted build service is used.
+
+npm 12.0.2 or newer is required. If npm offers an update, use `npm install --global npm@12.0.2` for this recorded setup. Install scripts are restricted to the pinned esbuild version. Audit reporting stays enabled; funding reminders are disabled. `npm audit` reports known advisories, not a guarantee against all vulnerabilities.
 
 ## Local checks
 

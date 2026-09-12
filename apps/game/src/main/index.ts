@@ -6,6 +6,8 @@ import { brand, type Result, type FailureCode } from '../../../../packages/contr
 import { createSaveStore } from './saves.ts';
 
 const here=dirname(fileURLToPath(import.meta.url));
+// Save identity stays fixed when the executable or product title changes.
+app.setPath('userData',join(app.getPath('appData'),'fcu'));
 if(process.env.FCU_USER_DATA && !app.isPackaged)app.setPath('userData',process.env.FCU_USER_DATA);
 const locked=app.requestSingleInstanceLock();
 if(!locked)app.quit();

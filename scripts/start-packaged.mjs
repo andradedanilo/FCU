@@ -1,0 +1,11 @@
+import { readFile } from 'node:fs/promises';
+import { resolve, relative, isAbsolute } from 'node:path';
+import { spawn } from 'node:child_process';
+const { executable } = JSON.parse(await readFile('release/latest.json', 'utf8'));
+if (typeof executable !== 'string') throw new Error('Package FCU first.');
+const destination = resolve(executable);
+const path = relative(resolve('release'), destination);
+if (path.startsWith('..') || isAbsolute(path)) throw new Error('Invalid packaged executable path.');
+const child = spawn(destination, [], { stdio: 'inherit' });
+child.on('error', error => { console.error(error.message); process.exitCode = 1; });
+child.on('exit', code => { process.exitCode = code ?? 0; });
