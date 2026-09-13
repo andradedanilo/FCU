@@ -178,6 +178,7 @@ export function advanceMatch(previous: Match, players: Player[], minutes: number
   if(match.phase==='interval')match.phase='second';else if(match.phase==='extraInterval')match.phase='extraSecond';
   const tactics=[match.homeTactics,match.awayTactics];
   const conditionedPlayers=players.map(p=>({...p}));
+  let lineupKey='',slots:ReturnType<typeof arrangeLineup>[]=[],lineups:Player[][]=[];
   const roll=()=>{let value; [match.rng,value]=draw(match.rng); return value%10000;};
   const weighted=(pool:Player[],weight:(p:Player)=>number):Player=>{
     const total=pool.reduce((n,p)=>n+weight(p),0); let target=roll()*total/10000;
@@ -194,9 +195,12 @@ export function advanceMatch(previous: Match, players: Player[], minutes: number
     automaticChanges(match,players);
   const active=[activeLineup(match,match.home),activeLineup(match,match.away)];
   for(const player of conditionedPlayers)player.condition=match.condition[player.id]??player.condition;
-  const slots=active.map((ids,i)=>arrangeLineup(conditionedPlayers,ids,tactics[i]!.formation));
-  // Keep the committed lineup order for weighted draws when natural roles are unchanged.
-  const lineups=active.map((ids,i)=>ids.map(id=>{const slot=slots[i]!.find(s=>s.player.id===id)!;return slot.player.role===slot.role?slot.player:{...slot.player,role:slot.role};}));
+  const key=active.map((ids,i)=>tactics[i]!.formation+':'+ids.join('/')).join('|');
+  // Positions remain stable between personnel changes; ratings still use this minute's condition.
+  if(key!==lineupKey){lineupKey=key;slots=active.map((ids,i)=>arrangeLineup(conditionedPlayers,ids,tactics[i]!.formation));
+   lineups=active.map((ids,i)=>ids.map(id=>{const slot=slots[i]!.find(s=>s.player.id===id)!;return slot.player.role===slot.role?slot.player:{...slot.player,role:slot.role};}));
+  }
+  for(const team of lineups)for(const player of team)player.condition=match.condition[player.id]??player.condition;
   const strengths=slots.map((team,i)=>{const value=strength(team);const size=team.length/11;return {...value,A:Math.round(value.A*size*100)/100,D:Math.round(value.D*size*100)/100,M:Math.round(value.M*size*rules.pressing[tactics[i]!.pressing]/100)/100};});
     for(const [side,ids] of active.entries())for(const id of ids)match.condition[id]=Math.max(0,match.condition[id]!-Math.round(rules.conditionLoss*rules.conditionTempo[tactics[side]!.tempo]/10000*rules.conditionPressing[tactics[side]!.pressing]/10000));
     const short=active.findIndex(ids=>ids.length<7);
@@ -230,7 +234,8 @@ function simulateScheduledAI(state:Career,dream=false){
  if(nextManagedFixture(state)?.date===state.date)return;
  for(const fixture of state.fixtures){if(fixture.score!==null||fixture.date!==state.date||fixture.home===state.clubId||fixture.away===state.clubId)continue;
   if(!dream)for(const club of [fixture.home,fixture.away])while(callUp(state,club,fixture.competitionClass)){ /* At most eight active academy places. */ }
-  let match=startMatch(state,fixture);while(match.phase!=='finished')match=advanceMatch(match,state.players,90);settleFixture(state,match,dream);
+  const players=state.players.filter(p=>p.clubId===fixture.home||p.clubId===fixture.away);
+  let match=startMatch({...state,players},fixture);while(match.phase!=='finished')match=advanceMatch(match,players,90);settleFixture(state,match,dream);
  }
 }
 export function applyCommand(state: Career, command: Command, dream=false): Result<Career> {
