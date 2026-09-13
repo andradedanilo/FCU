@@ -97,3 +97,20 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
     await page.screenshot({path:'work/season-table.png'});await click('Clubhouse');let end=await latest();while(end.loans[0]?.status==='active'){await advance();await save();end=await latest();}expect(end.date).toBe('2027-06-30');expect(end.players.find(p=>p.id===end.loans[0]!.playerId)!.clubId).toBe(end.loans[0]!.parent);expect(errors).toEqual([]);
   }finally{await app!.close();}
 });
+
+test('stops Dream stadium audio when returning to the title',async()=>{
+ const data=await mkdtemp(join(tmpdir(),'fcu-dream-audio-'));
+ const app=await electron.launch({args:['.'],env:{...process.env,FCU_USER_DATA:data}});
+ try{const page=await app.firstWindow();await page.context().setOffline(true);
+  await page.evaluate(()=>{
+   const Original=window.Audio,clips:HTMLAudioElement[]=[];
+   Object.defineProperty(window,'fcuAuditionClips',{value:clips});
+   window.Audio=class extends Original{constructor(src?:string){super(src);clips.push(this);}};
+  });
+  const audible=()=>page.evaluate(()=>(window as unknown as {fcuAuditionClips:HTMLAudioElement[]}).fcuAuditionClips.filter(clip=>clip.loop&&!clip.paused).length);
+  await page.getByRole('button',{name:'FCU Dream Club',exact:true}).click();await page.getByRole('button',{name:'Begin Dream Club',exact:true}).click();
+  await page.getByRole('button',{name:'Play next fixture',exact:true}).click();await page.getByRole('button',{name:'Play',exact:true}).click();
+  await expect.poll(audible).toBe(1);await page.getByRole('button',{name:'Title screen',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Start a career',exact:true})).toBeVisible();await expect.poll(audible).toBe(0);
+ }finally{await app.close();}
+});

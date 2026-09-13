@@ -27,13 +27,18 @@ export function DreamClub({packs,exit,cue,ambience}:{packs:InstalledRoster[];exi
  const [saves,setSaves]=useState<SaveEntry[]|null>(null),[lineup,setLineup]=useState<PlayerId[]>([]),[tactics,setTactics]=useState(false),[bench,setBench]=useState(false),[report,setReport]=useState(false),[collection,setCollection]=useState(false);
  const [continuous,setContinuous]=useState(false),continuousRef=useRef(false);
  const [playing,setPlaying]=useState(false),running=useRef(false),hold=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const sound=useRef(ambience);sound.current=ambience;
+ const cancelRequest=useRef<(()=>void)|null>(null);
  function stop(){ambience(false);running.current=false;setPlaying(false);if(timer.current)clearTimeout(timer.current);}
- useEffect(()=>()=>{worker.current?.terminate();if(timer.current)clearTimeout(timer.current);},[]);
+ useEffect(()=>()=>{running.current=false;sound.current(false);cancelRequest.current?.();worker.current?.terminate();if(timer.current)clearTimeout(timer.current);},[]);
  function send(request:DreamRequest):Promise<Result<Dream>>{
   worker.current??=new Worker(new URL('../worker/dream.ts',import.meta.url),{type:'module'});
   const target=worker.current;
-  return new Promise(resolve=>{const timeout=setTimeout(()=>{target.terminate();worker.current=null;resolve({ok:false,error:'WORKER_FAILED'});},10000);
-   target.onmessage=(event:MessageEvent<Result<Dream>>)=>{clearTimeout(timeout);resolve(event.data);};target.onerror=()=>{clearTimeout(timeout);resolve({ok:false,error:'WORKER_FAILED'});};target.postMessage(request);
+  return new Promise(resolve=>{
+   const finish=(result:Result<Dream>)=>{clearTimeout(timeout);target.onmessage=null;target.onerror=null;cancelRequest.current=null;resolve(result);};
+   const fail=()=>{target.terminate();worker.current=null;finish({ok:false,error:'WORKER_FAILED'});};
+   const timeout=setTimeout(fail,10000);cancelRequest.current=fail;
+   target.onmessage=(event:MessageEvent<Result<Dream>>)=>finish(event.data);target.onerror=fail;target.postMessage(request);
   });
  }
  async function persist(value:Dream){const result=await window.fcu.dreamSave(value);setDurable(result.ok);setNotice(result.ok?t.saved:t.errors[result.error]);return result.ok;}
