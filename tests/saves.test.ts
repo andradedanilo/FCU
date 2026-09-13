@@ -4,10 +4,23 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync,gunzipSync } from 'node:zlib';
 import { createSaveStore, checksum, decode } from '../apps/game/src/main/saves.ts';
+import {createSettingsStore} from '../apps/game/src/main/settings.ts';
 import { createCareer, applyCommand } from '../packages/simulation/src/engine.ts';
 import { clubs } from '../packages/contracts/src/identity.ts';
 import { canonical } from '../packages/contracts/src/index.ts';
 const career=()=>createCareer('00000000-0000-4000-8000-000000000001',45,clubs[0]!.id);
+it('persists audio choices atomically and preserves unsupported settings',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'fcu-settings-')),store=createSettingsStore(root);
+ expect(await store.load()).toEqual({schema:1,music:false,effects:true});
+ await Promise.all([store.save({schema:1,music:true,effects:true}),store.save({schema:1,music:false,effects:false})]);
+ await writeFile(join(root,'audio.tmp'),'{interrupted');
+ expect(await createSettingsStore(root).load()).toEqual({schema:1,music:false,effects:false});
+ await expect(store.save({schema:1,music:'yes',effects:true})).rejects.toThrow();
+ expect(await store.load()).toEqual({schema:1,music:false,effects:false});
+ const unsupported='{"schema":2,"music":true,"effects":true}';await writeFile(join(root,'audio.json'),unsupported);
+ await expect(store.load()).rejects.toThrow();await expect(store.save({schema:1,music:false,effects:false})).rejects.toThrow();
+ expect(await readFile(join(root,'audio.json'),'utf8')).toBe(unsupported);
+});
 it('roundtrips a Unicode mid-match checkpoint with the same continuation hash',async()=>{
   const store=createSaveStore(await mkdtemp(join(tmpdir(),'fcu-save-')));const s=career();s.players[0]!.name='Jo\u00e3o';
   const start=applyCommand(s,{type:'StartMatch',commandId:crypto.randomUUID(),careerId:s.careerId,expectedRevision:0});if(!start.ok)throw new Error();

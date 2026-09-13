@@ -1,4 +1,5 @@
 import {createDreamStore} from './dreamSaves.ts';
+import {createSettingsStore} from './settings.ts';
 import {createRosterStore} from './rosters.ts';
 import { app, BrowserWindow, ipcMain, session, dialog, type IpcMainInvokeEvent } from 'electron';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -15,6 +16,7 @@ const locked=app.requestSingleInstanceLock();
 if(!locked)app.quit();
 else void app.whenReady().then(async()=>{
   const dream=createDreamStore(join(app.getPath('userData'),'dream-saves'));
+  const settings=createSettingsStore(join(app.getPath('userData'),'settings'));
   const store=createSaveStore(join(app.getPath('userData'),'saves'));
   const rosters=createRosterStore(join(app.getPath('userData'),'rosters'),!app.isPackaged);
   const productionURL=pathToFileURL(join(here,'../dist/index.html')).href;
@@ -28,6 +30,8 @@ else void app.whenReady().then(async()=>{
     try{return {ok:true,value:await fn(...args)};}catch(error){const code:FailureCode=error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':error instanceof Error&&error.message==='INVALID_SAVE'?'INVALID_SAVE':'IO_ERROR';return {ok:false,error:code};}
   };
   ipcMain.handle('roster-list',route(async()=>rosters.list()));
+  ipcMain.handle('audio-settings',route(async()=>settings.load()));
+  ipcMain.handle('save-audio-settings',route(async(value)=>settings.save(value)));
   ipcMain.handle('roster-import',route(async()=>{const selected=await dialog.showOpenDialog(window,{filters:[{name:'FCU roster pack',extensions:['zip']}],properties:['openFile']});return selected.canceled?null:rosters.install(selected.filePaths[0]!);}));
   ipcMain.handle('dream-save',route(async(state)=>dream.save(state)));
   ipcMain.handle('dream-list',route(async()=>dream.list()));
@@ -41,7 +45,7 @@ else void app.whenReady().then(async()=>{
   window.webContents.on('will-navigate',event=>event.preventDefault());
   window.webContents.on('will-attach-webview',event=>event.preventDefault());
   let closing=false;
-  window.on('close',event=>{if(closing)return;event.preventDefault();void Promise.all([store.idle(),dream.idle()]).then(()=>{closing=true;window.close();});});
+  window.on('close',event=>{if(closing)return;event.preventDefault();void Promise.all([store.idle(),dream.idle(),settings.idle()]).then(()=>{closing=true;window.close();});});
   window.webContents.on('render-process-gone',()=>{void dialog.showMessageBox({type:'error',message:'FCU stopped unexpectedly. Reopen the game and load a confirmed save.'});});
   app.on('second-instance',()=>{window.restore();window.focus();});
   window.once('ready-to-show',()=>window.show());

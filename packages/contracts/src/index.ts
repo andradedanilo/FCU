@@ -165,6 +165,8 @@ export type FailureCode = 'OFFER_CHANGED' | 'SQUAD_NEED' | 'SQUAD_FULL' | 'REPUT
 export type Result<T> = { ok: true; value: T } | { ok: false; error: FailureCode };
 export type SaveEntry = { careerId: string; commitId: string; club: string; round: number; tick: number; savedAtUTC: string; kind: 'manual' | 'auto'; valid: boolean; engineVersion:string|null; error: FailureCode | null };
 export interface DesktopBridge {
+  audioSettings():Promise<Result<AudioSettings>>;
+  saveAudioSettings(value:AudioSettings):Promise<Result<AudioSettings>>;
   dreamSave(state:import('./dream.ts').Dream):Promise<Result<string>>;
   dreamList():Promise<Result<SaveEntry[]>>;
   dreamLoad(id:string,commit:string):Promise<Result<import('./dream.ts').Dream>>;
@@ -174,6 +176,8 @@ export interface DesktopBridge {
   list(): Promise<Result<SaveEntry[]>>;
   load(careerId: string, commitId: string): Promise<Result<Career>>;
 }
+export const audioSettingsSchema=z.strictObject({schema:z.literal(1),music:z.boolean(),effects:z.boolean()});
+export type AudioSettings=z.infer<typeof audioSettingsSchema>;
 export function canonical(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';

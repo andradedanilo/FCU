@@ -67,10 +67,21 @@ export function App() {
   const audio = useRef<ReturnType<typeof createGameAudio>|null>(null);
   const [music, setMusic] = useState(false);
   const [effects, setEffects] = useState(true);
+  const [audioReady,setAudioReady]=useState(false),[audioSaving,setAudioSaving]=useState(false);
+  const audioWriting=useRef(false);
+  async function persistAudio(nextMusic:boolean,nextEffects:boolean){
+    if(audioWriting.current||!audioReady)return;audioWriting.current=true;setAudioSaving(true);
+    try{const result=await window.fcu.saveAudioSettings({schema:1,music:nextMusic,effects:nextEffects});
+      if(result.ok){setMusic(result.value.music);setEffects(result.value.effects);audio.current?.effects(result.value.effects);audio.current?.music(result.value.music);}
+      else setNotice(t.audioSettingsFailed);
+    }finally{audioWriting.current=false;setAudioSaving(false);}
+  }
   const stop = () => { running.current=false;setPlaying(false);if(timer.current)clearTimeout(timer.current); };
   useEffect(() => {
     audio.current=createGameAudio();
-    return () => {if(timer.current)clearTimeout(timer.current);resetWorker();audio.current?.dispose();};
+    let active=true;
+    void window.fcu.audioSettings().then(result=>{if(!active)return;if(result.ok){setMusic(result.value.music);setEffects(result.value.effects);audio.current?.effects(result.value.effects);audio.current?.music(result.value.music);}else setNotice(t.audioSettingsFailed);setAudioReady(true);});
+    return () => {active=false;if(timer.current)clearTimeout(timer.current);resetWorker();audio.current?.dispose();};
   }, []);
   useEffect(() => { if(saves===null)return;const previous=document.activeElement;const modal=dialog.current;modal?.showModal();return()=>{modal?.close();if(previous instanceof HTMLElement&&previous.isConnected)previous.focus();}; }, [saves]);
   const accept = (value:Career,keepDraft=false) => { latest.current=value;setState(value);if(!keepDraft)setLineup(value.lineup); };
@@ -134,8 +145,8 @@ export function App() {
       <header data-input-section className={s.hud}><button className={s.wordmark} disabled={busy} aria-label={t.titleMenu} onClick={()=>navigate('title')}>{brand.short}<span aria-hidden="true">★</span></button>
         <span className={s.hudLabel}>{t.retroMode}</span>
         <div className={s.hudActions}>
-          <button aria-label={`${t.music} ${music?t.on:t.off}`} aria-pressed={music} onClick={()=>{audio.current?.music(!music);setMusic(!music);}}>{t.music}<span>{music?t.on:t.off}</span></button>
-          <button aria-label={`${t.effects} ${effects?t.on:t.off}`} aria-pressed={effects} onClick={()=>{audio.current?.effects(!effects);setEffects(!effects);}}>{t.effects}<span>{effects?t.on:t.off}</span></button>
+          <button disabled={!audioReady||audioSaving} aria-label={`${t.music} ${music?t.on:t.off}`} aria-pressed={music} onClick={()=>void persistAudio(!music,effects)}>{t.music}<span>{music?t.on:t.off}</span></button>
+          <button disabled={!audioReady||audioSaving} aria-label={`${t.effects} ${effects?t.on:t.off}`} aria-pressed={effects} onClick={()=>void persistAudio(music,!effects)}>{t.effects}<span>{effects?t.on:t.off}</span></button>
           {!title&&screen!=='dream'&&<button disabled={busy} onClick={()=>void showSaves()}>{t.load}</button>}
           {state&&!title&&screen!=='dream'&&<button disabled={busy} onClick={()=>void manualSave()}>{t.save}</button>}
           {!title&&screen!=='dream'&&<button data-input-back disabled={busy} onClick={()=>navigate(screen==='setup'?'title':screen==='home'?'title':'home')}>{screen==='setup'||screen==='home'?t.back:t.clubhouse}</button>}
