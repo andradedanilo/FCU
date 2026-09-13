@@ -3,7 +3,7 @@ import type {Career,ClubId,Player,PlayerId,Role,Offer} from '../../contracts/src
 import {marketCommand,affordability,askingPrice,activeOffer,dealError,register,windowOpen,nextWindow} from './market.ts';
 import {desiredTerms,ageOn} from './contracts.ts';
 import {estimate} from './scouting.ts';
-import {monday,budgets} from './economy.ts';
+import {monday,budgets,budgetBook} from './economy.ts';
 import {stream} from './rng.ts';
 import {occupiedPlaces} from './loans.ts';
 import {overall} from './ratings.ts';
@@ -30,22 +30,25 @@ export function recruit(state:Career){
  }
  if(!monday(state.date)||seasonComplete(state)||!windowOpen(state.date))return;
  const eligible=state.players.filter(p=>!p.academy&&state.personnel.players[p.id]!.retired===null&&ageOn(state.contracts[p.id]!.birthDate,state.date)<34);
+ const listed=eligible.filter(p=>p.clubId===state.clubId&&p.transferListing);
  const key=`${state.seed}/${state.date.slice(0,4)}/`+eligible.map(p=>`${p.id}:${overall(p)}:${ageOn(state.contracts[p.id]!.birthDate,state.date)}`).join(',');
  if(key!==rankingKey){rankingKey=key;rankings.clear();}
+ const banks=budgetBook(state);
  const current=new Map(eligible.map(p=>[p.id,p]));
  // Club transfers settle before this scan; only free agents register immediately below.
  const depth=new Map<ClubId,{size:number;keepers:number}>();
  for(const p of state.players)if(p.clubId&&!p.academy){const count=depth.get(p.clubId)??{size:0,keepers:0};count.size++;count.keepers+=Number(p.role==='GK');depth.set(p.clubId,count);}
  for(const club of [...state.clubs].sort((a,b)=>a.id<b.id?-1:1)){
   if(club.id===state.clubId)continue;
+  let bank=banks.get(club.id)!;
   const existing=state.offers.filter(o=>o.buyerId===club.id&&o.date===state.date).length;
   for(let slot=existing;slot<2;slot++){
    const squad=state.players.filter(p=>p.clubId===club.id&&!p.academy);
    const pending=state.offers.filter(o=>o.buyerId===club.id&&activeOffer(o));
    const deficits=(Object.keys(targetSquad) as Role[]).map(role=>({role,missing:targetSquad[role]-squad.filter(p=>p.role===role).length-pending.filter(o=>state.players.find(p=>p.id===o.playerId)!.role===role).length})).filter(d=>d.missing>0).sort((a,b)=>b.missing-a.missing);
-   if(!deficits.length){for(const role of Object.keys(targetSquad) as Role[]){const group=squad.filter(p=>p.role===role);if(group.length>=targetSquad[role]+1||pending.some(o=>state.players.find(p=>p.id===o.playerId)?.role===role))continue;const weakest=Math.min(...group.map(overall));if(eligible.some(p=>p.clubId===state.clubId&&p.transferListing&&p.role===role&&overall(p)>=weakest+3))deficits.push({role,missing:0});}}
+   if(!deficits.length){for(const role of Object.keys(targetSquad) as Role[]){const group=squad.filter(p=>p.role===role);if(group.length>=targetSquad[role]+1||pending.some(o=>state.players.find(p=>p.id===o.playerId)?.role===role))continue;const weakest=Math.min(...group.map(overall));if(listed.some(p=>p.role===role&&overall(p)>=weakest+3))deficits.push({role,missing:0});}}
    if(!deficits.length)break;
-   const role=deficits[0]!.role,view={...state,clubId:club.id},bank=budgets(state,club.id),occupied=occupiedPlaces(state,club.id);
+   const role=deficits[0]!.role,view={...state,clubId:club.id},occupied=occupiedPlaces(state,club.id);
    let ranked=rankings.get(club.id);
    if(!ranked){ranked=eligible.map(player=>{const ability=estimate(view,player,3);return {player,ability:ability.low+ability.high,age:ageOn(state.contracts[player.id]!.birthDate,state.date)};}).sort((a,b)=>b.ability-a.ability||a.age-b.age||(a.player.id<b.player.id?-1:1)).map(entry=>entry.player.id);rankings.set(club.id,ranked);}
    const candidates=ranked.map(id=>current.get(id)!).filter(p=>p.clubId!==club.id&&(p.clubId!==state.clubId||!!p.transferListing)&&p.role===role&&!pending.some(o=>o.playerId===p.id)&&(deficits[0]!.missing>0||(!!p.transferListing&&overall(p)>=Math.min(...squad.filter(q=>q.role===role).map(overall))+3)));
@@ -58,7 +61,7 @@ export function recruit(state:Career){
    if(error)break;
    const offer=state.offers.at(-1)!;
    if(offer.sellerId===state.clubId)offer.terms=terms(state,selected);
-   if(offer.status==='accepted'){offer.terms=terms(state,selected);if(!register(state,offer)){const count=depth.get(club.id)??{size:0,keepers:0};count.size++;count.keepers+=Number(selected.role==='GK');depth.set(club.id,count);}}
+   if(offer.status==='accepted'){offer.terms=terms(state,selected);if(!register(state,offer)){bank=budgets(state,club.id);const count=depth.get(club.id)??{size:0,keepers:0};count.size++;count.keepers+=Number(selected.role==='GK');depth.set(club.id,count);}}
   }
  }
 }

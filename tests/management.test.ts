@@ -35,7 +35,7 @@ it('promotes an academy player with a paid senior contract once and preserves de
 import {marketCommand,processMarket} from '../packages/simulation/src/market.ts';
 import {recruit} from '../packages/simulation/src/recruitment.ts';
 import {returnLoans} from '../packages/simulation/src/loans.ts';
-import {cash} from '../packages/simulation/src/economy.ts';
+import {cash,budgets,budgetBook} from '../packages/simulation/src/economy.ts';
 import type {Career,Command} from '../packages/contracts/src/index.ts';
 type Action<T=Command>=T extends Command?Omit<T,'careerId'|'expectedRevision'|'commandId'>:never;
 function managementAct(state:Career,action:Action){const result=applyCommand(state,{...action,careerId:state.careerId,expectedRevision:state.revision,commandId:crypto.randomUUID()});if(!result.ok)throw Error(result.error);return result.value;}
@@ -55,7 +55,7 @@ it('requires the manager to accept a sale and repairs selection without duplicat
 });
 it('loans out with retained ownership and returns the player to the parent',()=>{
  const {state,player,offer}=incoming('loan');const next=managementAct(state,{type:'RespondBid',offerId:offer.id,accept:true});
- expect(next.contracts[player.id]!.ownerId).toBe(next.clubId);expect(next.loans.at(-1)?.share).toBe(50);expect(cash(next.economy,next.clubId)).toBe(cash(state.economy,state.clubId));validateCareer(next);
+ expect(next.contracts[player.id]!.ownerId).toBe(next.clubId);expect(next.loans.at(-1)?.share).toBe(50);expect([...budgetBook(next)]).toEqual(next.economy.clubs.map(c=>[c.clubId,budgets(next,c.clubId)]));expect(cash(next.economy,next.clubId)).toBe(cash(state.economy,state.clubId));validateCareer(next);
  next.date=next.loans.at(-1)!.ends;returnLoans(next);expect(next.players.find(p=>p.id===player.id)?.clubId).toBe(next.clubId);expect(next.loans.at(-1)?.status).toBe('returned');
 });
 it('rejects or expires unaccepted bids without selling and requires affordable current terms',()=>{
@@ -83,4 +83,14 @@ it('records played minutes goals assists and cards once at match settlement',()=
  const encoded=canonical(state);expect(canonical(validateCareer(JSON.parse(encoded)))).toBe(encoded);expect(()=>managementAct(state,{type:'AdvanceMatch',minutes:1})).toThrow('INVALID_COMMAND');expect(canonical(state)).toBe(encoded);
  const player=state.players.find(p=>p.performance?.length)!;const past=canonical(player.performance);const next=structuredClone(state);next.season++;next.date=`${next.season}-07-01`;const replay={...match,date:next.date};recordPerformance(next,replay);validatePerformance(next);expect(next.players.find(p=>p.id===player.id)!.performance).toHaveLength(2);expect(canonical(player.performance)).toBe(past);
  const corrupt=structuredClone(state);corrupt.players.find(p=>p.id===player.id)!.performance![0]!.starts=300;expect(()=>validateCareer(corrupt)).toThrow();
+});
+import {manageMarket,tradingMetrics} from '../scripts/career-policy.ts';
+import {post} from '../packages/simulation/src/economy.ts';
+it('exercises paid buying borrowing and promotion through affordable public commands',()=>{
+ let state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id,'countries');state.date='2026-07-06';youthIntake(state);
+ post(state.economy,{id:'test-market-capital',date:state.date,kind:'opening',postings:[{account:state.clubId,amount:2000000000},{account:'external',amount:-2000000000}]});
+ const metrics=tradingMetrics(),act=(action:Action)=>{state=managementAct(state,action);};manageMarket(()=>state,act,metrics);
+ act({type:'AdvanceCalendar',target:'day'});manageMarket(()=>state,act,metrics);
+ expect(metrics.promotions).toBe(1);expect(metrics.paidSignings).toBe(1);expect(metrics.loanIns).toBe(1);expect(metrics.feesPaid).toBeGreaterThan(0);validateCareer(state);
+ const prior=canonical(metrics);manageMarket(()=>state,act,metrics);expect(canonical(metrics)).toBe(prior);
 });

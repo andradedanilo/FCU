@@ -32,6 +32,7 @@ it('earns choices once, preserves revealed candidates and resolves the final uno
 });
 it('completes a separate Dream season and recovers a saved pending reward without Career processing',async()=>{
  let s=newDream({type:'New',id:crypto.randomUUID(),seed:2026,name:'Dream Test',tier:'starter',pack:null});
+ const invalidPosition=structuredClone(s);invalidPosition.game.players[0]!.secondaryRoles=['FWD'];expect(()=>validateDream(invalidPosition)).toThrow('INVALID_SAVE');
  const fixed=canonical({economy:s.game.economy,personnel:s.game.personnel,board:s.game.board});
  type Action<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
  const match=(action:Action<Command>)=>{s=dreamCommand(s,{type:'Match',command:{...action,careerId:s.game.careerId,commandId:crypto.randomUUID(),expectedRevision:s.game.revision}});};

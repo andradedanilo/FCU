@@ -85,7 +85,7 @@ export function validateDream(input:unknown):Dream{
  const owned=g.players.filter(p=>p.clubId===g.clubId).map(p=>state.instances[p.id]);
  if(new Set(owned).size!==owned.length||owned.length!==state.collection.unlocked.length||owned.some(id=>!id||!state.collection.unlocked.includes(id)))throw Error('INVALID_SAVE');
  const stats=['goalkeeping','tackling','passing','shooting','pace','stamina','discipline','name','role'] as const;
- for(const p of g.players){const source=state.pool.find(s=>s.id===state.instances[p.id]);if(!source||stats.some(key=>p[key]!==source.player[key]))throw Error('INVALID_SAVE');}
+ for(const p of g.players){const source=state.pool.find(s=>s.id===state.instances[p.id]);if(!source||p.transferListing||JSON.stringify(p.secondaryRoles??[])!==JSON.stringify(source.player.secondaryRoles??[])||stats.some(key=>p[key]!==source.player[key]))throw Error('INVALID_SAVE');}
  return state;
 }
 

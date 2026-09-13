@@ -196,7 +196,7 @@ export function advanceMatch(previous: Match, players: Player[], minutes: number
   for(const player of conditionedPlayers)player.condition=match.condition[player.id]??player.condition;
   const slots=active.map((ids,i)=>arrangeLineup(conditionedPlayers,ids,tactics[i]!.formation));
   // Keep the committed lineup order for weighted draws when natural roles are unchanged.
-  const lineups=active.map((ids,i)=>ids.map(id=>{const slot=slots[i]!.find(s=>s.player.id===id)!;return {...slot.player,role:slot.role};}));
+  const lineups=active.map((ids,i)=>ids.map(id=>{const slot=slots[i]!.find(s=>s.player.id===id)!;return slot.player.role===slot.role?slot.player:{...slot.player,role:slot.role};}));
   const strengths=slots.map((team,i)=>{const value=strength(team);const size=team.length/11;return {...value,A:Math.round(value.A*size*100)/100,D:Math.round(value.D*size*100)/100,M:Math.round(value.M*size*rules.pressing[tactics[i]!.pressing]/100)/100};});
     for(const [side,ids] of active.entries())for(const id of ids)match.condition[id]=Math.max(0,match.condition[id]!-Math.round(rules.conditionLoss*rules.conditionTempo[tactics[side]!.tempo]/10000*rules.conditionPressing[tactics[side]!.pressing]/10000));
     const short=active.findIndex(ids=>ids.length<7);
@@ -219,10 +219,11 @@ export function advanceMatch(previous: Match, players: Player[], minutes: number
 }
 function settleFixture(state:Career,match:Match,dream=false){
  const fixture=state.fixtures.find(f=>f.id===match.fixtureId)!;if(fixture.score!==null)return;
- recordPerformance(state,match);
- if(!dream)recordAppearances(state,match);
+ const participants=state.players.filter(p=>p.clubId===match.home||p.clubId===match.away),view={...state,players:participants};
+ recordPerformance(view,match);
+ if(!dream)recordAppearances(view,match);
  if(!dream&&match.tick>0)settleGate(state,fixture.home,fixture.id,state.date,fixture.neutral);
- state.players=state.players.map(p=>{if(p.clubId!==match.home&&p.clubId!==match.away)return p;const own=p.clubId===match.home?match.homeGoals:match.awayGoals,other=p.clubId===match.home?match.awayGoals:match.homeGoals;cupBookings(state,p,match);const settled=settleAvailability(p,match);return {...settled,...(match.competitionClass==='league'?{}:{leagueBan:p.leagueBan,leagueYellows:p.leagueYellows}),condition:match.condition[p.id]??p.condition,morale:clamp(p.morale+(own>other?4:own<other?-4:0),0,100)};});
+ for(const p of participants){const own=p.clubId===match.home?match.homeGoals:match.awayGoals,other=p.clubId===match.home?match.awayGoals:match.homeGoals;cupBookings(state,p,match);const settled=settleAvailability(p,match);Object.assign(p,{...settled,...(match.competitionClass==='league'?{}:{leagueBan:p.leagueBan,leagueYellows:p.leagueYellows}),condition:match.condition[p.id]??p.condition,morale:clamp(p.morale+(own>other?4:own<other?-4:0),0,100)});}
  fixture.score=[match.homeGoals,match.awayGoals];fixture.shootout=penaltyScore(match);fixture.forfeit=match.forfeit;if(!dream)boardFixture(state,fixture);
 }
 function simulateScheduledAI(state:Career,dream=false){

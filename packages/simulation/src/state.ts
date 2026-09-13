@@ -1,7 +1,7 @@
 import type {Career} from '../../contracts/src/index.ts';
 
 function records<T extends object>(source:Record<string,T>):Record<string,T>{
- return Object.fromEntries(Object.entries(source).map(([id,value])=>[id,{...value}]));
+ const result:Record<string,T>={};for(const id of Object.keys(source))result[id]={...source[id]!};return result;
 }
 // Large flat records need independent writable objects, not a general structured clone.
 // Committed ledger entries and archived seasons/transfers are immutable and append-only.

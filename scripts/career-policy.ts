@@ -1,3 +1,4 @@
+import {occupiedPlaces} from '../packages/simulation/src/loans.ts';
 import type {Career,Command,Role} from '../packages/contracts/src/index.ts';
 import {desiredTerms,renewalError,ageOn} from '../packages/simulation/src/contracts.ts';
 import {budgets} from '../packages/simulation/src/economy.ts';
@@ -45,4 +46,48 @@ export function respondToInjuries(current:()=>Career,act:(action:PolicyAction)=>
   act({type:'Substitute',out,in:incoming.id});metrics.substitutions++;
  }
  if(current().match!.pendingDismissal||current().match!.pendingInjuries.length)act({type:'AcknowledgeMatch'});
+}
+import {activeOffer,askingPrice,dealError,affordability,windowOpen} from '../packages/simulation/src/market.ts';
+import {incomingBidError} from '../packages/simulation/src/outgoing.ts';
+import type {Offer} from '../packages/contracts/src/index.ts';
+export type TradingMetrics={promotions:number;paidSignings:number;sales:number;loanIns:number;loanOuts:number;feesPaid:number;feesReceived:number;attempted:string[]};
+export function tradingMetrics():TradingMetrics{return {promotions:0,paidSignings:0,sales:0,loanIns:0,loanOuts:0,feesPaid:0,feesReceived:0,attempted:[]};}
+export function manageMarket(current:()=>Career,act:(action:PolicyAction)=>void,metrics:TradingMetrics){
+ let state=current();if(state.match&&state.match.phase!=='finished'||state.date>=`${state.season+1}-06-30`)return;
+ for(const id of state.offers.filter(o=>activeOffer(o)&&(o.buyerId===state.clubId||o.sellerId===state.clubId)).map(o=>o.id)){
+  state=current();const offer=state.offers.find(o=>o.id===id)!;
+  if(offer.sellerId===state.clubId&&offer.status==='submitted'&&offer.responseDate<=state.date){const accept=!incomingBidError(state,offer);act({type:'RespondBid',offerId:id,accept});if(accept){if(offer.loanShare===null){metrics.sales++;metrics.feesReceived+=offer.fee;}else metrics.loanOuts++;}continue;}
+  if(offer.buyerId!==state.clubId||!['accepted','countered'].includes(offer.status))continue;
+  const player=state.players.find(p=>p.id===offer.playerId)!,terms={...(offer.loanShare===null?desiredTerms(state,player):{wage:state.economy.wages[player.id]!,bonus:0}),years:2,role:state.contracts[player.id]!.role};
+  if(dealError(state,{...offer,terms})){act({type:'WithdrawOffer',offerId:id});continue;}
+  if(offer.status==='countered')act({type:'AcceptOffer',offerId:id});act({type:'OfferTerms',offerId:id,terms});act({type:'ConfirmDeal',offerId:id});
+  if(offer.loanShare===null){metrics.paidSignings++;metrics.feesPaid+=offer.fee;}else metrics.loanIns++;
+ }
+ state=current();const key=`${state.season}/${state.clubId}`;
+ if(!metrics.attempted.includes(key+'/promote')){
+  const player=state.players.filter(p=>p.clubId===state.clubId&&p.academy&&state.personnel.players[p.id]!.potential>=60).sort((a,b)=>overall(b)-overall(a)||a.id.localeCompare(b.id))[0];
+  if(player){const action={type:'PromoteAcademy' as const,playerId:player.id,contractRevision:state.contracts[player.id]!.revision,years:3,role:'prospect' as const,...desiredTerms(state,player)};if(!renewalError(state,action)){act(action);metrics.promotions++;metrics.attempted.push(key+'/promote');}}
+ }
+ state=current();if(!windowOpen(state.date))return;
+ const review=key+'/review/'+state.date.slice(0,7)+'/'+Math.floor((Number(state.date.slice(8))-1)/7);
+ if(metrics.attempted.includes(review))return;metrics.attempted.push(review);
+ for(const kind of ['sale','loan'] as const){
+  if(metrics.attempted.includes(key+'/'+kind))continue;
+  state=current();const role=kind==='sale'?'MID':'DEF',group=state.players.filter(p=>p.clubId===state.clubId&&!p.academy&&p.role===role&&state.contracts[p.id]!.ownerId===state.clubId&&!p.transferListing&&!state.loans.some(l=>l.playerId===p.id&&l.status==='active'));
+  const player=group.sort((a,b)=>overall(b)-overall(a)||a.id.localeCompare(b.id)).find(p=>kind==='sale'||state.contracts[p.id]!.ends!>=`${state.season+1}-06-30`);
+  if(group.length>4&&player){act({type:'SetTransferListing',playerId:player.id,listing:{kind,fee:kind==='sale'?Math.round(askingPrice(state,player)/2):0,share:50}});metrics.attempted.push(key+'/'+kind);}
+ }
+ for(const kind of ['buy','borrow'] as const){
+  if(metrics.attempted.includes(key+'/'+kind))continue;
+  state=current();const bank=budgets(state,state.clubId),occupied=occupiedPlaces(state,state.clubId);if(occupied>=30)continue;
+  const depth=new Map<Career['clubId'],{size:number;keepers:number}>();for(const p of state.players)if(p.clubId&&!p.academy){const row=depth.get(p.clubId)??{size:0,keepers:0};row.size++;row.keepers+=Number(p.role==='GK');depth.set(p.clubId,row);}
+  const candidates=state.players.filter(p=>p.clubId!==null&&p.clubId!==state.clubId&&!p.academy&&p.role!=='GK'&&state.personnel.players[p.id]!.retired===null&&!state.loans.some(l=>l.playerId===p.id&&l.status==='active')&&!state.offers.some(o=>o.playerId===p.id&&o.buyerId===state.clubId&&activeOffer(o))).sort((a,b)=>overall(b)-overall(a)||a.id.localeCompare(b.id));
+  for(const player of candidates){
+   const fee=kind==='buy'?askingPrice(state,player):0;if(fee>bank.transfer/3)continue;
+   const terms={...(kind==='buy'?desiredTerms(state,player):{wage:state.economy.wages[player.id]!,bonus:0}),years:2,role:state.contracts[player.id]!.role};
+   const proposed:Offer={id:'00000000-0000-4000-8000-000000000001' as Offer['id'],playerId:player.id,buyerId:state.clubId,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee,loanShare:kind==='buy'?null:50,date:state.date,responseDate:state.date,expires:state.date,activation:null,buyerCounters:0,sellerCounters:0,status:'accepted',reason:null,terms};
+   if(affordability(proposed,bank)||dealError(state,proposed,bank,{player,occupied,seller:player.clubId?depth.get(player.clubId)??null:null}))continue;
+   act(kind==='buy'?{type:'SubmitOffer',playerId:player.id,fee}:{type:'SubmitLoan',playerId:player.id,share:50});metrics.attempted.push(key+'/'+kind);break;
+  }
+ }
 }

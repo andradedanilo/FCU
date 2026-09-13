@@ -9,18 +9,29 @@ export function cash(economy:Career['economy'],club:ClubId):number {
  return economy.ledger.reduce((sum,entry)=>sum+entry.postings.reduce((value,p)=>value+(p.account===club?p.amount:0),0),0);
 }
 export function commitments(state:Pick<Career,'economy'|'players'|'loans'>,club:ClubId,reserved=false):number {
- return state.players.reduce((sum,p)=>{const wage=state.economy.wages[p.id]!,loan=state.loans.find(l=>l.playerId===p.id&&l.status==='active');
+ const loans=new Map(state.loans.filter(l=>l.status==='active').map(l=>[l.playerId,l]));
+ return state.players.reduce((sum,p)=>{const wage=state.economy.wages[p.id]!,loan=loans.get(p.id);
   if(!loan)return sum+(p.clubId===club?wage:0);const share=Math.floor(wage*loan.share/100);
   return sum+(loan.parent===club?(reserved?wage:wage-share):loan.borrower===club?share:0);
  },0);
 }
 function attendance(capacity:number,reputation:number,ratio:number){return Math.floor(capacity*Math.max(.30,Math.min(.98,.40+reputation/200+ratio/10)));}
-export function budgets(state:Pick<Career,'economy'|'players'|'fixtures'|'loans'>,club:ClubId){
- const account=state.economy.clubs.find(c=>c.clubId===club)!;
- const gate=state.fixtures.filter(f=>f.home===club&&f.competitionClass==='league').length*attendance(account.capacity,account.reputation,.5)*account.ticket;
+function budgetValues(account:Career['economy']['clubs'][number],homes:number,weekly:number,committed:number,balance:number){
+ const gate=homes*attendance(account.capacity,account.reputation,.5)*account.ticket;
  const wage=Math.floor(.60*(account.sponsorship+gate+account.lastPrizes)/52);
- const weekly=commitments(state,club),committed=commitments(state,club,true);const balance=cash(state.economy,club);
  return {cash:balance,weekly,committed,wage,transfer:Math.max(0,balance-13*committed-4*account.overhead),overhead:account.overhead};
+}
+export function budgets(state:Pick<Career,'economy'|'players'|'fixtures'|'loans'>,club:ClubId){
+ return budgetValues(state.economy.clubs.find(c=>c.clubId===club)!,state.fixtures.filter(f=>f.home===club&&f.competitionClass==='league').length,commitments(state,club),commitments(state,club,true),cash(state.economy,club));
+}
+// One read-only book for a recruitment scan; refresh a buyer after an immediate signing.
+export function budgetBook(state:Pick<Career,'economy'|'players'|'fixtures'|'loans'>){
+ const values=new Map(state.economy.clubs.map(c=>[c.clubId,{cash:0,weekly:0,committed:0,homes:0}]));
+ for(const entry of state.economy.ledger)for(const p of entry.postings){const v=values.get(p.account as ClubId);if(v)v.cash+=p.amount;}
+ for(const fixture of state.fixtures)if(fixture.competitionClass==='league')values.get(fixture.home)!.homes++;
+ const loans=new Map(state.loans.filter(l=>l.status==='active').map(l=>[l.playerId,l]));
+ for(const player of state.players){const wage=state.economy.wages[player.id]!,loan=loans.get(player.id);if(loan){const share=Math.floor(wage*loan.share/100),parent=values.get(loan.parent)!,borrower=values.get(loan.borrower)!;parent.weekly+=wage-share;parent.committed+=wage;borrower.weekly+=share;borrower.committed+=share;}else if(player.clubId){const v=values.get(player.clubId)!;v.weekly+=wage;v.committed+=wage;}}
+ return new Map(state.economy.clubs.map(account=>{const v=values.get(account.clubId)!;return [account.clubId,budgetValues(account,v.homes,v.weekly,v.committed,v.cash)] as const;}));
 }
 // Signed postings represent equal debits and credits; generated money uses the external account.
 export function post(economy:Career['economy'],entry:LedgerEntry):boolean {

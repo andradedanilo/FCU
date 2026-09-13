@@ -10,7 +10,7 @@ An offline football management game with quick decisions, season-long consequenc
 
 **FCU Career** puts you in charge of a fictional club across England, Spain, France, Italy and Germany. The development world has 176 clubs across ten active divisions, promotion and relegation, domestic cups and continental competition. A smaller eight-club exhibition is also available.
 
-Pick the squad, set tactics and make substitutions. Between fixtures, scout players, negotiate transfers and loans, renew contracts and balance the wage bill. Training, condition, morale, injuries and suspensions affect your choices. Develop the academy, improve recovery facilities and manage board expectations as seasons pass.
+Pick the squad, set tactics and make substitutions. Between fixtures, scout players, buy, sell and loan players, renew contracts and balance the wage bill. Promote academy prospects into senior contracts and review individual player records across seasons. Secondary positions count when selecting the team. Training, condition, morale, injuries and suspensions affect your choices. Develop the academy, improve recovery facilities and manage board expectations as seasons pass.
 
 **FCU Dream Club** is a separate eight-club fantasy league. Complete three fixtures to earn a player-choice pack, choose one player and decide how they fit your active squad. Wins and losses count equally; season completion brings another pack. Watch matches or use Instant result. Dream players, rewards and checkpoints stay separate from Career.
 
@@ -41,6 +41,8 @@ To run a production build without the development server:
 npm run build
 npm start
 ```
+
+Use **Squad > Player contracts** for renewals, academy promotion and outgoing listings/bids. **Squad > Player records** shows tracked appearances, goals, assists and cards. Older saves begin recording future matches.
 
 Choose **Start a career**, select a club and seed, then **Begin career**. Open **Squad**, pick eleven players and confirm the lineup. Return to **Clubhouse**, advance to match day, choose **Kick off**, then **Play**. **How to play** in the footer explains both modes, squad decisions, saves and controls.
 
