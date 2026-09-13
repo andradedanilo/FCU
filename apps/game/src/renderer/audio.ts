@@ -40,7 +40,8 @@ export function createGameAudio() {
       if(!effects||hidden())return;
       if(kind==='kick')sample('kick',.7);
       else if(kind==='fulltime')sample('fulltime',.22);
-      else if(['tackle','foul','yellow','red','offside','disallowedOffside','disallowedFoul','corner'].includes(kind))sample('tackle',.22);
+      else if(['tackle','foul','yellow','red','disallowedFoul'].includes(kind))sample('tackle',.32);
+      else if(['offside','disallowedOffside','corner'].includes(kind))return;
       else if(['whistle','halftime','lineup'].includes(kind))sample('whistle',.22);
       else if(kind!=='anticipation'&&kind!=='injury'&&kind!=='coach')sample(kind==='save'||kind==='post'||kind==='shot'||kind==='penaltyMiss'?'groan':'cheer',.6);
     },

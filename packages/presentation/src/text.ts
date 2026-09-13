@@ -37,7 +37,7 @@ export const text = {
 
  registration:"Squad registration",registrationHint:"Choose up to 30 active senior players, including two goalkeepers. Returning loans reserve places. Inactive players keep their contracts and wages; academy places are separate. Confirming rebuilds your lineup and bench.",activePlayers:"active players",inactivePlayer:"Inactive",confirmRegistration:"Confirm registration",
  rosterVersion:"Roster version",bundledRoster:"Bundled fictional world",developmentRoster:"Development",importRoster:"Import roster pack",rosterPinned:"New careers only / abilities are estimates",
- soundLibrary:'Sound library',soundLibraryHint:'Game music and sound effects. Audition one sound at a time at normal speed. Source credits and edits are listed below.',soundNames:{music:'Menu music',click:'Menu button',kick:'Ball kick',whistle:'Kickoff whistle',fulltime:'Full-time whistle',crowd:'Stadium ambience',cheer:'Goal celebration',groan:'Crowd disappointment',tackle:'Foul whistle'},
+ soundLibrary:'Sound library',soundLibraryHint:'Game music and sound effects. Audition one sound at a time at normal speed. Source credits and edits are listed below.',soundNames:{music:'Menu music',click:'Menu button',kick:'Ball kick',whistle:'Kickoff whistle',fulltime:'Full-time whistle',crowd:'Stadium ambience',cheer:'Goal celebration',groan:'Crowd disappointment',tackle:'Severe foul whistle'},
  teamManagement:'Team management',
  domesticRounds:['Preliminary round','Round of 32','Round of 16','Quarter-finals','Semi-finals','Final'],continentalRounds:['Round of 16','Quarter-finals','Semi-finals','Final'],homeTeam:'Home club',awayTeam:'Away club',result:'Result',tieWinner:'Tie winner',
  penaltyScored:'Scored',penaltyMissed:'Missed',

@@ -42,15 +42,24 @@
     "file": "whistle.wav",
     "source": "assets/original/audio/referee-whistle-source.wav",
     "sourceSha256": "8ca6b65493d31f67201f3ef70caf2e67e0a489aac9b381afb4d45d727c3770cd",
-    "sha256": "6ec5647d1f692131103c4e6c37428c2d39f627ee767db3a61754e5d609131527",
+    "sha256": "fa1671ca4983d8b9464e6a38274ae55aad50d938079414de7f8226125461c840",
     "segments": [
       {
         "at": 0,
-        "start": 0.1,
-        "duration": 0.55
+        "start": 0.15,
+        "duration": 1.65,
+        "fadeIn": 0.008,
+        "fadeOut": 0.2
+      },
+      {
+        "at": 1.45,
+        "start": 0.35,
+        "duration": 1.55,
+        "fadeIn": 0.2,
+        "fadeOut": 0.06
       }
     ],
-    "durationSeconds": 0.55,
+    "durationSeconds": 3,
     "sampleRate": 48000,
     "channels": 1,
     "gain": 1,
@@ -64,18 +73,20 @@
     "file": "tackle.wav",
     "source": "assets/original/audio/referee-whistle-source.wav",
     "sourceSha256": "8ca6b65493d31f67201f3ef70caf2e67e0a489aac9b381afb4d45d727c3770cd",
-    "sha256": "7d09ff4607a29853859ceb10f5651a89259b599116815b8c8cf26d253d5cef9d",
+    "sha256": "a55b8082863acc299c9e6a2ce28d870e8a369cee260692380c75b3855feb1948",
     "segments": [
       {
         "at": 0,
-        "start": 0.1,
-        "duration": 0.18
+        "start": 0.85,
+        "duration": 0.72,
+        "fadeIn": 0.002,
+        "fadeOut": 0.03
       }
     ],
-    "durationSeconds": 0.18,
+    "durationSeconds": 0.72,
     "sampleRate": 48000,
     "channels": 1,
-    "gain": 1,
+    "gain": 1.12,
     "fadeInSeconds": 0.008,
     "fadeOutSeconds": 0.025,
     "author": "Pablo-F",

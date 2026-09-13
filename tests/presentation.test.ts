@@ -11,7 +11,8 @@ it('keeps one recorded ambience loop, fixed audio speed and immediate SFX mute',
  try{audio.match(true);const first=clips[0]!;expect(first.loop).toBe(true);audio.match(true);expect(first.paused).toBe(true);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(1);
  audio.suspend(true);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(0);audio.suspend(false);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(1);
  audio.highlight('kick');expect(clips.at(-1)!.src).toContain('kick.wav');expect(clips.at(-1)!.playbackRate).toBe(1);audio.match(false);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(0);audio.effects(false);expect(clips.every(c=>c.paused)).toBe(true);const count=clips.length;audio.highlight('whistle');expect(clips).toHaveLength(count);
- audio.effects(true);for(const kind of ['foul','yellow','red','tackle'] as const){audio.highlight(kind);expect(clips.at(-1)!.src).toContain('tackle.wav');expect(clips.at(-1)!.volume).toBe(.22);}
+ audio.effects(true);for(const kind of ['foul','yellow','red','tackle'] as const){audio.highlight(kind);expect(clips.at(-1)!.src).toContain('tackle.wav');expect(clips.at(-1)!.volume).toBe(.32);}
+ const beforeAttention=clips.length;for(const kind of ['corner','offside','disallowedOffside'] as const)audio.highlight(kind);expect(clips).toHaveLength(beforeAttention);
  audio.highlight('whistle');expect(clips.at(-1)!.src).toContain('whistle.wav');audio.highlight('fulltime');expect(clips.at(-1)!.src).toContain('fulltime.wav');expect(clips.at(-1)!.playbackRate).toBe(1);audio.effects(false);
  audio.music(true);const song=clips.at(-1)!;expect(song.src).toContain('music.wav');expect(song.loop).toBe(true);expect(song.paused).toBe(false);
  audio.effects(true);audio.click();expect(clips.at(-1)!.src).toContain('click.wav');audio.effects(false);expect(song.paused).toBe(false);

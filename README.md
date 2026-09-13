@@ -128,8 +128,8 @@ All nine active sounds are in assets/audio. Replace a WAV with the same filename
 | cheer.wav | Goal celebration; owner-supplied Cheer.wav |
 | groan.wav | Saved/missed shots, woodwork and missed penalties; owner-supplied Missed.wav |
 | crowd.wav | Looping stadium ambience |
-| whistle.wav | Short kickoff/restart and half-time whistle (0.55 seconds) |
-| tackle.wav | Brief foul/decision whistle (0.18 seconds), replacing the tackle sound |
+| whistle.wav | Sustained kickoff/restart and half-time whistle (3 seconds) |
+| tackle.wav | Sharp severe-foul whistle (0.72 seconds), replacing the tackle sound |
 | fulltime.wav | Two short blasts then a longer blast at full time (1.43 seconds) |
 
 Music and clicks were previously generated at runtime; they are now editable WAVs of the original tune and button note. Original synthesis sources and rejected crowd auditions remain in assets/original/audio; these are not live game inputs. All active sounds can be auditioned in Sound library. Source/credit metadata is in apps/game/src/renderer/audioAssets.ts; preparation records are in assets/audio/edits.json. If a replacement comes from another source, update its metadata too.
