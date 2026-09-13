@@ -1,0 +1,39 @@
+{
+  "status": "Unpublished local draft",
+  "sourceCommit": "5641a8db17539afcc49500294aa1dc190a193adf",
+  "appVersion": "0.9.0",
+  "platform": "Windows 11",
+  "capture": "Unedited Electron content screenshots, isolated fictional country career, default Manchester Redside. Match image is a real worker event after Play; no art preview or injected match outcome.",
+  "files": [
+    {
+      "file": "01-match.png",
+      "width": 1920,
+      "height": 1080,
+      "sha256": "e9a45b87e0c64092086d2668eb1605f014897fa2c6c3193a02d45fde4318cea8"
+    },
+    {
+      "file": "02-squad.png",
+      "width": 1920,
+      "height": 1080,
+      "sha256": "9a7c34bc9077d61e7e39f8382ca3b5cc9c4087b083fa79c693d30f2157891062"
+    },
+    {
+      "file": "03-tactics.png",
+      "width": 1920,
+      "height": 1080,
+      "sha256": "e37430ccb7263af9720d990e33ec31cd777e039b3ce3b1a3a061fd4378d939b6"
+    },
+    {
+      "file": "04-finances.png",
+      "width": 1920,
+      "height": 1080,
+      "sha256": "9ce70f4e3a3e8798a44439aac7ef2fab9d5a7ddb462463de0504826abfe4afff"
+    },
+    {
+      "file": "05-scouting.png",
+      "width": 1920,
+      "height": 1080,
+      "sha256": "1828846de5c247718771418d9b5f3df2dbd0e042810b0f35be107d2492ae513d"
+    }
+  ]
+}
