@@ -96,7 +96,7 @@ it('identifies alternate save continuations by ancestry and preserves both after
 });
 
 it('bounds diagnostics and excludes unstructured private data from exported reports',()=>{
- const diagnostics=createDiagnostics({build:{appVersion:'0.9.0',sourceCommit:null,sourceDirty:true,lockHash:'0'.repeat(64),rendererHash:null},runtime:{platform:'win32',architecture:'x64',electron:'44.3.0',chrome:'1.0',node:'26.8.2',packaged:false}});
+ const diagnostics=createDiagnostics({build:{appVersion:'0.9.0',sourceCommit:null,sourceDirty:true,lockHash:'0'.repeat(64),rendererHash:null,sourceHash:null},runtime:{platform:'win32',architecture:'x64',electron:'44.3.0',chrome:'1.0',node:'26.8.2',packaged:false}});
  // One capacity scenario: 105 operations leave only the newest 100 records.
  Array.from({length:105},(_,milliseconds)=>diagnostics.record({operation:'load',milliseconds,error:null}));
  diagnostics.record({operation:'https://provider.test/?token=private',milliseconds:1,error:null});

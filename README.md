@@ -86,12 +86,14 @@ npm run test:e2e
 npm run check:docs
 ```
 
-The suite registers 39 unit/integration cases plus one Electron journey in eight files. The E2E journey covers offline play, lineup rejection, save/restart, normal/fallback match equivalence, Canvas failure recovery and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
+The suite registers 78 unit/integration cases plus two Electron journeys in fourteen files. The E2E journey covers offline play, lineup rejection, save/restart, normal/fallback match equivalence, missing-artwork recovery and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
+
+Portable builds include a file checksum manifest and bundled dependency/audio notices. Packaging refuses stale build inputs; rebuild after source changes. These are local prototypes, not signed public releases.
 
 ## Prototype limits
 
-- Pixel art is the chosen direction; the original goal/save/miss audition is ready for feedback. Three.js and the old stadium renderer have been removed. The scenes illustrate resolved events; they do not physically simulate football.
-- The fixed 500-match probe produced 1.866 goals per match, below the later balance target. No artificial score correction is applied.
+- Original pixel-art still sequences illustrate important match events. Three.js and the old stadium renderer have been removed. The scenes illustrate resolved events; they do not physically simulate football.
+- Fictional-player and economic balance remain provisional. No artificial score correction is applied.
 - All immutable saves are retained in this prototype, including autosaves. Automatic pruning is not implemented yet.
 - Linux, low-end graphics, physical controllers and Steam Deck remain unverified. Standard gamepad mapping has a synthetic Electron check. Reduced-motion preference keeps commentary visible without animated highlights.
 
