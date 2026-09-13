@@ -6,8 +6,8 @@ import {z} from 'zod';
 import {rosterSchema,auditSchema,type EntityId} from '../../../packages/roster-pipeline/src/model.ts';
 import {fictionalCandidate} from '../../../packages/roster-pipeline/src/fictional.ts';
 import {validateRoster} from '../../../packages/roster-pipeline/src/validate.ts';
-import {approve,canonical,canonicalRoster,sha256} from '../../../packages/roster-pipeline/src/review.ts';
-import {createArchive} from '../../../packages/roster-pipeline/src/archive.ts';
+import {approve,canonical,canonicalRoster,rosterChanges,sha256} from '../../../packages/roster-pipeline/src/review.ts';
+import {createArchive,openArchive,type OpenPack} from '../../../packages/roster-pipeline/src/archive.ts';
 import {writeArchive,listArchives} from '../../../packages/roster-pipeline/src/store.ts';
 import {actionSchema,type Reply,type View} from './contract.ts';
 
@@ -17,16 +17,24 @@ app.setPath('userData',join(directory,'electron'));
 const documentSchema=z.strictObject({roster:rosterSchema,audit:auditSchema});
 const sessionSchema=documentSchema.extend({approvedHash:z.string().length(64).nullable(),exported:z.string().nullable()});
 let current:z.infer<typeof sessionSchema>|null=null;
+let previous:OpenPack|null=null;
+const trust={allowDevelopment:true,trustedKeys:new Map()};
+async function loadPrevious(){
+  const archives=await listArchives(join(directory,'exports'),trust);
+  const latest=archives.at(-1);
+  previous=latest?openArchive(await readFile(join(directory,'exports',latest.snapshotId+'.zip')),trust):null;
+}
 const currentHash=()=>current?sha256(canonicalRoster(current.roster)+canonical(current.audit)):null;
 const view=(message:string|null=null):View=>{
   const result=current?validateRoster(current.roster,current.audit):null;
-  return {roster:current?.roster??null,reviewedTeamIds:current?.audit.reviewedTeamIds??[],issues:result&&!result.ok?result.issues:[],hash:currentHash(),approved:!!current&&current.approvedHash===currentHash(),provider:current?.audit.providerId??null,exported:current?.exported??null,message};
+  return {previousSnapshotId:previous?.manifest.snapshotId??null,previousTeams:previous?.roster.teams??[],changes:current?rosterChanges(previous?.roster??null,current.roster):[],roster:current?.roster??null,reviewedTeamIds:current?.audit.reviewedTeamIds??[],issues:result&&!result.ok?result.issues:[],hash:currentHash(),approved:!!current&&current.approvedHash===currentHash(),provider:current?.audit.providerId??null,exported:current?.exported??null,message};
 };
 async function persist(){await mkdir(directory,{recursive:true});const path=join(directory,'candidate.json');await writeFile(path+'.tmp',JSON.stringify(current));await rename(path+'.tmp',path);}
 if(!app.requestSingleInstanceLock())app.quit();
 else void app.whenReady().then(async()=>{
   await mkdir(directory,{recursive:true});
   try{current=sessionSchema.parse(JSON.parse(await readFile(join(directory,'candidate.json'),'utf8')));}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')await dialog.showMessageBox({type:'warning',message:'The previous publisher candidate could not be read. Its file is preserved.'});}
+  await loadPrevious();
   const url=pathToFileURL(join(here,'../dist-roster/index.html')).href;
   const window=new BrowserWindow({title:'FCU Roster Publisher',width:1360,height:900,minWidth:900,minHeight:650,webPreferences:{preload:join(here,'preload.cjs'),sandbox:true,contextIsolation:true,nodeIntegration:false}});
   window.removeMenu();window.webContents.setWindowOpenHandler(()=>({action:'deny'}));window.webContents.on('will-navigate',e=>e.preventDefault());window.webContents.on('will-attach-webview',e=>e.preventDefault());session.defaultSession.setPermissionRequestHandler((_w,_p,cb)=>cb(false));session.defaultSession.setPermissionCheckHandler(()=>false);
@@ -57,7 +65,7 @@ else void app.whenReady().then(async()=>{
             const approval=approve(current.roster,current.audit,action.hash,'Local operator',new Date().toISOString());current.approvedHash=approval.reviewHash;
           }else{
             if(current.approvedHash!==action.hash)throw Error('Approve this exact candidate before export.');
-            const output=join(directory,'exports'),trust={allowDevelopment:true,trustedKeys:new Map()};
+            const output=join(directory,'exports');
             const archives=await listArchives(output,trust);const hash=sha256(canonicalRoster(current.roster));
             if(archives.some(a=>a.contentHash===hash&&a.compatibleSaveSchemaMax>=18)){message='No roster changes; existing export retained.';return {ok:true,view:view(message)};}
             const year=current.roster.competitions[0]!.seasonStartYear;const base=`roster-${year}-${String(year+1).slice(-2)}.${new Date().toISOString().slice(0,10).replaceAll('-','')}.r`;
@@ -65,6 +73,7 @@ else void app.whenReady().then(async()=>{
             const approval=approve(current.roster,current.audit,action.hash,'Local operator',new Date().toISOString());
             const bytes=createArchive(current.roster,current.audit,approval,{snapshotId:base+revision,previousSnapshotId:archives.at(-1)?.snapshotId??null,attribution:'FCU publisher development candidate',rightsRef:null,notices:'Unsigned development candidate. Abilities and contracts are generated estimates.',key:null});
             current.exported=await writeArchive(output,bytes,trust);
+            await loadPrevious();
           }
         }
         await persist();return {ok:true,view:view(message)};

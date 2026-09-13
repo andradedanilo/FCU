@@ -8,7 +8,8 @@ export const actionSchema=z.discriminatedUnion('type',[
   z.strictObject({type:z.literal('export'),hash:z.string().length(64)})
 ]);
 export type Action=z.infer<typeof actionSchema>;
-export type View={roster:Roster|null;reviewedTeamIds:string[];issues:Issue[];hash:string|null;approved:boolean;provider:string|null;exported:string|null;message:string|null};
+import type {Change} from '../../../packages/roster-pipeline/src/review.ts';
+export type View={previousSnapshotId:string|null;previousTeams:Roster['teams'];changes:Change[];roster:Roster|null;reviewedTeamIds:string[];issues:Issue[];hash:string|null;approved:boolean;provider:string|null;exported:string|null;message:string|null};
 export type Reply={ok:true;view:View}|{ok:false;message:string};
 export interface PublisherBridge{read:()=>Promise<Reply>;act:(action:Action)=>Promise<Reply>}
 declare global{interface Window{publisher:PublisherBridge}}

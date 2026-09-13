@@ -23,6 +23,7 @@ describe('Publisher roster boundaries',()=>{
     b.roster.players[0]!.displayName='Jos\u00e9 M\u00fcller';a.roster.players[0]!.displayName=b.roster.players[0]!.displayName;
     b.roster.players.reverse();b.roster.teams.reverse();b.roster.memberships.reverse();b.roster.gameProfiles.reverse();b.roster.competitions.reverse();b.roster.competitions.forEach(c=>c.participatingTeamIds.reverse());
     expect(canonicalRoster(a.roster)).toBe(canonicalRoster(b.roster));
+    expect(rosterChanges(JSON.parse(canonicalRoster(a.roster)),b.roster)).toEqual([]);
     const moved=b.roster.memberships.find(m=>m.playerId===a.roster.players[3]!.id)!;
     moved.playingTeamId=a.roster.teams[1]!.id;moved.owningTeamId=moved.playingTeamId;
     expect(validateRoster(b.roster,b.audit).ok).toBe(true);

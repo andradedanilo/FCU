@@ -14,6 +14,9 @@ export function canonicalRoster(roster:Roster):string {
 }
 export type Change = {kind:'addition'|'departure'|'transfer'|'edit'; playerId:string; name:string; from:string|null; to:string|null};
 export function rosterChanges(previous:Roster|null, next:Roster):Change[] {
+  // Archive canonicalization reorders set-like lists; that is not an editorial change.
+  previous=previous?JSON.parse(canonicalRoster(previous)) as Roster:null;
+  next=JSON.parse(canonicalRoster(next)) as Roster;
   const changes:Change[]=[];
   const before = new Map(previous?.players.map(p=>[p.id,p])??[]);
   const oldMembership = new Map(previous?.memberships.map(m=>[m.playerId,m])??[]);

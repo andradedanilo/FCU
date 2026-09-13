@@ -23,5 +23,5 @@ export async function listArchives(directory:string,trust:{allowDevelopment:bool
     const file=await open(join(directory,name),'r');
     try{if((await file.stat()).size>50*1024*1024)throw Error('PACK_SIZE_LIMIT');manifests.push(openArchive(await file.readFile(),trust).manifest);}finally{await file.close();}
   }
-  return manifests;
+  return manifests.sort((a,b)=>a.createdAtUTC.localeCompare(b.createdAtUTC)||a.snapshotId.localeCompare(b.snapshotId,'en',{numeric:true}));
 }
