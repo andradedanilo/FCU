@@ -8,7 +8,7 @@ Build a fast, offline football management game for Steam, inspired by the feelin
 
 ## Current completion priority
 
-Owner direction: complete pending match rules and automate broader Career/Dream progression, economy and balance checks before the dedicated UI/audio pass. Those rules and reproducible workloads are now implemented; native Windows packaging is the remaining local verification before the UI/audio pass. Steam integration, live provider verification and unavailable platforms remain explicit deferred items, not completed gates. Test ceilings no longer block meaningful verification. Preserve the approved visual direction; technical and external release checks still require actual evidence. Automated balance signals do not certify enjoyment.
+Owner direction: complete pending match rules and automate broader Career/Dream progression, economy and balance checks before the dedicated UI/audio pass. Those rules and reproducible workloads are now implemented; native Windows packaging and offline Save/restart verification also pass. The next local development focus is UI/audio. Steam integration, live provider verification and unavailable platforms remain explicit deferred items, not completed gates. Test ceilings no longer block meaningful verification. Preserve the approved visual direction; technical and external release checks still require actual evidence. Automated balance signals do not certify enjoyment.
 
 ## Approved visual direction
 
