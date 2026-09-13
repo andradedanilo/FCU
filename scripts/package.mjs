@@ -28,6 +28,7 @@ const output = await packager({
   dir: staging, out: destination, name: brand.title,
   executableName: platform === 'win32' ? brand.title : 'fcu',
   platform, arch: 'x64', electronVersion: config.devDependencies.electron,
+  ...(platform==='win32'?{icon:resolve('assets/original/fcu-icon.ico')}:{}),
   appVersion: config.version, appBundleId: 'com.fcu.game', asar: true,
   // A unique output avoids deleting or overwriting another running prototype.
   prune: false, overwrite: false

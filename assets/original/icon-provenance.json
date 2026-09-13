@@ -1,0 +1,18 @@
+{
+  "source": "Original code-authored SVG using the FCU abbreviation and existing navy/gold identity",
+  "export": "Chromium SVG rasterization at 16,32,48,64,128,256 pixels; PNG images packed into a Windows ICO directory. 256px PNG is copied into the desktop build.",
+  "assets": [
+    {
+      "file": "fcu-icon.svg",
+      "sha256": "959ea7ca9f9a768d01faac80b07301aa5942b30693f4e2ef58ab592157aa5b79"
+    },
+    {
+      "file": "fcu-icon.png",
+      "sha256": "0db2a28eecdf0328e47fd7c7ff72b40a5818c5466a9490058823ed4425cb2e40"
+    },
+    {
+      "file": "fcu-icon.ico",
+      "sha256": "4639eefd1a56c0eb4992695e896e520fff27645d1770a8dde71b0d795c66fc69"
+    }
+  ]
+}

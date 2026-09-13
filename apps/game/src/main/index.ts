@@ -27,7 +27,7 @@ else void app.whenReady().then(async()=>{
   const rosters=createRosterStore(join(app.getPath('userData'),'rosters'),!app.isPackaged);
   const productionURL=pathToFileURL(join(here,'../dist/index.html')).href;
   const devURL=!app.isPackaged&&process.env.FCU_DEV_URL==='http://localhost:5173'?'http://localhost:5173':null;
-  const window=new BrowserWindow({width:1440,height:940,minWidth:800,minHeight:600,fullscreen:true,title:brand.title,backgroundColor:'#10191c',show:false,webPreferences:{preload:join(here,'preload.cjs'),sandbox:true,contextIsolation:true,nodeIntegration:false}});
+  const window=new BrowserWindow({width:1440,height:940,minWidth:800,minHeight:600,fullscreen:true,title:brand.title,icon:join(here,'icon.png'),backgroundColor:'#10191c',show:false,webPreferences:{preload:join(here,'preload.cjs'),sandbox:true,contextIsolation:true,nodeIntegration:false}});
   window.removeMenu();
   const suspend=()=>{if(!window.isDestroyed())window.webContents.send('power-state','suspend');};
   const resume=()=>{if(!window.isDestroyed())window.webContents.send('power-state','resume');};

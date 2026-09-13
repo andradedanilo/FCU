@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="FCU">
+  <rect x="4" y="4" width="248" height="248" rx="36" fill="#0c1933"/>
+  <rect x="16" y="16" width="224" height="224" rx="25" fill="none" stroke="#f5c66b" stroke-width="8"/>
+  <path fill="#f5c66b" d="m128 34 9 19 21 3-15 15 4 21-19-10-19 10 4-21-15-15 21-3z"/>
+  <path fill="#f4ebcd" d="M37 104h52v13H51v16h32v13H51v37H37zm68 0h47v13h-33v53h33v13h-47zm62 0h14v66h24v-66h14v79h-52z"/>
+  <path stroke="#f5c66b" stroke-width="8" d="M58 207h140"/>
+</svg>

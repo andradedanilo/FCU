@@ -1,5 +1,5 @@
 import {treeHash,sourceHash,desktopNotices} from './artifacts.ts';
-import {readFile,writeFile} from 'node:fs/promises';
+import {readFile,writeFile,copyFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {resolve} from 'node:path';
@@ -13,6 +13,7 @@ const info={appVersion:config.version,sourceCommit,sourceDirty,lockHash:createHa
 const main=await build({metafile:true,entryPoints:['apps/game/src/main/index.ts'],outfile:'dist-electron/main.js',bundle:true,platform:'node',format:'esm',external:['electron'],target:'node22',define:{__FCU_BUILD__:JSON.stringify(info)}});
 await build({entryPoints:['apps/game/src/preload/index.ts'],outfile:'dist-electron/preload.cjs',bundle:true,platform:'node',format:'cjs',external:['electron'],target:'node22'});
 
+await copyFile('assets/original/fcu-icon.png','dist-electron/icon.png');
 await writeFile('dist-electron/THIRD_PARTY_MAIN_LICENSES.txt',await desktopNotices(Object.keys(main.metafile.inputs)));
 await writeFile('dist-electron/build-info.json',JSON.stringify({...info,desktopHash:await treeHash('dist-electron',['build-info.json'])},null,2)+'\n');
 }
