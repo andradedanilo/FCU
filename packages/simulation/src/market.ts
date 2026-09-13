@@ -6,7 +6,7 @@ import {marketValue,desiredTerms,contractEnd} from './contracts.ts';
 import {budgets,post} from './economy.ts';
 
 export function freePlayers():Player[]{
- return (['GK','GK','DEF','DEF','DEF','DEF','MID','MID','MID','MID','FWD','FWD'] as const).map((role,i)=>({id:`player-00-${String(i+1).padStart(2,'0')}` as PlayerId,clubId:null,name:`${['Alex','Robin','Sam','Jamie','Morgan','Casey','Drew','Ellis','Jules','Riley','Taylor','Noel'][i]} Westbrook`,role,academy:false,condition:100000,morale:70,injuryUntil:null,leagueYellows:0,leagueBan:0,goalkeeping:role==='GK'?55+i:15,tackling:50+i,passing:50+i,shooting:50+i,pace:60,stamina:60,discipline:65}));
+ return (['GK','GK','DEF','DEF','DEF','DEF','MID','MID','MID','MID','FWD','FWD'] as const).map((role,i)=>({id:`player-00-${String(i+1).padStart(2,'0')}` as PlayerId,clubId:null,name:`${['Alex','Robin','Sam','Jamie','Morgan','Casey','Drew','Ellis','Jules','Riley','Taylor','Noel'][i]} Westbrook`,role,registered:true,academy:false,condition:100000,morale:70,injuryUntil:null,leagueYellows:0,leagueBan:0,goalkeeping:role==='GK'?55+i:15,tackling:50+i,passing:50+i,shooting:50+i,pace:60,stamina:60,discipline:65}));
 }
 export const activeOffer=(offer:Offer)=>['submitted','countered','accepted','ready','queued'].includes(offer.status);
 export function askingPrice(state:Career,player:Player){return player.clubId===null?0:Math.round(marketValue(state,player)*(state.contracts[player.id]!.role==='starter'?1.2:1));}
@@ -44,9 +44,9 @@ export function register(state:Career,offer:Offer):FailureCode|null {
  if(state.economy.ledger.some(e=>e.id===feeId||e.id===bonusId))return 'OFFER_CHANGED';
  if(offer.sellerId!==null&&offer.fee>0)post(state.economy,{id:feeId,date:state.date,kind:'transferFee',postings:[{account:offer.buyerId,amount:-offer.fee},{account:offer.sellerId,amount:offer.fee}]});
  if(offer.loanShare===null)post(state.economy,{id:bonusId,date:state.date,kind:'signingBonus',postings:[{account:offer.buyerId,amount:-offer.terms!.bonus},{account:'external',amount:offer.terms!.bonus}]});
- const player=state.players.find(p=>p.id===offer.playerId)!;player.clubId=offer.buyerId;
+ const player=state.players.find(p=>p.id===offer.playerId)!;player.clubId=offer.buyerId;player.registered=true;
  state.economy.wages[player.id]=offer.terms!.wage;
- if(offer.loanShare!==null){state.loans.push({id:offer.id,playerId:player.id,parent:offer.sellerId!,borrower:offer.buyerId,ends:loanEnd(state.date),share:offer.loanShare,status:'active'});state.contracts[player.id]!.revision++;}
+ if(offer.loanShare!==null){state.loans.push({source:'market',id:offer.id,playerId:player.id,parent:offer.sellerId!,borrower:offer.buyerId,ends:loanEnd(state.date),share:offer.loanShare,status:'active'});state.contracts[player.id]!.revision++;}
  else state.contracts[player.id]={...state.contracts[player.id]!,ownerId:offer.buyerId,ends:contractEnd(state.date,offer.terms!.years),role:offer.terms!.role,revision:offer.contractRevision+1};
  offer.status='completed';offer.activation=null;
  for(const rival of state.offers)if(rival.id!==offer.id&&rival.playerId===offer.playerId&&activeOffer(rival)){rival.status='rejected';rival.reason='competing';rival.activation=null;}

@@ -59,7 +59,7 @@ else void app.whenReady().then(async()=>{
             if(current.approvedHash!==action.hash)throw Error('Approve this exact candidate before export.');
             const output=join(directory,'exports'),trust={allowDevelopment:true,trustedKeys:new Map()};
             const archives=await listArchives(output,trust);const hash=sha256(canonicalRoster(current.roster));
-            if(archives.some(a=>a.contentHash===hash)){message='No roster changes; existing export retained.';return {ok:true,view:view(message)};}
+            if(archives.some(a=>a.contentHash===hash&&a.compatibleSaveSchemaMax>=18)){message='No roster changes; existing export retained.';return {ok:true,view:view(message)};}
             const year=current.roster.competitions[0]!.seasonStartYear;const base=`roster-${year}-${String(year+1).slice(-2)}.${new Date().toISOString().slice(0,10).replaceAll('-','')}.r`;
             const revision=1+Math.max(0,...archives.filter(a=>a.snapshotId.startsWith(base)).map(a=>Number(a.snapshotId.slice(base.length))));
             const approval=approve(current.roster,current.audit,action.hash,'Local operator',new Date().toISOString());

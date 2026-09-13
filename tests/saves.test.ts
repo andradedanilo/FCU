@@ -15,6 +15,9 @@ it('roundtrips a Unicode mid-match checkpoint with the same continuation hash',a
   const id=await store.save(changed.value,'manual');const loaded=await store.load(s.careerId,id);expect(checksum(loaded)).toBe(checksum(changed.value));
   const command={type:'AdvanceMatch' as const,minutes:19,commandId:crypto.randomUUID(),careerId:s.careerId,expectedRevision:3};
   expect(checksum(applyCommand(loaded,command))).toBe(checksum(applyCommand(changed.value,command)));
+  const payload={...changed.value,engineVersion:'0.6.0',players:changed.value.players.map(p=>Object.fromEntries(Object.entries(p).filter(([key])=>key!=='registered'))),loans:changed.value.loans.map(l=>Object.fromEntries(Object.entries(l).filter(([key])=>key!=='source')))};
+  const old={schema:17,appVersion:'0.6.0',engineVersion:'0.6.0',rulesetVersion:changed.value.rulesetVersion,careerId:s.careerId,saveCommitId:id,parentCommitId:null,stateRevision:changed.value.revision,savedAtUTC:'2026-09-12T12:00:00Z',snapshotId:s.snapshotId,kind:'manual',checksum:checksum(payload),payload};
+  expect(decode(gzipSync(canonical(old))).state).toEqual(changed.value);
 });
 it('preserves previous commits and ignores an interrupted temporary write',async()=>{
   const root=await mkdtemp(join(tmpdir(),'fcu-save-'));const store=createSaveStore(root);const s=career();const first=await store.save(s,'manual');
@@ -42,7 +45,7 @@ it('migrates a v0.1 checkpoint without rewriting it and refuses missing current 
  const id=await store.save(started.value,'manual');const file=join(root,s.careerId,id+'.save');const raw=JSON.parse(gunzipSync(await readFile(file)).toString());
  const malformed=structuredClone(raw);delete malformed.payload.match.homeBench;malformed.checksum=checksum(malformed.payload);expect(()=>decode(gzipSync(canonical(malformed)))).toThrow();
  raw.schema=1;raw.rulesetVersion='exhibition-1';raw.payload.rulesetVersion='exhibition-1';delete raw.payload.tactics;delete raw.payload.match.homeTactics;delete raw.payload.match.awayTactics;raw.appVersion='0.1.0';raw.engineVersion='0.1.0';raw.payload.engineVersion='0.1.0';delete raw.payload.match.homeBench;delete raw.payload.match.awayBench;delete raw.payload.match.substitutions;raw.payload.players=raw.payload.players.filter((p:{clubId:string|null})=>p.clubId!==null);raw.checksum=checksum(raw.payload);
- const legacy=gzipSync(canonical(raw));await writeFile(file,legacy);const loaded=await store.load(s.careerId,id);expect(loaded.match?.homeBench).toHaveLength(9);expect(loaded.match?.substitutions).toEqual([]);expect(loaded.engineVersion).toBe('0.6.0');expect({...loaded,economy:started.value.economy}).toEqual(started.value);expect(loaded.economy.ledger.every(e=>e.kind==='opening')).toBe(true);
+ const legacy=gzipSync(canonical(raw));await writeFile(file,legacy);const loaded=await store.load(s.careerId,id);expect(loaded.match?.homeBench).toHaveLength(9);expect(loaded.match?.substitutions).toEqual([]);expect(loaded.engineVersion).toBe('0.6.1');expect({...loaded,economy:started.value.economy}).toEqual(started.value);expect(loaded.economy.ledger.every(e=>e.kind==='opening')).toBe(true);
  await store.save(loaded,'manual');expect(await readFile(file)).toEqual(legacy);
 });
 

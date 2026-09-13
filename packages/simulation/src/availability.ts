@@ -9,7 +9,7 @@ export function addDays(date:string,days:number):string{
  for(let i=0;i<days;i++){day++;if(day>length()){day=1;month++;if(month===13){year++;month=1;}}}
  return String(year).padStart(4,'0')+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0');
 }
-export function available(p:Player,date:string){return p.leagueBan===0&&(p.injuryUntil===null||p.injuryUntil<=date);}
+export function available(p:Player,date:string){return p.registered&&p.leagueBan===0&&(p.injuryUntil===null||p.injuryUntil<=date);}
 export function activeLineup(match:Match,club:ClubId):PlayerId[]{return (club===match.home?match.homeLineup:match.awayLineup).filter(id=>!match.dismissed.includes(id)&&!match.injuries.some(injury=>injury.playerId===id));}
 export function needsDecision(match:Match){return match.phase!=='finished'&&(match.pendingDismissal||match.pendingInjuries.length>0);}
 export function settleAvailability(player:Player,match:Match):Player{

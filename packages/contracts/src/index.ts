@@ -22,7 +22,8 @@ export const playerSchema = z.object({ id: playerId, clubId, name: z.string().mi
 export const fitPlayerSchema=playerSchema.extend({condition:integer.max(100000),morale:integer.max(100)});
 export const availablePlayerSchema=fitPlayerSchema.extend({academy:z.boolean(),injuryUntil:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),leagueYellows:integer.max(4),leagueBan:integer.max(100)});
 export const transferablePlayerSchema=availablePlayerSchema.extend({clubId:clubId.nullable()});
-export type Player = z.infer<typeof transferablePlayerSchema>;
+export const registeredPlayerSchema=transferablePlayerSchema.extend({registered:z.boolean()});
+export type Player = z.infer<typeof registeredPlayerSchema>;
 export const trainingSchema=z.enum(['light','balanced','intense']);
 export const eventSchema = z.object({ tick: integer.max(90), order: integer, clubId, playerId, assistId: playerId.nullable(), type: z.enum(['pass', 'shot', 'save', 'goal']), homeGoals: integer.max(90), awayGoals: integer.max(90) });
 export const incidentEventSchema=eventSchema.extend({type:z.enum(['pass','shot','save','goal','foul','yellow','secondYellow','red','injury'])});
@@ -103,7 +104,8 @@ export const penaltyKickSchema=z.object({clubId,playerId,scored:z.boolean()});
 export const knockoutMatchSchema=historicalMatchSchema.extend({homeGoals:integer.max(130),awayGoals:integer.max(130),tick:integer.max(130),phase:z.enum(['first','interval','second','extraFirst','extraInterval','extraSecond','finished']),events:z.array(timedEventSchema.extend({tick:integer.max(130),homeGoals:integer.max(130),awayGoals:integer.max(130)})).max(1900),substitutions:z.array(substitutionSchema.extend({tick:integer.min(1).max(129)})).max(10),homeStats:timedStatsSchema.extend({possession:integer.max(1300000),shots:integer.max(130),onTarget:integer.max(130),quality:integer.max(1300000)}),awayStats:timedStatsSchema.extend({possession:integer.max(1300000),shots:integer.max(130),onTarget:integer.max(130),quality:integer.max(1300000)}),competitionClass:competitionClassSchema,neutral:z.boolean(),decider:z.boolean(),aggregate:scoreSchema,extraTime:z.boolean(),penalties:z.array(penaltyKickSchema).max(2048)});
 const disciplineCounter=z.object({yellows:integer.max(2),ban:integer.max(100)});
 export const competitionCareerSchema=countryCareerSchema.extend({scouting:scoutingSchema.extend({shortlist:z.array(playerId).max(20000)}),engineVersion:z.literal('0.5.2'),rulesetVersion:z.literal('world-2'),fixtures:z.array(competitionFixtureSchema).max(10000),match:knockoutMatchSchema.nullable(),cupStartSeason:integer.min(2026).max(2101),cups:z.array(cupSchema).max(6),cupDiscipline:z.record(playerId,z.object({domestic:disciplineCounter,continental:disciplineCounter})),history:z.array(worldHistorySchema.extend({fixtures:z.array(competitionFixtureSchema).max(10000),cups:z.array(cupSchema).max(6)})).max(100)});
-export const careerSchema=competitionCareerSchema.extend({engineVersion:z.literal('0.6.0'),snapshotId:z.string().min(1).max(100),rosterOrigin:z.strictObject({contentHash:z.string().regex(/^[a-f0-9]{64}$/),observedAt:z.iso.datetime(),development:z.boolean(),playerIds:z.record(playerId,z.string().uuid()),clubIds:z.record(clubId,z.string().uuid())}).nullable()});
+export const rosterCareerSchema=competitionCareerSchema.extend({engineVersion:z.literal('0.6.0'),snapshotId:z.string().min(1).max(100),rosterOrigin:z.strictObject({contentHash:z.string().regex(/^[a-f0-9]{64}$/),observedAt:z.iso.datetime(),development:z.boolean(),playerIds:z.record(playerId,z.string().uuid()),clubIds:z.record(clubId,z.string().uuid())}).nullable()});
+export const careerSchema=rosterCareerSchema.extend({engineVersion:z.literal('0.6.1'),players:z.array(registeredPlayerSchema).min(176).max(60000),loans:z.array(loanSchema.extend({source:z.enum(['market','roster'])})).max(5000)});
 export type Career=z.infer<typeof careerSchema>;
 
 
@@ -124,6 +126,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({...commandBase,type:z.literal('AdvanceCalendar'),target:z.enum(['day','event'])}),
   z.object({...commandBase,type:z.literal('RenewContract'),playerId,contractRevision:integer,years:z.number().int().min(1).max(5),wage:integer.max(10000000000),bonus:integer.max(1000000000000),role:promisedRoleSchema}),
   z.object({...commandBase,type:z.literal('SetTraining'),training:trainingSchema}),
+  z.object({...commandBase,type:z.literal('SetRegistration'),players:z.array(playerId).min(11).max(30)}),
   z.object({...commandBase,type:z.literal('AcknowledgeMatch')}),
   z.object({...commandBase,type:z.literal('CallUp')}),
   z.object({...commandBase,type:z.literal('ForfeitMatch')}),

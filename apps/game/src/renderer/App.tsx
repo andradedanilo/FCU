@@ -1,3 +1,4 @@
+import {RegistrationMenu} from './RegistrationMenu.tsx';
 import {rosterClubs} from '../../../../packages/simulation/src/roster.ts';
 import type {InstalledRoster} from '../../../../packages/contracts/src/index.ts';
 import {selectionPlayers} from '../../../../packages/simulation/src/discipline.ts';
@@ -27,6 +28,7 @@ type Screen = 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match';
 type CommandPayload<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
 type Action=CommandPayload<Command>;
 export function App() {
+  const [registrationOpen,setRegistrationOpen]=useState(false);
   const [packs,setPacks]=useState<InstalledRoster[]>([]),[packId,setPackId]=useState('');
   const selectedPack=packs.find(p=>p.snapshotId===packId);
   useEffect(()=>{void window.fcu.rosterList().then(result=>{if(result.ok)setPacks(result.value);});},[]);
@@ -140,7 +142,8 @@ export function App() {
         {screen==='title'&&<TitleScreen start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
         {screen==='setup'&&<ClubSelect packs={packs} packId={packId} changePack={id=>{setPackId(id);setWorldKind('countries');setClub(clubs[0]!.id);}} importPack={()=>void importPack()} importedClubs={selectedPack?rosterClubs(selectedPack):null} worldKind={worldKind} changeWorld={kind=>{setPackId('');setWorldKind(kind);setClub(clubs[0]!.id);}} club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
         {state&&screen==='home'&&<Clubhouse closeSeason={()=>void command({type:'CloseSeason'})} history={()=>setHistoryOpen(true)} news={id=>{setNewsPlayer(id);setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
-        {state&&screen==='squad'&&<SquadScreen contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
+        {state&&screen==='squad'&&<SquadScreen registration={()=>setRegistrationOpen(true)} contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
+        {state&&registrationOpen&&<RegistrationMenu state={state} busy={busy} confirm={players=>command({type:'SetRegistration',players})} close={()=>setRegistrationOpen(false)}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
         {state?.match&&screen==='match'&&<MatchScreen hold={value=>{presentationBusy.current=value;}} acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>

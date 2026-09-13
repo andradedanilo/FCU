@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {z} from 'zod';
-import {fictionalCandidate} from '../packages/roster-pipeline/src/fictional.ts';
+import {fictionalCandidate,fictionalId} from '../packages/roster-pipeline/src/fictional.ts';
 import {candidate,approve,canonicalRoster,rosterChanges} from '../packages/roster-pipeline/src/review.ts';
 import {validateRoster} from '../packages/roster-pipeline/src/validate.ts';
 import {collectPages} from '../packages/roster-pipeline/src/provider.ts';
@@ -13,6 +13,9 @@ import {createArchive,openArchive} from '../packages/roster-pipeline/src/archive
 import {writeArchive} from '../packages/roster-pipeline/src/store.ts';
 import {createPackedCareer,rosterClubs} from '../packages/simulation/src/roster.ts';
 import {createSaveStore} from '../apps/game/src/main/saves.ts';
+import {applyCommand,validateCareer} from '../packages/simulation/src/engine.ts';
+import {returnLoans,validateLoans} from '../packages/simulation/src/loans.ts';
+import {available} from '../packages/simulation/src/availability.ts';
 
 describe('Publisher roster boundaries',()=>{
   it('preserves Unicode and stable identity through reordered snapshots and a transfer',async()=>{
@@ -35,6 +38,27 @@ describe('Publisher roster boundaries',()=>{
     const changedId=Object.entries(changed.rosterOrigin!.playerIds).find(([,source])=>source===moved.playerId)![0];
     expect(career.players.find(p=>p.id===originalId)!.clubId).not.toBe(changed.players.find(p=>p.id===changedId)!.clubId);
     expect(await saves.load(career.careerId,commit)).toEqual(career);
+    const expanded=structuredClone(a.roster);
+    // One oversized squad fixture exercises retention, registration and imported ownership together.
+    for(let i=0;i<10;i++){
+      const id=fictionalId('reserve/'+i);
+      expanded.players.push({...expanded.players[4]!,id,displayName:'Reserve '+i});
+      expanded.memberships.push({...expanded.memberships[4]!,playerId:id,shirtNumber:null});
+      expanded.gameProfiles.push({...expanded.gameProfiles[4]!,playerId:id});
+    }
+    const borrowed=expanded.memberships[25]!;borrowed.isLoan=true;borrowed.playingTeamId=expanded.teams[0]!.id;
+    const large=createPackedCareer('00000000-0000-4000-8000-000000000003',2026,club,{...pack,roster:expanded});
+    expect(large.players.filter(p=>p.clubId===club&&!p.academy)).toHaveLength(33);
+    const active=large.players.filter(p=>p.clubId===club&&p.registered&&!p.academy),inactive=large.players.find(p=>p.clubId===club&&!p.registered)!;
+    expect(active).toHaveLength(30);expect(available(inactive,large.date)).toBe(false);expect(large.economy.wages[inactive.id]).toBeGreaterThan(0);
+    const replacement=active.find(p=>p.role!=='GK')!;const registration={type:'SetRegistration' as const,players:[...active.filter(p=>p.id!==replacement.id).map(p=>p.id),inactive.id],careerId:large.careerId,expectedRevision:large.revision,commandId:crypto.randomUUID()};
+    const registered=applyCommand(large,registration);if(!registered.ok)throw Error(registered.error);
+    expect(large.players.find(p=>p.id===inactive.id)!.registered).toBe(false);
+    expect(validateCareer(registered.value).players.find(p=>p.id===inactive.id)!.registered).toBe(true);
+    expect(registered.value.economy).toEqual(large.economy);expect(registered.value.loans[0]!.source).toBe('roster');
+    const loan=registered.value.loans[0]!;expect(registered.value.contracts[loan.playerId]!.ownerId).toBe(loan.parent);
+    const stored=await saves.save(registered.value,'manual');expect(await saves.load(large.careerId,stored)).toEqual(registered.value);
+    const returned=structuredClone(registered.value);returned.date=loan.ends;returnLoans(returned);validateLoans(returned);expect(returned.players.find(p=>p.id===loan.playerId)!.clubId).toBe(loan.parent);
   });
   it('blocks incomplete coverage, unresolved identities and malformed roster facts',()=>{
     const input=fictionalCandidate();

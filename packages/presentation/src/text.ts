@@ -1,6 +1,7 @@
 import {matchMinute} from './highlights.ts';
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+ registration:"Squad registration",registrationHint:"Choose up to 30 active senior players, including two goalkeepers. Returning loans reserve places. Inactive players keep their contracts and wages; academy places are separate. Confirming rebuilds your lineup and bench.",activePlayers:"active players",inactivePlayer:"Inactive",confirmRegistration:"Confirm registration",
  rosterVersion:"Roster version",bundledRoster:"Bundled fictional world",developmentRoster:"Development",importRoster:"Import roster pack",rosterPinned:"New careers only / abilities are estimates",
  soundLibrary:'Sound library',soundLibraryHint:'Recorded match effects. Audition one sound at a time at normal speed. Source credits and edits are listed below.',soundNames:{kick:'Ball kick',whistle:'Referee whistle',crowd:'Stadium ambience',cheer:'Goal celebration',groan:'Crowd disappointment',tackle:'Sliding tackle'},
  teamManagement:'Team management',

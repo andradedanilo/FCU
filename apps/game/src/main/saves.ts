@@ -4,7 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { z } from 'zod';
 import { canonical, type SaveEntry } from '../../../../packages/contracts/src/index.ts';
-import { migrateCompetitionCareer, validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer, migrateExhibitionCareer, migrateRepeatingCareer, migrateCountryCareer } from '../../../../packages/simulation/src/engine.ts';
+import { migrateRosterCareer, migrateCompetitionCareer, validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer, migrateExhibitionCareer, migrateRepeatingCareer, migrateCountryCareer } from '../../../../packages/simulation/src/engine.ts';
 
 const MAX_BYTES=32*1024*1024;
 export const checksum=(value:unknown)=>createHash('sha256').update(canonical(value)).digest('hex');
@@ -25,7 +25,8 @@ const formats=[
  {app:'0.5.0',rules:'exhibition-13',read:migrateRepeatingCareer},
  {app:'0.5.1',rules:'world-1',read:migrateCountryCareer},
  {app:'0.5.2',rules:'world-2',read:migrateCompetitionCareer},
- {app:'0.6.0',rules:'world-2',read:validateCareer}
+ {app:'0.6.0',rules:'world-2',read:migrateRosterCareer},
+ {app:'0.6.1',rules:'world-2',read:validateCareer}
 ] as const;
 const envelopeSchema=z.object({schema:z.number().int().min(1).max(formats.length),appVersion:z.string().max(20),engineVersion:z.string().max(20),rulesetVersion:z.string().max(40),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.string().min(1).max(100),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decode(bytes:Uint8Array) {
