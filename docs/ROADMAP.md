@@ -23,6 +23,24 @@
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
 
+## Completion definition and outstanding 1.0 work
+
+Core gameplay feature complete means the agreed offline Career and Dream Club systems are implemented, including the final squad-management additions. This milestone was reached on source 8d4bf9e. It does not mean the entire planned 1.0 product is feature complete: Steam integration, Cloud and achievements remain implementation work, not merely tests waiting to run. Do not describe UI/audio as the only remaining 1.0 work. These deferred platform features do not require adding another football-management subsystem before visual work.
+
+Use this checklist as the release handoff. Close a row only with actual evidence; update it when scope or implementation changes. The milestone gates below retain the detailed acceptance requirements.
+
+| Remaining area | Current status | Evidence needed to close |
+| --- | --- | --- |
+| UI/audio and accessibility | Presentation work remains, including screen identity, event artwork, audio, controller/handheld clarity and owner acceptance. | Approved final screens/sounds, complete keyboard/controller flows, reduced-motion/fallback and scaling checks. |
+| Steam features | Main-process Steam adapter, Cloud integration/configuration, achievement delivery and Steam-specific input/text/glyph behavior remain unimplemented or incomplete. SDK/account/App ID access is deferred. | Implement the advertised features securely; verify native bindings, offline behavior, achievement retry and cross-OS Cloud continuity/conflict choice through actual Steam installs. |
+| Native Linux and target hardware | Native Linux build/run, Wayland/XWayland, low-end machine and physical controller/Steam Deck checks remain unverified. Compatibility fixes may follow. | Native packages and affected suites on both OSs; physical input, suspend/resume, save paths and handheld journeys. |
+| Launch roster pipeline/content | Fixture adapters and signed-pack mechanisms work; live provider verification, production trust configuration and the audited signed five-league launch snapshot remain pending. | Actual provider response and coverage audit, signed export/import with production trust, and old-career roster isolation. Commercial/provider arrangements remain owner-handled assumptions. |
+| Human balance and enjoyment | Automated invariants pass, but participant Career/Dream playtests and final economy/reward/difficulty tuning remain open. AI forfeits and Dream tier progression are review signals in the workload report. | The participant gates below, including ten testers completing at least 20 seasons across both OSs, with at least three testers on each; resolve progression/exploit findings and record owner acceptance. |
+| Performance and final regression | Windows source/package checks pass. Final cross-platform responsiveness, memory and release-wide runtime targets are not certified. Long-career worker heap reached 1095 MB on one seed; this is a profiling signal, not a measured packaged-game memory pass. | Measure ARCHITECTURE performance targets on the final packages; investigate memory/latency, run release suites/workloads and dependency/security checks on the release candidate, and fix known crash, data-loss or blocked-progression defects. |
+| Distribution and publication | Local portable packaging, manifests/notices and diagnostics work. Steam depots/install/update/rollback, final store content/support information and submission remain pending. | Verify exact release build/content hashes, install/update and save compatibility; finish accurate store materials and platform review, then obtain owner authorization for publication. |
+
+No additional identical full-suite run is needed solely to restate completion. Source 8d4bf9e already passed 102 unit/integration cases, four Electron journeys, the fixed match/Career/Dream workloads and packaged offline Save/restart/Load. Later commits through b7a43b8 changed documentation only. Rerun affected checks when implementation changes or new evidence appears; run the complete release-candidate checks against the final product after UI/audio and deferred integrations.
+
 | Milestone | Implemented | Verified | Remaining gate |
 | --- | --- | --- | --- |
 | v0.1 | Eight approved clubs, 176 synthetic players, squad selection, deterministic worker league/matches, table, Save/Load, pixel art/text, packaging configuration | Windows 11: 15 registered cases; packaged offline launch/play/save | Native Linux build/launch and reproducibility; owner accepted the current layout |
