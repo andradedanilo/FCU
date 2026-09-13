@@ -60,7 +60,7 @@ Gamepad confirm opens an offline keyboard or chooser for supported fields. Physi
 
 Save creates a new checkpoint, including during a match. Completed Career rounds and mandatory Dream rewards save automatically. Returning to the title or closing FCU requests a final checkpoint. If saving fails, retry or return to the game; Quit without saving loses only progress after your last confirmed checkpoint.
 
-Load shows earlier checkpoints and alternate continuations. Choosing one preserves the others. Older supported saves migrate when loaded; original files remain untouched. A new save uses Career schema 24 or Dream envelope 4, with app 0.9.0 and engine 0.7.4. Older builds cannot read these newer formats.
+Load shows earlier checkpoints and alternate continuations in pages of 20. Choosing one preserves the others. Older supported saves migrate when loaded; original files remain untouched. A new save uses Career schema 24 or Dream envelope 4, with app 0.9.0 and engine 0.7.4. Older builds cannot read these newer formats.
 
 Saves live outside the installation folder:
 

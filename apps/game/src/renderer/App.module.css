@@ -68,3 +68,4 @@
 .recovery{min-height:100dvh;display:grid;place-items:center;background:var(--dark);padding:24px}.recovery>section{max-width:780px;border:3px solid var(--accent);padding:28px;background:var(--panel);display:grid;gap:20px}.recovery p{font-size:16px;line-height:1.6}.recovery button{min-height:48px}
 
 .saveLoading{padding:24px;border:2px solid var(--line);font-size:18px;line-height:1.6;background:var(--dark)}
+.savePages{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;font-size:18px}.savePages>span{text-align:center}.savePages small{display:block;font-size:16px;margin-top:4px}
