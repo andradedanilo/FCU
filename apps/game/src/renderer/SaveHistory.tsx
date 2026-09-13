@@ -14,4 +14,3 @@ export function SaveHistory({entries,busy,loading=false,load}:{entries:SaveEntry
   {loading?<p className={s.saveLoading} role="status">{t.readingSaves}</p>:<div ref={list} className={s.saveList}>{entries.length===0?<p>{t.noSaves}</p>:entries.slice(current*20,(current+1)*20).map(entry=><div className={s.saveRow} key={entry.commitId}>{entry.valid?<><span><strong>{entry.club}</strong>{alternatives.has(entry.commitId)&&<b className={s.saveBranch}>{t.saveBranch}</b>}<small>{entry.savedAtUTC.replace('T',' ').slice(0,19)} UTC / {t[entry.kind]} / {entry.season} / {t.round} {entry.round} / {entry.tick}'</small><small>{t.saveCheckpoint}: {entry.commitId.slice(0,8)} / {t.saveApp}: {entry.appVersion??t.saveAppUnknown}</small></span><button disabled={busy} onClick={()=>load(entry)}>{t.load}</button></>:<p>{entry.error==='FUTURE_SAVE'?t.future:t.corrupt}<small>{entry.commitId}</small></p>}</div>)}</div>}
  </section>;
 }
-
