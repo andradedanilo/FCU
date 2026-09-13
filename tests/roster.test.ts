@@ -18,6 +18,7 @@ import {returnLoans,validateLoans} from '../packages/simulation/src/loans.ts';
 import {available} from '../packages/simulation/src/availability.ts';
 import {fictionalProvider,syncFictional} from '../packages/roster-pipeline/src/fictional-provider.ts';
 import {sportmonksProvider,sportmonksTransport} from '../packages/roster-pipeline/src/sportmonks.ts';
+import {syncRoster} from '../packages/roster-pipeline/src/sync.ts';
 
 describe('Publisher roster boundaries',()=>{
   it('maps a season-specific provider fixture without inventing roles or membership history',async()=>{
@@ -58,6 +59,21 @@ describe('Publisher roster boundaries',()=>{
     const broken=fictionalProvider(),fetch=broken.fetchSquad;
     broken.fetchSquad=async(...args)=>{const page=await fetch(...args);return {...page,total:0,items:[],nextCursor:null};};
     await expect(syncFictional(broken)).rejects.toThrow('INCOMPLETE_SQUAD');
+  });
+  it('normalizes mapped facts while retaining editorial identity and blocking ambiguous people',async()=>{
+    const input=fictionalCandidate();
+    const plan={...input,competitions:Object.fromEntries(input.roster.competitions.map(c=>[c.id,{league:c.id,season:c.id}])),teams:Object.fromEntries(input.roster.teams.map(t=>[t.id,t.id])),players:Object.fromEntries(input.roster.players.map(p=>[p.id,p.id]))};
+    const provider=fictionalProvider(),original=provider.fetchPlayers;
+    provider.fetchPlayers=async(...args)=>{const page=await original(...args);return {...page,items:page.items.map(p=>({...p,name:'Imported '+p.name}))};};
+    const result=await syncRoster(plan,provider);
+    expect(result.roster.players[0]!.displayName).toMatch(/^Imported /);
+    expect(result.roster.teams).toEqual(input.roster.teams);
+    expect(result.roster.gameProfiles).toEqual(input.roster.gameProfiles);
+    expect(result.audit.provenance.some(p=>p.sourceKind==='provider')).toBe(true);
+    expect(result.audit.reviewedTeamIds).toEqual([]);
+    expect(input.roster.players[0]!.displayName).not.toMatch(/^Imported /);
+    plan.players[input.roster.players[1]!.id]=input.roster.players[0]!.id;
+    await expect(syncRoster(plan,provider)).rejects.toThrow('AMBIGUOUS_IDENTITY');
   });
   it('preserves Unicode and stable identity through reordered snapshots and a transfer',async()=>{
     const a=fictionalCandidate(true), b=structuredClone(a);

@@ -24,6 +24,7 @@
     "package:linux": "node scripts/package.mjs linux",
     "start:packaged": "node scripts/start-packaged.mjs",
     "roster:check": "node scripts/roster-check.ts",
+    "roster:sync": "node scripts/roster-sync.ts",
     "roster:build": "node scripts/build-roster.mjs",
     "roster:start": "electron dist-roster-electron/main.js"
   },
