@@ -34,7 +34,7 @@ Board and career shows your season objective and confidence. Poor results or pro
 
 Scouting includes an Assistant review with two squad priorities and up to three affordable candidate links. Review the estimated ability and costs, then scout or negotiate through the normal controls.
 
-FCU Dream Club is a separate fantasy league with eight clubs and 14 rounds. Name your club, choose an opponent tier and earn one player-choice pack every three completed matches, plus one at season end. Wins and losses count equally. Watch matches or use Instant result. Pick one of the saved candidates and activate the new player from Collection and active squad. Rewards never carry into Career. Dream saves use the dream-saves folder under the same user-data root. Save and Load are available inside Dream Club; mandatory reward checkpoints save automatically.
+FCU Dream Club is a separate fantasy league with eight clubs and 14 rounds. Name your club, choose an opponent tier and earn one player-choice pack every three completed matches, plus one at season end. Wins and losses count equally. Watch matches or use Instant result. Pick one of the saved candidates and activate the new player from Collection and active squad. Rewards never carry into Career. Dream saves use the dream-saves folder under the same user-data root. Save and Load are available inside Dream Club; mandatory reward checkpoints save automatically. Returning to the title also saves current Dream progress; a failed save keeps the game open for retry.
 
 Training intensity also affects injury risk on non-match days. Calendar advancement stops when someone in your team is hurt; Club news shows recovery dates. In June it also warns about academy contract expiry and possible releases after the next intake.
 

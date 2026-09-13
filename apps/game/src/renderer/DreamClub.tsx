@@ -3,7 +3,7 @@ import {usePowerPause} from './usePowerPause.ts';
 import type {MatchCue} from './useMatchBroadcast.ts';
 import d from './DreamClub.module.css';
 import {minuteDuration} from '../../../../packages/presentation/src/highlights.ts';
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState,type RefObject} from 'react';
 import type {Dream,DreamRequest} from '../../../../packages/contracts/src/dream.ts';
 import type {Command,InstalledRoster,PlayerId,Result,SaveEntry} from '../../../../packages/contracts/src/index.ts';
 import {brand} from '../../../../packages/contracts/src/index.ts';
@@ -22,13 +22,15 @@ import {MatchReport} from './MatchReport.tsx';
 import {BenchMenu} from './BenchMenu.tsx';
 import s from './App.module.css';
 type Action<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
-export function DreamClub({packs,exit,cue,ambience,overlayOpen}:{overlayOpen:boolean;packs:InstalledRoster[];exit:()=>void;cue:(kind:MatchCue)=>void;ambience:(value:boolean)=>void}){
+export function DreamClub({packs,exit,cue,ambience,overlayOpen,exitCheckpoint}:{exitCheckpoint:RefObject<(()=>Promise<boolean>)|null>;overlayOpen:boolean;packs:InstalledRoster[];exit:()=>void;cue:(kind:MatchCue)=>void;ambience:(value:boolean)=>void}){
  const [state,setState]=useState<Dream|null>(null),latest=useRef<Dream|null>(null),worker=useRef<Worker|null>(null),occupied=useRef(false);
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[durable,setDurable]=useState(true),[screen,setScreen]=useState('home');
  const [name,setName]=useState('Dream FC'),[tier,setTier]=useState<Dream['tier']>('starter'),[pack,setPack]=useState('');
  const [saves,setSaves]=useState<SaveEntry[]|null>(null),[lineup,setLineup]=useState<PlayerId[]>([]),[tactics,setTactics]=useState(false),[bench,setBench]=useState(false),[report,setReport]=useState(false),[collection,setCollection]=useState(false);
  const [continuous,setContinuous]=useState(false),continuousRef=useRef(false);
  const [playing,setPlaying]=useState(false),running=useRef(false),hold=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const waiters=useRef<(()=>void)[]>([]);
+ function release(){occupied.current=false;setBusy(false);for(const resolve of waiters.current.splice(0))resolve();}
  const sound=useRef(ambience);sound.current=ambience;
  const cancelRequest=useRef<(()=>void)|null>(null);
  const choices=useRef<HTMLDivElement|null>(null),primary=useRef<HTMLButtonElement|null>(null),previousChoice=useRef<number|null>(null);
@@ -54,7 +56,14 @@ export function DreamClub({packs,exit,cue,ambience,overlayOpen}:{overlayOpen:boo
    target.onmessage=(event:MessageEvent<Result<Dream>>)=>finish(event.data);target.onerror=fail;target.postMessage(request);
   });
  }
- usePowerPause(()=>stop(),()=>{if(latest.current&&!occupied.current){occupied.current=true;setBusy(true);void persist(latest.current).catch(()=>{setDurable(false);setNotice(t.errors.IO_ERROR);}).finally(()=>{occupied.current=false;setBusy(false);});}},busy);
+ async function checkpoint(){
+  stop();while(occupied.current)await new Promise<void>(resolve=>waiters.current.push(resolve));
+  if(!latest.current)return true;occupied.current=true;setBusy(true);
+  try{return await persist(latest.current);}catch{setDurable(false);setNotice(t.errors.IO_ERROR);return false;}finally{release();}
+ }
+ const saveBeforeExit=useRef(checkpoint);saveBeforeExit.current=checkpoint;
+ useEffect(()=>{const save=()=>saveBeforeExit.current();exitCheckpoint.current=save;return()=>{if(exitCheckpoint.current===save)exitCheckpoint.current=null;};},[exitCheckpoint]);
+ usePowerPause(()=>stop(),()=>{void checkpoint();},busy);
  async function persist(value:Dream){const result=await window.fcu.dreamSave(value);setDurable(result.ok);setNotice(result.ok?t.saved:t.errors[result.error]);return result.ok;}
  async function act(request:DreamRequest){
   if(occupied.current)return false;occupied.current=true;setBusy(true);
@@ -65,7 +74,7 @@ export function DreamClub({packs,exit,cue,ambience,overlayOpen}:{overlayOpen:boo
    latest.current=value;setState(value);setLineup(value.game.lineup);
    if(value.game.match&&(needsDecision(value.game.match)||value.game.match.phase==='finished'||!continuousRef.current&&value.game.match.phase==='interval'))stop();
    return true;
-  }finally{occupied.current=false;setBusy(false);}
+  }finally{release();}
  }
  async function match(action:Action<Command>){const g=latest.current!.game;return act({type:'Match',command:{...action,careerId:g.careerId,commandId:crypto.randomUUID(),expectedRevision:g.revision} as Command});}
  async function tick(){if(!running.current)return;if(document.hidden){timer.current=setTimeout(()=>void tick(),250);return;}if(!hold.current)await match({type:'AdvanceMatch',minutes:1});if(running.current)timer.current=setTimeout(()=>void tick(),hold.current?50:minuteDuration(latest.current!.game.match!.events,latest.current!.game.match!.tick));}
@@ -73,7 +82,7 @@ export function DreamClub({packs,exit,cue,ambience,overlayOpen}:{overlayOpen:boo
  async function list(){stop();const result=await window.fcu.dreamList();if(result.ok)setSaves(result.value);else setNotice(t.errors[result.error]);}
  async function load(entry:SaveEntry){stop();const result=await window.fcu.dreamLoad(entry.careerId,entry.commitId);if(result.ok&&await act({type:'Load',state:result.value})){setSaves(null);setScreen('home');setDurable(true);}else if(!result.ok)setNotice(t.errors[result.error]);}
  const g=state?.game;
- return <section className={d.root}><header><div><h1>{brand.dreamClub}</h1><p role="status">{notice}</p></div><div><button data-input-back disabled={busy} onClick={()=>{stop();if(saves){setSaves(null);}else if(collection){setCollection(false);}else if(state&&screen!=='home'){setCollection(false);setScreen('home');}else exit();}}>{t.back}</button><button disabled={busy} onClick={()=>void list()}>{t.load}</button>{state&&<button disabled={busy} onClick={()=>{stop();if(!occupied.current){occupied.current=true;setBusy(true);void persist(state).finally(()=>{occupied.current=false;setBusy(false);});}}}>{t.save}</button>}</div></header>
+ return <section className={d.root}><header><div><h1>{brand.dreamClub}</h1><p role="status">{notice}</p></div><div><button data-input-back disabled={busy} onClick={()=>{stop();if(saves){setSaves(null);}else if(collection){setCollection(false);}else if(state&&screen!=='home'){setCollection(false);setScreen('home');}else exit();}}>{t.back}</button><button disabled={busy} onClick={()=>void list()}>{t.load}</button>{state&&<button disabled={busy} onClick={()=>void checkpoint()}>{t.save}</button>}</div></header>
  {saves?<SaveHistory entries={saves} busy={busy} load={entry=>void load(entry)}/>:!state?<section className={d.home}><p>{t.dreamIntro}</p><label>{t.clubName}<input value={name} maxLength={40} onChange={e=>setName(e.target.value)}/></label><label>{t.dreamTier}<select value={tier} onChange={e=>setTier(e.target.value as Dream['tier'])}>{(['starter','club','elite'] as const).map(v=><option key={v} value={v}>{t.dreamTiers[v]}</option>)}</select></label><label>{t.dreamSnapshot}<select value={pack} onChange={e=>setPack(e.target.value)}><option value="">{t.dreamFictional}</option>{packs.map(p=><option key={p.snapshotId} value={p.snapshotId}>{p.snapshotId}</option>)}</select></label><button className={s.primary} disabled={busy||!name.trim()} onClick={()=>void act({type:'New',id:crypto.randomUUID(),seed:2026,name:name.trim(),tier,pack:packs.find(p=>p.snapshotId===pack)??null})}>{t.dreamBegin}</button></section>:!durable?<p>{t.dreamSaveRequired}</p>:g&&<>
  {screen!=='match'&&<nav>{!seasonComplete(g)&&<button disabled={busy} onClick={()=>{stop();void act({type:'Instant'}).then(ok=>{if(ok)setScreen('home');});}}>{t.dreamInstant}</button>}<button disabled={busy} onClick={()=>{stop();setCollection(false);setScreen('home');}}>{t.back}</button><button disabled={busy} onClick={()=>{stop();setCollection(false);setScreen('squad');}}>{t.squad}</button><button disabled={busy} onClick={()=>{stop();setCollection(false);setScreen('table');}}>{t.table}</button><button disabled={busy} onClick={()=>{stop();setCollection(!collection);}}>{t.dreamCollection}</button></nav>}
  {collection&&screen!=='match'&&<Collection key={g.revision} state={state} busy={busy} confirm={async players=>{const ok=await act({type:'Squad',players});if(ok){setCollection(false);setScreen('squad');}return ok;}}/>}

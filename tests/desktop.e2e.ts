@@ -1,7 +1,7 @@
 import { test, expect, _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp,rename,writeFile,unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join,dirname,resolve } from 'node:path';
 import { canonical } from '../packages/contracts/src/index.ts';
 test('offline career, lineup, commentary clock, highlight recovery and full exhibition season',async()=>{
   const data=await mkdtemp(join(tmpdir(),'fcu-e2e-'));
@@ -141,7 +141,13 @@ test('chooses an earned Dream player by keyboard and stops audio on exit',async(
   await expect.poll(async()=>{const entries=await page.evaluate(()=>window.fcu.dreamList());return entries.ok?entries.value[0]?.commitId:null;}).not.toBe(beforeSuspend.value[0]?.commitId);
   const restored=await page.evaluate(async()=>{const entries=await window.fcu.dreamList();if(!entries.ok||!entries.value[0])return null;const entry=entries.value[0],loaded=await window.fcu.dreamLoad(entry.careerId,entry.commitId);return loaded.ok?loaded.value.game.match?.tick:null;});expect(restored).toBe(Number(minute));
   await app.evaluate(({powerMonitor})=>{powerMonitor.emit('resume');});await expect(page.getByRole('button',{name:'Play',exact:true})).toBeVisible();await expect.poll(audible).toBe(0);
+  const folder=resolve(data,'dream-saves'),backup=resolve(data,'dream-save-recovery');if(dirname(folder)!==resolve(data)||dirname(backup)!==resolve(data))throw Error('Unexpected isolated test path');
+  await rename(folder,backup);await writeFile(folder,'blocked destination');
+  try{await page.getByRole('button',{name:'Title screen',exact:true}).click();await expect(page.getByText('The checkpoint could not be saved. Retry Save before continuing or revealing choices.',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Start a career',exact:true})).toHaveCount(0);}finally{await unlink(folder);await rename(backup,folder);}
+  await page.getByRole('button',{name:'Save',exact:true}).click();await expect(page.getByRole('button',{name:'Play',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Play',exact:true}).click();await expect.poll(audible).toBe(1);await page.getByRole('button',{name:'Title screen',exact:true}).click();
   await expect(page.getByRole('button',{name:'Start a career',exact:true})).toBeVisible();await expect.poll(audible).toBe(0);
+  await page.getByRole('button',{name:'FCU Dream Club',exact:true}).click();await page.getByRole('button',{name:'Load',exact:true}).click();await page.getByRole('region',{name:'Saved checkpoints',exact:true}).getByRole('button',{name:'Load',exact:true}).first().click();await page.getByRole('button',{name:'Continue',exact:true}).click();await expect(page.getByTestId('minute')).toHaveAttribute('data-tick',String(Number(minute)+1));
+
  }finally{await app.close();}
 });

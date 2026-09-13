@@ -34,6 +34,7 @@ type Screen = 'dream' | 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match'
 type CommandPayload<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
 type Action=CommandPayload<Command>;
 export function App() {
+  const dreamCheckpoint=useRef<(()=>Promise<boolean>)|null>(null),navigating=useRef(false);
   const [diagnosticsOpen,setDiagnosticsOpen]=useState(false);
   const [boardOpen,setBoardOpen]=useState(false);
   const [registrationOpen,setRegistrationOpen]=useState(false);
@@ -92,10 +93,10 @@ export function App() {
   usePowerPause(value=>{stop();audio.current?.suspend(value==='suspend');},()=>{if(screen!=='dream')void manualSave('auto').catch(()=>setNotice(t.errors.IO_ERROR));},busy);
   const accept = (value:Career,keepDraft=false) => { latest.current=value;setState(value);if(!keepDraft)setLineup(value.lineup); };
   async function save(value=latest.current, kind:'manual'|'auto'='manual') {
-    if(!value)return;
+    if(!value)return true;
     setNotice(t.saving);
     const result=await window.fcu.save(value,kind);
-    setNotice(result.ok?t.saved:t.errors[result.error]);setDirty(!result.ok);
+    setNotice(result.ok?t.saved:t.errors[result.error]);setDirty(!result.ok);return result.ok;
   }
   async function manualSave(kind:'manual'|'auto'='manual') {
     if(occupied.current)return;
@@ -128,7 +129,14 @@ export function App() {
   const presentationBusy=useRef(false);
   const tick=async()=>{if(!running.current)return;if(presentationBusy.current){timer.current=setTimeout(()=>void tick(),50);return;}await command({type:'AdvanceMatch',minutes:1});const match=latest.current?.match;if(running.current&&match)timer.current=setTimeout(()=>void tick(),minuteDuration(match.events,match.tick));};
   const play=()=>{if(running.current){stop();return;}if(latest.current?.match&&(latest.current.match.tick===0||['interval','extraInterval'].includes(latest.current.match.phase)))audio.current?.highlight('whistle');if(latest.current?.match&&['interval','extraInterval'].includes(latest.current.match.phase))presentationBusy.current=false;running.current=true;setPlaying(true);void tick();};
-  const navigate=(next:Screen)=>{stop();setNotice('');setScreen(next);};
+  const navigate=(next:Screen)=>{
+    if(navigating.current)return;stop();navigating.current=true;
+    void (async()=>{try{
+      if(screen==='dream'&&next!=='dream'){setBusy(true);if(dreamCheckpoint.current&&!await dreamCheckpoint.current())return;}
+      else if(next==='title'&&dirty){setBusy(true);if(!await save(latest.current,'auto'))return;}
+      setNotice('');setScreen(next);
+    }catch{setNotice(t.errors.IO_ERROR);}finally{navigating.current=false;setBusy(false);}})();
+  };
   async function newCareer() {
     if(!/^\d+$/.test(seed)||Number(seed)>4294967295){setNotice(t.seedInvalid);return;}
     stop();setBusy(true);const result=await request(selectedPack?{type:'NewPackedCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,pack:selectedPack}:{type:'NewCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,world:worldKind});
@@ -160,7 +168,7 @@ export function App() {
       </header>
       <main data-input-section className={s.gameScreen} key={screen}>
         {screen==='title'&&<TitleScreen dream={()=>navigate('dream')} start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
-        {screen==='dream'&&<DreamClub overlayOpen={diagnosticsOpen||soundLibrary} cue={kind=>audio.current?.highlight(kind)} ambience={value=>audio.current?.match(value)} packs={packs} exit={()=>navigate('title')}/>}
+        {screen==='dream'&&<DreamClub exitCheckpoint={dreamCheckpoint} overlayOpen={diagnosticsOpen||soundLibrary} cue={kind=>audio.current?.highlight(kind)} ambience={value=>audio.current?.match(value)} packs={packs} exit={()=>navigate('title')}/>}
         {screen==='setup'&&<ClubSelect packs={packs} packId={packId} changePack={id=>{setPackId(id);setWorldKind('countries');setClub(clubs[0]!.id);}} importPack={()=>void importPack()} importedClubs={selectedPack?rosterClubs(selectedPack):null} worldKind={worldKind} changeWorld={kind=>{setPackId('');setWorldKind(kind);setClub(clubs[0]!.id);}} club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
         {state&&screen==='home'&&<Clubhouse board={()=>setBoardOpen(true)} closeSeason={()=>void command({type:'CloseSeason'})} history={()=>setHistoryOpen(true)} news={id=>{setNewsPlayer(id);setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen registration={()=>setRegistrationOpen(true)} contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} focus={focus=>{void command({type:'SetTrainingFocus',focus});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
