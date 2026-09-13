@@ -105,7 +105,10 @@ export const knockoutMatchSchema=historicalMatchSchema.extend({homeGoals:integer
 const disciplineCounter=z.object({yellows:integer.max(2),ban:integer.max(100)});
 export const competitionCareerSchema=countryCareerSchema.extend({scouting:scoutingSchema.extend({shortlist:z.array(playerId).max(20000)}),engineVersion:z.literal('0.5.2'),rulesetVersion:z.literal('world-2'),fixtures:z.array(competitionFixtureSchema).max(10000),match:knockoutMatchSchema.nullable(),cupStartSeason:integer.min(2026).max(2101),cups:z.array(cupSchema).max(6),cupDiscipline:z.record(playerId,z.object({domestic:disciplineCounter,continental:disciplineCounter})),history:z.array(worldHistorySchema.extend({fixtures:z.array(competitionFixtureSchema).max(10000),cups:z.array(cupSchema).max(6)})).max(100)});
 export const rosterCareerSchema=competitionCareerSchema.extend({engineVersion:z.literal('0.6.0'),snapshotId:z.string().min(1).max(100),rosterOrigin:z.strictObject({contentHash:z.string().regex(/^[a-f0-9]{64}$/),observedAt:z.iso.datetime(),development:z.boolean(),playerIds:z.record(playerId,z.string().uuid()),clubIds:z.record(clubId,z.string().uuid())}).nullable()});
-export const careerSchema=rosterCareerSchema.extend({engineVersion:z.literal('0.6.1'),players:z.array(registeredPlayerSchema).min(176).max(60000),loans:z.array(loanSchema.extend({source:z.enum(['market','roster'])})).max(5000)});
+export const registrationCareerSchema=rosterCareerSchema.extend({engineVersion:z.literal('0.6.1'),players:z.array(registeredPlayerSchema).min(176).max(60000),loans:z.array(loanSchema.extend({source:z.enum(['market','roster'])})).max(5000)});
+export const facilityKind=z.enum(['academy','recovery']);
+export const facilitySchema=z.strictObject({academy:integer.max(3),recovery:integer.max(3),construction:z.strictObject({kind:facilityKind,level:integer.min(1).max(3),started:z.iso.date(),due:z.iso.date()}).nullable()});
+export const careerSchema=registrationCareerSchema.extend({engineVersion:z.literal('0.7.0'),facilities:z.record(clubId,facilitySchema),economy:worldEconomySchema.extend({ledger:z.array(worldEconomySchema.shape.ledger.element.extend({kind:z.enum(['opening','sponsor','wages','overhead','gate','signingBonus','transferFee','prize','facility'])})).max(100000)})});
 export type Career=z.infer<typeof careerSchema>;
 
 
@@ -126,6 +129,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({...commandBase,type:z.literal('AdvanceCalendar'),target:z.enum(['day','event'])}),
   z.object({...commandBase,type:z.literal('RenewContract'),playerId,contractRevision:integer,years:z.number().int().min(1).max(5),wage:integer.max(10000000000),bonus:integer.max(1000000000000),role:promisedRoleSchema}),
   z.object({...commandBase,type:z.literal('SetTraining'),training:trainingSchema}),
+  z.object({...commandBase,type:z.literal('UpgradeFacility'),kind:facilityKind}),
   z.object({...commandBase,type:z.literal('SetRegistration'),players:z.array(playerId).min(11).max(30)}),
   z.object({...commandBase,type:z.literal('AcknowledgeMatch')}),
   z.object({...commandBase,type:z.literal('CallUp')}),

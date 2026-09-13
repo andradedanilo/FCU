@@ -9,7 +9,7 @@ export function createRosterStore(directory:string,allowDevelopment:boolean){
   const trust={allowDevelopment,trustedKeys:new Map()};
   const decode=(bytes:Uint8Array):InstalledRoster=>{
     const {manifest,roster}=openArchive(bytes,trust);
-    if(manifest.compatibleSaveSchemaMin>18||manifest.compatibleSaveSchemaMax<18||roster.identityProfileId!=='fcu-city-v1')throw Error('INCOMPATIBLE_ROSTER');
+    if(manifest.compatibleSaveSchemaMin>19||manifest.compatibleSaveSchemaMax<18||roster.identityProfileId!=='fcu-city-v1')throw Error('INCOMPATIBLE_ROSTER');
     const pack={snapshotId:manifest.snapshotId,contentHash:manifest.contentHash,observedAt:manifest.extractionCompletedAt,development:manifest.permittedDistribution==='development',roster};
     const clubs=rosterClubs(pack);
     createPackedCareer('00000000-0000-4000-8000-000000000001',1,clubs[0]!.id,pack);

@@ -95,3 +95,5 @@ The shipped WAV effects are excerpts from the following free recordings, with le
 - Crowd disappointment: [crowd oh - disappointed](https://freesound.org/people/mrrap4food/sounds/619007/), mrrap4food, CC0 1.0.
 - Sliding-tackle foley: [Grass Slide,Grass Scuff](https://freesound.org/people/yeemeng/sounds/530467/), yeemeng, CC0 1.0.
 - Stadium ambience: [noise#01.aif](https://freesound.org/people/huubjeroen/sounds/39733/), huubjeroen, CC0 1.0.
+
+Club finances also offers academy and recovery upgrades, paid from available funds and completed after 30 in-game days. This is the first v0.7 feature; annual player development and Dream Club are still planned.

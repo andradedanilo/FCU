@@ -3,7 +3,28 @@ import {createCareer,applyCommand,validateCareer,migrateTimedCareer} from '../pa
 import {budgets,cash,settleDay,settleGate,validateEconomy} from '../packages/simulation/src/economy.ts';
 import {clubs} from '../packages/contracts/src/identity.ts';
 import {canonical} from '../packages/contracts/src/index.ts';
+import {advanceCalendar} from '../packages/simulation/src/calendar.ts';
+import {facilityCosts} from '../packages/simulation/src/facilities.ts';
+import {migrateRegistrationCareer} from '../packages/simulation/src/engine.ts';
 const initial=()=>createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);
+it('charges facilities once, preserves reserves and completes recovery construction on its due date',()=>{
+ const old=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id,'countries');
+ const migrated=migrateRegistrationCareer({...old,engineVersion:'0.6.1'});expect(migrated).toEqual(old);
+ const command={type:'UpgradeFacility' as const,kind:'recovery' as const,careerId:old.careerId,expectedRevision:0,commandId:crypto.randomUUID()};
+ const result=applyCommand(old,command);if(!result.ok)throw Error(result.error);const state=result.value;
+ expect(cash(state.economy,state.clubId)).toBe(cash(old.economy,old.clubId)-facilityCosts[0]);
+ expect(old.facilities[old.clubId]!.construction).toBeNull();
+ expect(state.facilities[state.clubId]!.construction?.due).toBe('2026-07-31');
+ expect(applyCommand(state,command).ok).toBe(false);
+ expect(applyCommand(state,{...command,expectedRevision:1,commandId:crypto.randomUUID()}).ok).toBe(false);
+ expect(validateCareer(JSON.parse(canonical(state)))).toEqual(state);
+ state.date='2026-07-30';state.players[0]!.condition=50000;
+ expect(state.facilities[state.clubId]!.recovery).toBe(0);
+ expect(advanceCalendar(state,'day',()=>{})).toBeNull();
+ expect(state.facilities[state.clubId]).toMatchObject({recovery:1,construction:null});
+ expect(state.players[0]!.condition).toBe(59000);expect(()=>validateCareer(state)).not.toThrow();
+ const poor=structuredClone(old);poor.economy.ledger=[];expect(applyCommand(poor,command).ok).toBe(false);
+});
 it('balances dated operating transactions once and keeps initial wage commitments affordable',()=>{
  const s=initial(),club=s.clubId;const before=budgets(s,club);
  expect(before.weekly).toBeLessThanOrEqual(Math.floor(before.wage*.8));expect(before.cash).toBe(250000000+Math.floor(500000000/12));

@@ -1,3 +1,4 @@
+import {completeFacilities} from './facilities.ts';
 import {seasonEnd,nextManagedFixture} from './competition.ts';
 import {nextLoanDate,returnLoans} from './loans.ts';
 import {recruit} from './recruitment.ts';
@@ -9,7 +10,7 @@ import {finishScouting} from './scouting.ts';
 import {rules} from './rules.ts';
 export function nextFixtureDate(state:Pick<Career,'fixtures'|'clubId'>):string|null{return nextManagedFixture(state)?.date??null;}
 export function nextCalendarDate(state:Career):string|null {
- return [nextFixtureDate(state),state.fixtures.find(f=>f.score===null)?.date??null,state.scouting.active?.due??null,nextMarketDate(state),nextLoanDate(state),seasonEnd(state.season)].filter((date):date is string=>date!==null&&date>state.date&&date<=seasonEnd(state.season)).sort()[0]??null;
+ return [...Object.values(state.facilities).flatMap(f=>f.construction?[f.construction.due]:[]),nextFixtureDate(state),state.fixtures.find(f=>f.score===null)?.date??null,state.scouting.active?.due??null,nextMarketDate(state),nextLoanDate(state),seasonEnd(state.season)].filter((date):date is string=>date!==null&&date>state.date&&date<=seasonEnd(state.season)).sort()[0]??null;
 }
 export function advanceCalendar(state:Career,target:'day'|'event',simulate:(state:Career)=>void):FailureCode|null {
  const fixture=nextFixtureDate(state),limit=nextCalendarDate(state);
@@ -17,9 +18,10 @@ export function advanceCalendar(state:Career,target:'day'|'event',simulate:(stat
  const end=target==='day'?addDays(state.date,1):limit;
  while(state.date<end){
   state.date=addDays(state.date,1);
-  state.players=state.players.map(p=>({...p,condition:Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>state.date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced']))}));
+  const facilityComplete=completeFacilities(state);
+  state.players=state.players.map(p=>({...p,condition:Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>state.date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced'])+(p.clubId?state.facilities[p.clubId]!.recovery*1000:0))}));
   const returned=returnLoans(state);if(state.date===seasonEnd(state.season))for(const offer of state.offers)if(['submitted','countered','accepted','ready','queued'].includes(offer.status)){offer.status='expired';offer.activation=null;}settleDay(state,state.date);
-  const report=finishScouting(state),market=processMarket(state);recruit(state);simulate(state);if(report||market||returned)break;
+  const report=finishScouting(state),market=processMarket(state);recruit(state);simulate(state);if(report||market||returned||facilityComplete)break;
  }
  return null;
 }
