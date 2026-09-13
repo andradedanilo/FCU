@@ -1,3 +1,7 @@
+import {createDiagnostics} from './diagnostics.ts';
+import {writeFile} from 'node:fs/promises';
+import type {BuildInfo,DiagnosticRecord} from '../../../../packages/contracts/src/diagnostics.ts';
+declare const __FCU_BUILD__:BuildInfo;
 import {createDreamStore} from './dreamSaves.ts';
 import {createSettingsStore} from './settings.ts';
 import {createRosterStore} from './rosters.ts';
@@ -5,7 +9,7 @@ import { app, BrowserWindow, ipcMain, session, dialog, powerMonitor, type IpcMai
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { z } from 'zod';
-import { brand, type Result, type FailureCode } from '../../../../packages/contracts/src/index.ts';
+import { brand, type Result } from '../../../../packages/contracts/src/index.ts';
 import { createSaveStore } from './saves.ts';
 
 const here=dirname(fileURLToPath(import.meta.url));
@@ -15,6 +19,7 @@ if(process.env.FCU_USER_DATA && !app.isPackaged)app.setPath('userData',process.e
 const locked=app.requestSingleInstanceLock();
 if(!locked)app.quit();
 else void app.whenReady().then(async()=>{
+  const diagnostics=createDiagnostics({build:__FCU_BUILD__,runtime:{platform:process.platform,architecture:process.arch,electron:process.versions.electron,chrome:process.versions.chrome,node:process.versions.node,packaged:app.isPackaged}});
   const dream=createDreamStore(join(app.getPath('userData'),'dream-saves'));
   const settings=createSettingsStore(join(app.getPath('userData'),'settings'));
   const store=createSaveStore(join(app.getPath('userData'),'saves'));
@@ -29,20 +34,23 @@ else void app.whenReady().then(async()=>{
   window.on('closed',()=>{powerMonitor.removeListener('suspend',suspend);powerMonitor.removeListener('resume',resume);});
   window.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&input.key==='F11'){event.preventDefault();window.setFullScreen(!window.isFullScreen());}});
   const trusted=(event:IpcMainInvokeEvent)=>event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame&&(event.senderFrame.url===productionURL||event.senderFrame.url===`${devURL}/`);
-  const route=<T>(fn:(...args:unknown[])=>Promise<T>)=>async(event:IpcMainInvokeEvent,...args:unknown[]):Promise<Result<T>>=>{
+  const route=<T>(operation:DiagnosticRecord['operation'],fn:(...args:unknown[])=>Promise<T>)=>async(event:IpcMainInvokeEvent,...args:unknown[]):Promise<Result<T>>=>{
     if(!trusted(event))return {ok:false,error:'INVALID_COMMAND'};
-    try{return {ok:true,value:await fn(...args)};}catch(error){const code:FailureCode=error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':error instanceof Error&&error.message==='INVALID_SAVE'?'INVALID_SAVE':'IO_ERROR';return {ok:false,error:code};}
+    const started=performance.now();let code:DiagnosticRecord['error']=null;
+    try{return {ok:true,value:await fn(...args)};}catch(error){code=error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':error instanceof Error&&error.message==='INVALID_SAVE'?'INVALID_SAVE':'IO_ERROR';return {ok:false,error:code};}finally{diagnostics.record({operation,milliseconds:Math.min(86400000,Math.max(0,Math.round(performance.now()-started))),error:code});}
   };
-  ipcMain.handle('roster-list',route(async()=>rosters.list()));
-  ipcMain.handle('audio-settings',route(async()=>settings.load()));
-  ipcMain.handle('save-audio-settings',route(async(value)=>settings.save(value)));
-  ipcMain.handle('roster-import',route(async()=>{const selected=await dialog.showOpenDialog(window,{filters:[{name:'FCU roster pack',extensions:['zip']}],properties:['openFile']});return selected.canceled?null:rosters.install(selected.filePaths[0]!);}));
-  ipcMain.handle('dream-save',route(async(state)=>dream.save(state)));
-  ipcMain.handle('dream-list',route(async()=>dream.list()));
-  ipcMain.handle('dream-load',route(async(id,commit)=>dream.load(z.string().uuid().parse(id),z.string().uuid().parse(commit))));
-  ipcMain.handle('save',route(async(state,kind)=>store.save(state,z.enum(['manual','auto']).parse(kind))));
-  ipcMain.handle('list',route(async()=>store.list()));
-  ipcMain.handle('load',route(async(career,commit)=>store.load(z.string().uuid().parse(career),z.string().uuid().parse(commit))));
+  ipcMain.handle('diagnostics',route('diagnostics',async()=>diagnostics.report()));
+  ipcMain.handle('export-diagnostics',route('export-diagnostics',async()=>{const chosen=await dialog.showSaveDialog(window,{defaultPath:'FCU-diagnostics.json',filters:[{name:'JSON',extensions:['json']}]});if(chosen.canceled||!chosen.filePath)return false;await writeFile(chosen.filePath,JSON.stringify(diagnostics.report(),null,2)+'\n');return true;}));
+  ipcMain.handle('roster-list',route('roster-list',async()=>rosters.list()));
+  ipcMain.handle('audio-settings',route('audio-settings',async()=>settings.load()));
+  ipcMain.handle('save-audio-settings',route('save-audio-settings',async(value)=>settings.save(value)));
+  ipcMain.handle('roster-import',route('roster-import',async()=>{const selected=await dialog.showOpenDialog(window,{filters:[{name:'FCU roster pack',extensions:['zip']}],properties:['openFile']});return selected.canceled?null:rosters.install(selected.filePaths[0]!);}));
+  ipcMain.handle('dream-save',route('dream-save',async(state)=>dream.save(state)));
+  ipcMain.handle('dream-list',route('dream-list',async()=>dream.list()));
+  ipcMain.handle('dream-load',route('dream-load',async(id,commit)=>dream.load(z.string().uuid().parse(id),z.string().uuid().parse(commit))));
+  ipcMain.handle('save',route('save',async(state,kind)=>store.save(state,z.enum(['manual','auto']).parse(kind))));
+  ipcMain.handle('list',route('list',async()=>store.list()));
+  ipcMain.handle('load',route('load',async(career,commit)=>store.load(z.string().uuid().parse(career),z.string().uuid().parse(commit))));
   session.defaultSession.setPermissionRequestHandler((_webContents,_permission,callback)=>callback(false));
   session.defaultSession.setPermissionCheckHandler(()=>false);
   window.webContents.setWindowOpenHandler(()=>({action:'deny'}));

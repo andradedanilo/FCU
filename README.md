@@ -38,6 +38,8 @@ FCU Dream Club is a separate fantasy league with eight clubs and 14 rounds. Name
 
 Training intensity also affects injury risk on non-match days. Calendar advancement stops when someone in your team is hurt; Club news shows recovery dates. In June it also warns about academy contract expiry and possible releases after the next intake.
 
+Open Diagnostics in the footer to inspect the build identity and export a local technical report. It includes recent file-operation timings and error codes, without saves, names, paths or credentials. No report is uploaded.
+
 ## Run from source
 
 Tested development tools: Node.js 26.8.2 and npm 12.0.2. Dependencies are pinned in the lockfile. The first launch may download Electron; installed gameplay is offline.

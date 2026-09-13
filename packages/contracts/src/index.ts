@@ -165,6 +165,8 @@ export type FailureCode = 'OFFER_CHANGED' | 'SQUAD_NEED' | 'SQUAD_FULL' | 'REPUT
 export type Result<T> = { ok: true; value: T } | { ok: false; error: FailureCode };
 export type SaveEntry = { careerId: string; commitId: string; parentCommitId:string|null; season:number|null; club: string; round: number; tick: number; savedAtUTC: string; kind: 'manual' | 'auto'; valid: boolean; engineVersion:string|null; error: FailureCode | null };
 export interface DesktopBridge {
+  diagnostics():Promise<Result<import('./diagnostics.ts').DiagnosticReport>>;
+  exportDiagnostics():Promise<Result<boolean>>;
   onPowerState(listener:(state:'suspend'|'resume')=>void):()=>void;
   audioSettings():Promise<Result<AudioSettings>>;
   saveAudioSettings(value:AudioSettings):Promise<Result<AudioSettings>>;

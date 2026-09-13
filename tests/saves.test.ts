@@ -1,3 +1,4 @@
+import {createDiagnostics} from '../apps/game/src/main/diagnostics.ts';
 import {alternateSaveHeads} from '../packages/presentation/src/saveHistory.ts';
 import { it, expect } from 'vitest';
 import { mkdtemp, writeFile, readFile, readdir } from 'node:fs/promises';
@@ -92,4 +93,15 @@ it('identifies alternate save continuations by ancestry and preserves both after
  expect(await readFile(join(root,state.careerId,first+'.save'))).toEqual(original);
  expect(checksum(await restarted.load(state.careerId,alternative))).toBe(checksum(state));
  expect(await readdir(join(root,state.careerId))).toHaveLength(4);
+});
+
+it('bounds diagnostics and excludes unstructured private data from exported reports',()=>{
+ const diagnostics=createDiagnostics({build:{appVersion:'0.9.0',sourceCommit:null,sourceDirty:true,lockHash:'0'.repeat(64),rendererHash:null},runtime:{platform:'win32',architecture:'x64',electron:'44.3.0',chrome:'1.0',node:'26.8.2',packaged:false}});
+ // One capacity scenario: 105 operations leave only the newest 100 records.
+ Array.from({length:105},(_,milliseconds)=>diagnostics.record({operation:'load',milliseconds,error:null}));
+ diagnostics.record({operation:'https://provider.test/?token=private',milliseconds:1,error:null});
+ diagnostics.record({operation:'load',milliseconds:1,error:'IO_ERROR',path:'private-user-file'});
+ const report=diagnostics.report();expect(report.payload.records).toHaveLength(100);expect(report.payload.records[0]?.milliseconds).toBe(5);expect(report.payload.records.at(-1)?.milliseconds).toBe(104);
+ expect(report.checksum).toBe(checksum(report.payload));expect(JSON.stringify(report)).not.toContain('private');
+ report.payload.records.length=0;expect(diagnostics.report().payload.records).toHaveLength(100);
 });

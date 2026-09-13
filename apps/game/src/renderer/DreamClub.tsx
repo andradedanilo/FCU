@@ -22,7 +22,7 @@ import {MatchReport} from './MatchReport.tsx';
 import {BenchMenu} from './BenchMenu.tsx';
 import s from './App.module.css';
 type Action<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
-export function DreamClub({packs,exit,cue,ambience}:{packs:InstalledRoster[];exit:()=>void;cue:(kind:MatchCue)=>void;ambience:(value:boolean)=>void}){
+export function DreamClub({packs,exit,cue,ambience,overlayOpen}:{overlayOpen:boolean;packs:InstalledRoster[];exit:()=>void;cue:(kind:MatchCue)=>void;ambience:(value:boolean)=>void}){
  const [state,setState]=useState<Dream|null>(null),latest=useRef<Dream|null>(null),worker=useRef<Worker|null>(null),occupied=useRef(false);
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[durable,setDurable]=useState(true),[screen,setScreen]=useState('home');
  const [name,setName]=useState('Dream FC'),[tier,setTier]=useState<Dream['tier']>('starter'),[pack,setPack]=useState('');
@@ -43,6 +43,7 @@ export function DreamClub({packs,exit,cue,ambience}:{packs:InstalledRoster[];exi
  },[pendingId,busy,screen,saves,durable]);
  function stop(){ambience(false);running.current=false;setPlaying(false);if(timer.current)clearTimeout(timer.current);}
  useEffect(()=>()=>{running.current=false;sound.current(false);cancelRequest.current?.();worker.current?.terminate();if(timer.current)clearTimeout(timer.current);},[]);
+ const pause=useRef(stop);pause.current=stop;useEffect(()=>{if(overlayOpen)pause.current();},[overlayOpen]);
  function send(request:DreamRequest):Promise<Result<Dream>>{
   worker.current??=new Worker(new URL('../worker/dream.ts',import.meta.url),{type:'module'});
   const target=worker.current;
