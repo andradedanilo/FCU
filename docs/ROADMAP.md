@@ -2,8 +2,8 @@
 
 ## Status - update this block, do not create new status files
 
-- Current milestone: v0.6 publisher roster pipeline. Owner renewed autonomous work across milestones; continue in complete slices until real input is needed. v0.5 Windows software gate passed; native Linux remains open.
-- Latest verified software gate: v0.5 Windows competition world. Earlier native Linux, low-end and physical-controller requirements remain unverified; no cumulative cross-platform completion claim.
+- Current milestone: v0.7 career depth, starting with facilities. Owner renewed autonomous work across milestones; continue in complete slices until real input is needed. v0.5 Windows software gate passed; native Linux remains open.
+- Latest verified software gate: v0.6 Windows offline roster development workflow. Live provider sample and release trust-root configuration remain unverified/deferred. Earlier native Linux, low-end and physical-controller requirements remain unverified; no cumulative cross-platform completion claim.
 - Owner-confirmed: Football Club Universe (FCU); Windows + native Linux; approved city-based fictional club identities; original pixel-art highlights and text fallback.
 - Identity fixture: use GAME.md's first eight approved names in the v0.1 development exhibition league; keep branding/profile centralized and real roster integration for later milestones.
 - Product assumptions awaiting optional revision: English, premium single-player, fictional second tiers, simplified rules. See README.
@@ -13,9 +13,9 @@
 - Rights/provider planning status: owner assumes arrangements handled; no procurement or legal launch blockers. Live integration evidence is still recorded honestly.
 - Dependency versions/reference Windows/Linux machines: Windows 11 Pro 10.0.26300, Ryzen 7 9800X3D, 32 GB RAM, RTX 4080 driver 32.0.16.1692; Linux unavailable (WSL not installed). Exact dependencies in package.json and lockfile; A14 records selection.
 - Test inventory/runtime: 69 registered cases in twelve files (68 Vitest, one Electron journey), within v0.6 limits 85/15/5. Four net new cases in this continuation; nine roster cases pass in 3.22 seconds.
-- Evidence from latest change: private provider plans reconcile source IDs, complete squads and profile batches before returning review candidates. Unknown identities or changed ownership block for editorial correction. Nine roster cases pass in 3.22 seconds; typecheck/affected lint pass. CLI completed a synthetic 96-club Sportmonks-shaped extraction with no network calls.
-- Open issues/next action: native Linux package/launch, low-end measurement, physical-controller checks and human audio/pacing review remain unverified. Next requested match-rules work: offside, cancelled-goal cause, corners, post hits/near misses and awarded in-play penalties, then corresponding art. These are not implemented or fabricated by the current presenter; shootout penalties are supported. Owner deferred live provider verification. Next: v0.6 development gate checks and Windows packaging; retain match-rule requests for subsequent gameplay work.
-- Build identity: app/engine 0.6.1, schema 18, world-2. Development game renderer .251 seconds and publisher .081 seconds. Packaged folder remains 0.5.2 pending milestone packaging; npm start runs current development build.
+- Evidence from latest change: v0.6 Windows development gate: typecheck/lint, 68 unit/integration cases in 27.69 seconds, one Electron journey in 32.3 seconds, renderer build .255 seconds. Fresh portable package passed offline fullscreen launch, worker match, Save and process restart/Load. Imported roster setup inspected and its 30-player registration guidance corrected. Signed archive behavior is fixture-tested; production signing/trust configuration and live sample remain open.
+- Open issues/next action: native Linux package/launch, low-end measurement, physical-controller checks and human audio/pacing review remain unverified. Next requested match-rules work: offside, cancelled-goal cause, corners, post hits/near misses and awarded in-play penalties, then corresponding art. These are not implemented or fabricated by the current presenter; shootout penalties are supported. Owner deferred live provider verification. Next: v0.7 facilities with dated construction and reserve-safe payment; retain match-rule requests for subsequent gameplay work.
+- Build identity: app/engine 0.6.1, schema 18, world-2. Current portable folder: release/build-E276HR/Football Club Universe-win32-x64. npm run start:packaged opens it.
 - Git: main; owner supplied https://github.com/andradedanilo/FCU.git, remote verified before this change. Commit/push every complete slice; guidance stays tracked.
 
 After each task replace the latest-evidence entry with build/commit identity, commands or checks performed, OSs used, registered-case count, elapsed time, manual observations and failed/unverified gates. Keep a short milestone completion table below this block when work starts; avoid an ever-growing daily diary.
@@ -30,6 +30,8 @@ After each task replace the latest-evidence entry with build/commit identity, co
 | v0.4 (software implemented) | Wage estimates, budgets, operating ledger, Club finances, renewals, scouting, calendar, transfers, free agents, AI recruitment, loans, returns and news | Windows 46 registered cases, full exhibition journey with transfer and loan, packaged offline launch/Save/restart | Native Linux |
 
 | v0.5 (software implemented) | Ten divisions, movement, domestic/continental cups, extra time, penalties, separate bans, qualification, prizes and history | Windows full-world command workload, 56 registered cases, offline UI and packaged persistence | Native Linux; earlier hardware checks |
+
+| v0.6 (offline development implemented) | Paginated fictional adapter, Sportmonks fixture adapter/normalization, audit/review/diff, signed archive core, immutable export/import, pinned career rosters and active registration | Windows 69 registered cases; publisher restart, imported career and packaged offline persistence | Live provider sample deferred; production signing/trust setup and native Linux unverified |
 
 ## Gates and scope discipline
 
