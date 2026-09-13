@@ -315,7 +315,8 @@ export function applyCommand(state: Career, command: Command, dream=false): Resu
   } else if(command.type==='StartMatch') {
     if(state.date!==nextFixtureDate(state))return {ok:false,error:'NOT_MATCH_DAY'};
     if(!nextManagedFixture(state)||(state.match&&state.match.phase!=='finished'))return {ok:false,error:'INVALID_COMMAND'};
-    if([...state.lineup,...state.bench].some(id=>!available(selectionPlayers(state).find(p=>p.id===id)!,state.date)))return {ok:false,error:'UNAVAILABLE_PLAYER'};
+    const selectable=selectionPlayers({...state,players:state.players.filter(p=>p.clubId===state.clubId)});
+    if([...state.lineup,...state.bench].some(id=>!available(selectable.find(p=>p.id===id)!,state.date)))return {ok:false,error:'UNAVAILABLE_PLAYER'};
     if(!validSelection(state,state.lineup))return {ok:false,error:'INVALID_LINEUP'};
     const fixture=nextManagedFixture(state)!;const opponent=fixture.home===state.clubId?fixture.away:fixture.home;if(!dream)while(callUp(next,opponent,fixture.competitionClass)){ /* Bounded academy cover. */ }
     next.match=startMatch(next,fixture);

@@ -54,6 +54,7 @@ it('recruits deterministically within weekly limits and protects the managed squ
  for(const p of released){p.clubId=null;s.contracts[p.id]={...s.contracts[p.id]!,ownerId:null,ends:null,revision:1};s.economy.wages[p.id]=0;}
  const original=validateCareer(structuredClone(s)),human=s.players.filter(p=>p.clubId===s.clubId).map(p=>p.id),history=canonical(s.match),before=canonical(s.economy.ledger);
  recruit(s);recruit(original);expect(canonical(s)).toBe(canonical(original));expect(s.offers.length).toBeGreaterThan(0);expect(s.offers.filter(o=>o.buyerId===club).length).toBeLessThanOrEqual(2);expect(s.offers.some(o=>o.sellerId===s.clubId||o.buyerId===s.clubId)).toBe(false);
+ const changed=structuredClone(original);changed.date='2026-07-13';changed.players[0]!.shooting=Math.min(100,changed.players[0]!.shooting+20);changed.contracts[changed.players[0]!.id]!.birthDate='1997-07-10';const cold=structuredClone(changed);recruit(changed);recruit({...structuredClone(original),seed:2027});recruit(cold);expect(canonical(changed)).toBe(canonical(cold));
  const repeated=canonical(s);recruit(s);expect(canonical(s)).toBe(repeated);expect(s.players.filter(p=>p.clubId===s.clubId).map(p=>p.id)).toEqual(human);expect(canonical(s.match)).toBe(history);expect(validateCareer(s)).toEqual(s);
  s.date='2026-07-07';processMarket(s);recruit(s);expect(s.offers.some(o=>o.status==='completed')).toBe(true);expect(canonical(s.economy.ledger)).not.toBe(before);expect(validateCareer(s)).toEqual(s);
 });

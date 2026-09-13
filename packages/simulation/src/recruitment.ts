@@ -11,6 +11,8 @@ import {overall} from './ratings.ts';
 // ownership and pending offers are filtered from current state after lookup.
 let rankingKey='';
 const rankings=new Map<ClubId,PlayerId[]>();
+let estimateYear='';
+const estimates=new Map<ClubId,Map<PlayerId,{rating:number;ability:number}>>();
 const targetSquad={GK:2,DEF:8,MID:8,FWD:4} as const;
 function rejection(error:string):Offer['reason'] {return error==='WAGE_BUDGET'?'wages':error==='INSUFFICIENT_FUNDS'?'funds':error==='REPUTATION'?'reputation':error==='OFFER_CHANGED'?'ownership':'squad';}
 function terms(state:Career,player:Player){if(player.transferListing?.kind==='loan')return {wage:state.economy.wages[player.id]!,bonus:0,years:1,role:state.contracts[player.id]!.role};return {...desiredTerms(state,player),years:2,role:state.contracts[player.id]!.role};}
@@ -29,6 +31,9 @@ export function recruit(state:Career){
   if(offer.sellerId!==null&&!windowOpen(state.date)){offer.status='queued';offer.activation=nextWindow(state.date);}else register(state,offer);
  }
  if(!monday(state.date)||seasonComplete(state)||!windowOpen(state.date))return;
+ const year=`${state.seed}/${state.date.slice(0,4)}`;
+ // Scouting noise depends on seed, calendar year and both IDs, not birthday or ownership.
+ if(year!==estimateYear){estimateYear=year;estimates.clear();}
  const eligible=state.players.filter(p=>!p.academy&&state.personnel.players[p.id]!.retired===null&&ageOn(state.contracts[p.id]!.birthDate,state.date)<34);
  const listed=eligible.filter(p=>p.clubId===state.clubId&&p.transferListing);
  const key=`${state.seed}/${state.date.slice(0,4)}/`+eligible.map(p=>`${p.id}:${overall(p)}:${ageOn(state.contracts[p.id]!.birthDate,state.date)}`).join(',');
@@ -50,7 +55,7 @@ export function recruit(state:Career){
    if(!deficits.length)break;
    const role=deficits[0]!.role,view={...state,clubId:club.id},occupied=occupiedPlaces(state,club.id);
    let ranked=rankings.get(club.id);
-   if(!ranked){ranked=eligible.map(player=>{const ability=estimate(view,player,3);return {player,ability:ability.low+ability.high,age:ageOn(state.contracts[player.id]!.birthDate,state.date)};}).sort((a,b)=>b.ability-a.ability||a.age-b.age||(a.player.id<b.player.id?-1:1)).map(entry=>entry.player.id);rankings.set(club.id,ranked);}
+   if(!ranked){let cache=estimates.get(club.id);if(!cache){cache=new Map();estimates.set(club.id,cache);}ranked=eligible.map(player=>{const rating=overall(player);let stored=cache.get(player.id);if(!stored||stored.rating!==rating){const ability=estimate(view,player,3);stored={rating,ability:ability.low+ability.high};cache.set(player.id,stored);}return {player,ability:stored.ability,age:ageOn(state.contracts[player.id]!.birthDate,state.date)};}).sort((a,b)=>b.ability-a.ability||a.age-b.age||(a.player.id<b.player.id?-1:1)).map(entry=>entry.player.id);rankings.set(club.id,ranked);}
    const candidates=ranked.map(id=>current.get(id)!).filter(p=>p.clubId!==club.id&&(p.clubId!==state.clubId||!!p.transferListing)&&p.role===role&&!pending.some(o=>o.playerId===p.id)&&(deficits[0]!.missing>0||(!!p.transferListing&&overall(p)>=Math.min(...squad.filter(q=>q.role===role).map(overall))+3)));
    const id=identifier(state,club.id,slot);
    let selected:Player|undefined;

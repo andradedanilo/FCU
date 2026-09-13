@@ -102,7 +102,7 @@ npm run test:e2e
 npm run check:docs
 ```
 
-The current inventory is 92 unit/integration cases and three Electron journeys. Typechecking uses TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API. Audit reporting remains enabled; an audit with no known advisories is not a guarantee against all vulnerabilities.
+The current inventory is 102 unit/integration cases and four Electron journeys. Typechecking uses TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API. Audit reporting remains enabled; an audit with no known advisories is not a guarantee against all vulnerabilities.
 
 Run the fixed match, maintained Career and Dream validation workloads with `npm run validate:balance`. The JSON report at `work/validation/latest.json` records the source revision, platform, metrics and failures. Individual workloads are `npm run probe`, `npm run validate:career` and `npm run validate:dream`. These check progression and balance signals; they cannot establish enjoyment.
 
