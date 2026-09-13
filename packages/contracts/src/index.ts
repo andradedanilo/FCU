@@ -140,6 +140,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({...commandBase,type:z.literal('SetShortlist'),playerId,listed:z.boolean()}),
   z.object({...commandBase,type:z.literal('ScoutPlayer'),playerId}),
   z.object({...commandBase,type:z.literal('AdvanceCalendar'),target:z.enum(['day','event'])}),
+  z.object({...commandBase,type:z.literal('PromoteAcademy'),playerId,contractRevision:integer,years:z.number().int().min(1).max(5),wage:integer.max(10000000000),bonus:integer.max(1000000000000),role:promisedRoleSchema}),
   z.object({...commandBase,type:z.literal('RenewContract'),playerId,contractRevision:integer,years:z.number().int().min(1).max(5),wage:integer.max(10000000000),bonus:integer.max(1000000000000),role:promisedRoleSchema}),
   z.object({...commandBase,type:z.literal('SetTraining'),training:trainingSchema}),
   z.object({...commandBase,type:z.literal('UpgradeFacility'),kind:facilityKind}),

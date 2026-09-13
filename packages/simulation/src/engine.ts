@@ -255,7 +255,7 @@ export function applyCommand(state: Career, command: Command, dream=false): Resu
   } else if(command.type==='SetShortlist'){
     if(!state.players.some(p=>p.id===command.playerId&&p.clubId!==state.clubId))return {ok:false,error:'INVALID_COMMAND'};
     next.scouting.shortlist=command.listed?[...new Set([...state.scouting.shortlist,command.playerId])].sort():state.scouting.shortlist.filter(id=>id!==command.playerId);
-  } else if(command.type==='RenewContract'){
+  } else if(command.type==='RenewContract'||command.type==='PromoteAcademy'){
     const error=renewContract(next,command);if(error)return {ok:false,error};
   } else if(command.type==='SelectLineup') {
     if(state.match && state.match.phase!=='finished')return {ok:false,error:'INVALID_COMMAND'};

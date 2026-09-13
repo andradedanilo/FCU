@@ -1,6 +1,7 @@
 import {matchMinute} from './highlights.ts';
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+ academyPlayer:'Academy',promoteAcademy:'Confirm senior contract',promotionHint:'Promote this player into a paid senior squad place. Their identity, development and performance records stay with them.',
  processFailed:'The game screen stopped unexpectedly.',processRecoveryHint:'Return to the title screen, then use Load in Career or Dream Club to recover a confirmed checkpoint. Progress since the last confirmed save may be lost. Your previous checkpoints remain on disk.',processRestart:'Return to title',processQuit:'Quit FCU',
  screenFailed:'This screen could not continue',screenRecoveryHint:'FCU stopped the current session after a screen error. Your confirmed checkpoints are still on disk. Progress since the last confirmed save may be lost. Return to the title, then use Load in the appropriate mode to recover a checkpoint.',screenRestart:'Return to title and recover a save',
  noRenewableContracts:'There are no owned senior players to renew. Academy players and players on loan do not use senior contract renewals. Close this screen to continue managing your squad or recruit through Scouting.',

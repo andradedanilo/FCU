@@ -1,3 +1,4 @@
+import {occupiedPlaces} from './loans.ts';
 import type {Career,Player,Contract,Command,FailureCode} from '../../contracts/src/index.ts';
 import {budgets,post} from './economy.ts';
 import {overall} from './ratings.ts';
@@ -23,14 +24,15 @@ export function desiredTerms(state:Career,player:Player){
  const wage=Math.round(Math.max(50000,marketValue(state,player)/500)/10000)*10000;
  return {wage,bonus:4*wage};
 }
-type Renewal=Extract<Command,{type:'RenewContract'}>;
+type Renewal=Extract<Command,{type:'RenewContract'|'PromoteAcademy'}>;
 export function renewalError(state:Career,action:Omit<Renewal,'careerId'|'commandId'|'expectedRevision'>):FailureCode|null {
  const player=state.players.find(p=>p.id===action.playerId),contract=state.contracts[action.playerId];
- if(!player||!contract||player.academy||player.clubId!==state.clubId||contract.ownerId!==state.clubId||(state.match&&state.match.phase!=='finished'))return 'INVALID_COMMAND';
+ if(!player||!contract||(action.type==='PromoteAcademy')!==player.academy||player.clubId!==state.clubId||contract.ownerId!==state.clubId||(state.match&&state.match.phase!=='finished'))return 'INVALID_COMMAND';
+ if(action.type==='PromoteAcademy'&&occupiedPlaces(state,state.clubId)>=30)return 'SQUAD_FULL';
  if(contract.revision!==action.contractRevision)return 'CONTRACT_CHANGED';
  const end=contractEnd(state.date,action.years),desired=desiredTerms(state,player);
  const roles={prospect:0,rotation:1,starter:2};
- if((contract.ends===null||end<=contract.ends)||action.wage<desired.wage||action.bonus<4*action.wage||roles[action.role]<roles[contract.role])return 'PLAYER_TERMS';
+ if((contract.ends===null||(action.type==='PromoteAcademy'?end<contract.ends:end<=contract.ends))||action.wage<desired.wage||action.bonus<4*action.wage||roles[action.role]<roles[contract.role])return 'PLAYER_TERMS';
  const bank=budgets(state,state.clubId),weekly=bank.committed-state.economy.wages[player.id]!+action.wage;
  if(weekly>bank.wage)return 'WAGE_BUDGET';
  if(bank.cash-action.bonus<13*weekly+4*bank.overhead)return 'INSUFFICIENT_FUNDS';
@@ -40,6 +42,7 @@ export function renewContract(state:Career,action:Renewal):FailureCode|null {
  const error=renewalError(state,action);if(error)return error;
  const contract=state.contracts[action.playerId]!;
  if(!post(state.economy,{id:`renewal/${action.playerId}/${contract.revision}`,date:state.date,kind:'signingBonus',postings:[{account:state.clubId,amount:-action.bonus},{account:'external',amount:action.bonus}]}))return 'CONTRACT_CHANGED';
+ if(action.type==='PromoteAcademy'){const player=state.players.find(p=>p.id===action.playerId)!;player.academy=false;player.registered=true;}
  state.economy.wages[action.playerId]=action.wage;
  state.contracts[action.playerId]={...contract,ends:contractEnd(state.date,action.years),role:action.role,revision:contract.revision+1};
  return null;

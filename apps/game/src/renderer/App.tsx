@@ -119,7 +119,7 @@ export function App() {
     occupied.current=true;setBusy(true);setNotice('');
     const result=await request({type:'Command',command:{...action,careerId:current.careerId,expectedRevision:current.revision,commandId:crypto.randomUUID()} as Command});
     if(result.ok) {
-      accept(result.value,action.type==='SetTactics'||action.type==='StoreTacticPreset'||action.type==='SelectBench'||action.type==='SetTraining'||action.type==='SetTrainingFocus'||action.type==='RenewContract'||action.type==='ScoutPlayer'||action.type==='SetShortlist');setDirty(true);
+      accept(result.value,action.type==='SetTactics'||action.type==='StoreTacticPreset'||action.type==='SelectBench'||action.type==='SetTraining'||action.type==='SetTrainingFocus'||action.type==='RenewContract'||action.type==='PromoteAcademy'||action.type==='ScoutPlayer'||action.type==='SetShortlist');setDirty(true);
       if(result.value.round>current.round||result.value.season>current.season)await save(result.value,'auto');
       if(action.type==='CloseSeason')setNotice(t.seasonStarted);
       if(action.type==='StartMatch')setScreen('match');

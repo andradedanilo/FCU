@@ -18,3 +18,17 @@ it('rejects duplicate and primary roles in secondary position data',()=>{
  state.players[0]!.secondaryRoles=[state.players[0]!.role];expect(()=>validateCareer(state)).toThrow();
  state.players[0]!.secondaryRoles=['DEF','DEF'];expect(()=>validateCareer(state)).toThrow();
 });
+import {applyCommand} from '../packages/simulation/src/engine.ts';
+import {youthIntake} from '../packages/simulation/src/personnel.ts';
+import {desiredTerms} from '../packages/simulation/src/contracts.ts';
+import {canonical} from '../packages/contracts/src/index.ts';
+it('promotes an academy player with a paid senior contract once and preserves development',()=>{
+ const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);youthIntake(state);
+ const player=state.players.find(p=>p.clubId===state.clubId&&p.academy)!;
+ const action={type:'PromoteAcademy' as const,playerId:player.id,contractRevision:0,years:2,role:'prospect' as const,...desiredTerms(state,player),careerId:state.careerId,expectedRevision:state.revision,commandId:'00000000-0000-4000-8000-000000000002'};
+ const before=canonical(state),result=applyCommand(state,action);expect(result.ok).toBe(true);if(!result.ok)throw Error(result.error);
+ const next=result.value;expect(canonical(state)).toBe(before);expect(next.players.find(p=>p.id===player.id)?.academy).toBe(false);expect(next.personnel.players[player.id]).toEqual(state.personnel.players[player.id]);expect(next.economy.wages[player.id]).toBe(action.wage);validateCareer(next);
+ expect(applyCommand(next,{...action,expectedRevision:next.revision})).toEqual({ok:false,error:'DUPLICATE_COMMAND'});
+ expect(applyCommand(next,{...action,expectedRevision:next.revision,commandId:'00000000-0000-4000-8000-000000000003'})).toEqual({ok:false,error:'INVALID_COMMAND'});
+ expect(applyCommand(state,{...action,bonus:Number.MAX_SAFE_INTEGER})).toEqual({ok:false,error:'INSUFFICIENT_FUNDS'});
+});
