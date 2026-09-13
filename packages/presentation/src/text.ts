@@ -1,6 +1,7 @@
 import {matchMinute} from './highlights.ts';
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+ screenFailed:'This screen could not continue',screenRecoveryHint:'FCU stopped the current session after a screen error. Your confirmed checkpoints are still on disk. Progress since the last confirmed save may be lost. Return to the title, then use Load in the appropriate mode to recover a checkpoint.',screenRestart:'Return to title and recover a save',
  noRenewableContracts:'There are no owned senior players to renew. Academy players and players on loan do not use senior contract renewals. Close this screen to continue managing your squad or recruit through Scouting.',
  help:'How to play',helpIntro:'A few decisions between fixtures. A story in every match. Choose a topic below; closing help leaves the match paused.',
  helpTopics:[
