@@ -67,6 +67,7 @@ export function App() {
   const [notice, setNotice] = useState('');
   const [dirty, setDirty] = useState(false);
   const [saves, setSaves] = useState<SaveEntry[]|null>(null);
+  const [listing,setListing]=useState(false),savesOpen=saves!==null;
   const dialog = useRef<HTMLDialogElement>(null);
   const [playing, setPlaying] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -92,7 +93,7 @@ export function App() {
     void window.fcu.audioSettings().then(result=>{if(!active)return;if(result.ok){setMusic(result.value.music);setEffects(result.value.effects);audio.current?.effects(result.value.effects);audio.current?.music(result.value.music);}else setNotice(t.audioSettingsFailed);setAudioReady(true);});
     return () => {active=false;if(timer.current)clearTimeout(timer.current);resetWorker();audio.current?.dispose();};
   }, []);
-  useEffect(() => { if(saves===null)return;const previous=document.activeElement;const modal=dialog.current;modal?.showModal();return()=>{modal?.close();if(previous instanceof HTMLElement&&previous.isConnected)previous.focus();}; }, [saves]);
+  useEffect(() => { if(!savesOpen)return;const previous=document.activeElement;const modal=dialog.current;modal?.showModal();return()=>{modal?.close();if(previous instanceof HTMLElement&&previous.isConnected)previous.focus();}; }, [savesOpen]);
   usePowerPause(value=>{stop();audio.current?.suspend(value==='suspend');},()=>{if(screen!=='dream')void manualSave('auto').catch(()=>setNotice(t.errors.IO_ERROR));},busy);
   const closeHandler=useRef<()=>Promise<boolean>>(async()=>true);
   closeHandler.current=async()=>{
@@ -153,8 +154,8 @@ export function App() {
     if(result.ok){accept(result.value);setScreen('home');await save(result.value,'auto');}else setNotice(t.errors[result.error]);release();
   }
   async function showSaves() {
-    stop();setBusy(true);const result=await window.fcu.list();
-    if(result.ok)setSaves(result.value);else setNotice(t.errors[result.error]);setBusy(false);
+    if(occupied.current)return;stop();occupied.current=true;setBusy(true);setListing(true);setSaves([]);
+    try{const result=await window.fcu.list();if(result.ok)setSaves(previous=>previous===null?null:result.value);else{setSaves(null);setNotice(t.errors[result.error]);}}catch{setSaves(null);setNotice(t.errors.IO_ERROR);}finally{setListing(false);release();}
   }
   async function load(entry:SaveEntry) {
     occupied.current=true;setBusy(true);const result=await window.fcu.load(entry.careerId,entry.commitId);
@@ -196,7 +197,7 @@ export function App() {
     {state&&financeOpen&&<FinanceMenu state={state} busy={busy} upgrade={kind=>void command({type:'UpgradeFacility',kind})} close={()=>setFinanceOpen(false)}/>}
     {state&&reportOpen&&<MatchReport state={state} close={()=>setReportOpen(false)}/>}
     {state&&benchOpen&&<BenchMenu state={state} busy={busy} close={()=>setBenchOpen(false)} confirm={bench=>command({type:'SelectBench',bench})}/>}
-    {saves!==null&&<dialog ref={dialog} className={s.dialog} onCancel={()=>setSaves(null)} aria-label={t.saves}><header><h2>{t.saves}</h2><button onClick={()=>setSaves(null)}>{t.close}</button></header><p>{t.recovery}</p><SaveHistory entries={saves} busy={busy} load={entry=>void load(entry)}/></dialog>}
+    {saves!==null&&<dialog ref={dialog} className={s.dialog} onCancel={()=>setSaves(null)} aria-label={t.saves}><header><h2>{t.saves}</h2><button onClick={()=>setSaves(null)}>{t.close}</button></header><p>{t.recovery}</p><SaveHistory entries={saves} busy={busy} loading={listing} load={entry=>void load(entry)}/></dialog>}
     {helpOpen&&<Help close={()=>setHelpOpen(false)}/>}
     {diagnosticsOpen&&<Diagnostics close={()=>setDiagnosticsOpen(false)}/>}<InputEditor/>
   </div>;
