@@ -82,7 +82,7 @@ export function DreamClub({packs,exit,cue,ambience,overlayOpen,exitCheckpoint}:{
  }
  async function match(action:Action<Command>){const g=latest.current!.game;return act({type:'Match',command:{...action,careerId:g.careerId,commandId:crypto.randomUUID(),expectedRevision:g.revision} as Command});}
  async function tick(){if(!running.current)return;if(document.hidden){timer.current=setTimeout(()=>void tick(),250);return;}if(!hold.current)await match({type:'AdvanceMatch',minutes:1});if(running.current)timer.current=setTimeout(()=>void tick(),hold.current?50:minuteDuration(latest.current!.game.match!.events,latest.current!.game.match!.tick));}
- function play(){if(running.current){stop();return;}ambience(true);running.current=true;setPlaying(true);void tick();}
+ function play(){if(running.current){stop();return;}const active=latest.current?.game.match;if(active&&(active.tick===0||['interval','extraInterval'].includes(active.phase)))cue('whistle');ambience(true);running.current=true;setPlaying(true);void tick();}
  async function list(){if(occupied.current)return;stop();occupied.current=true;setBusy(true);setListing(true);setSaves([]);try{const result=await window.fcu.dreamList();if(result.ok)setSaves(previous=>previous===null?null:result.value);else{setSaves(null);setNotice(t.errors[result.error]);}}catch{setSaves(null);setNotice(t.errors.IO_ERROR);}finally{setListing(false);release();}}
  async function load(entry:SaveEntry){
   if(occupied.current)return;stop();occupied.current=true;setBusy(true);let result:Result<Dream>;

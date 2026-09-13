@@ -16,7 +16,7 @@ export function MatchScreen({hold,state,acknowledge,report,tactics,busy,playing,
  const broadcast=useMatchBroadcast(state,playing,goal);
  useEffect(()=>{hold(!!broadcast.scene&&!broadcast.scene.preview);return()=>hold(false);},[broadcast.scene,hold]);
  const soundedPhase=useRef(state.match!.phase);
- useEffect(()=>{const phase=broadcast.view.match!.phase;if(phase!==soundedPhase.current&&['interval','extraInterval','finished'].includes(phase))goal('whistle');soundedPhase.current=phase;},[broadcast.view.match,goal]);
+ useEffect(()=>{const phase=broadcast.view.match!.phase;if(phase!==soundedPhase.current&&['interval','extraInterval','finished'].includes(phase))goal(phase==='finished'?'fulltime':'whistle');soundedPhase.current=phase;},[broadcast.view.match,goal]);
  const summary=matchReport(broadcast.view);
  const actual=state.match!;const match=broadcast.view.match!;const shootout=penaltyScore(match);const home=state.clubs.find(c=>c.id===match.home)!;const away=state.clubs.find(c=>c.id===match.away)!;
  return <section data-decision={needsDecision(actual)} className={s.matchScreen}>

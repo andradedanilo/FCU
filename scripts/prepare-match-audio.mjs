@@ -4,7 +4,7 @@ import {join} from 'node:path';import {tmpdir} from 'node:os';import {createHash
 // Input recordings are downloaded separately from the credited public sources.
 const input=process.argv[2];if(!input)throw Error('Pass the directory containing kick.wav and the four source MP3 previews.');
 const app=await _electron.launch({args:['.'],env:{...process.env,FCU_USER_DATA:mkdtempSync(join(tmpdir(),'fcu-audio-'))}});
-const selected=process.argv.slice(3);const names=selected.length?selected:['whistle','crowd','tackle'];
+const selected=process.argv.slice(3);const names=selected.length?selected:['crowd'];
 if(names.some(name=>!['kick','whistle','cheer','groan','crowd','tackle'].includes(name)))throw Error('Unknown audio cue');
 const edits=JSON.parse(readFileSync('assets/audio/edits.json','utf8')).filter(entry=>!names.includes(entry.file.replace('.wav','')));
 try{const page=await app.firstWindow();await page.context().setOffline(true);

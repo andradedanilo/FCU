@@ -1,28 +1,10 @@
 [
   {
-    "file": "whistle.wav",
-    "sourceSha256": "68b815d65b169d0d634d9bd31fd0b6fb5be6b5d66e1cf7046b23d574c3119d86",
-    "startSeconds": 0,
-    "durationSeconds": 2.1084791666666667,
-    "gain": 1.0668806717249102,
-    "sampleRate": 48000,
-    "channels": 1
-  },
-  {
     "file": "crowd.wav",
     "sourceSha256": "476935dd27a03ed88f13ec1df224d26e3814ce21011207eaf6239ea391c365ee",
     "startSeconds": 10,
     "durationSeconds": 20,
     "gain": 1.529108848941608,
-    "sampleRate": 48000,
-    "channels": 2
-  },
-  {
-    "file": "tackle.wav",
-    "sourceSha256": "857e64a8dfbe741faac29ac879f6457e25412858d5f54631211f1d2f1cf98635",
-    "startSeconds": 1.0950000000000002,
-    "durationSeconds": 1.2,
-    "gain": 1.293847545701634,
     "sampleRate": 48000,
     "channels": 2
   },
@@ -55,5 +37,81 @@
     "source": "scripts/create-menu-audio.mjs",
     "sha256": "437f1b17d8458c9ae77b0e0bea470f2a4b3513db3d220a844f04cec8f5774edc",
     "edit": "No post-render or post-copy processing."
+  },
+  {
+    "file": "whistle.wav",
+    "source": "assets/original/audio/referee-whistle-source.wav",
+    "sourceSha256": "8ca6b65493d31f67201f3ef70caf2e67e0a489aac9b381afb4d45d727c3770cd",
+    "sha256": "6ec5647d1f692131103c4e6c37428c2d39f627ee767db3a61754e5d609131527",
+    "segments": [
+      {
+        "at": 0,
+        "start": 0.1,
+        "duration": 0.55
+      }
+    ],
+    "durationSeconds": 0.55,
+    "sampleRate": 48000,
+    "channels": 1,
+    "gain": 1,
+    "fadeInSeconds": 0.008,
+    "fadeOutSeconds": 0.025,
+    "author": "Pablo-F",
+    "license": "CC BY 3.0",
+    "sourceUrl": "https://freesound.org/people/Pablo-F/sounds/90743/"
+  },
+  {
+    "file": "tackle.wav",
+    "source": "assets/original/audio/referee-whistle-source.wav",
+    "sourceSha256": "8ca6b65493d31f67201f3ef70caf2e67e0a489aac9b381afb4d45d727c3770cd",
+    "sha256": "7d09ff4607a29853859ceb10f5651a89259b599116815b8c8cf26d253d5cef9d",
+    "segments": [
+      {
+        "at": 0,
+        "start": 0.1,
+        "duration": 0.18
+      }
+    ],
+    "durationSeconds": 0.18,
+    "sampleRate": 48000,
+    "channels": 1,
+    "gain": 1,
+    "fadeInSeconds": 0.008,
+    "fadeOutSeconds": 0.025,
+    "author": "Pablo-F",
+    "license": "CC BY 3.0",
+    "sourceUrl": "https://freesound.org/people/Pablo-F/sounds/90743/"
+  },
+  {
+    "file": "fulltime.wav",
+    "source": "assets/original/audio/referee-whistle-source.wav",
+    "sourceSha256": "8ca6b65493d31f67201f3ef70caf2e67e0a489aac9b381afb4d45d727c3770cd",
+    "sha256": "a7d6b21d255f67b7dee8295ad234398f0aba6828a9a084d0da671fcc53c6f6e7",
+    "segments": [
+      {
+        "at": 0,
+        "start": 0.1,
+        "duration": 0.18
+      },
+      {
+        "at": 0.32,
+        "start": 0.3,
+        "duration": 0.18
+      },
+      {
+        "at": 0.68,
+        "start": 0.5,
+        "duration": 0.75
+      }
+    ],
+    "durationSeconds": 1.43,
+    "sampleRate": 48000,
+    "channels": 1,
+    "gain": 1,
+    "fadeInSeconds": 0.008,
+    "fadeOutSeconds": 0.025,
+    "author": "Pablo-F",
+    "license": "CC BY 3.0",
+    "sourceUrl": "https://freesound.org/people/Pablo-F/sounds/90743/"
   }
 ]

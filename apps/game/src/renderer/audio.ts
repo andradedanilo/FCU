@@ -36,11 +36,12 @@ export function createGameAudio() {
     effects(value:boolean){effects=value;if(!value)stopEffects();ambient();},
     match(value:boolean){matchActive=value;ambient();},
     click(){sample('click',1);},
-    highlight(kind:HighlightKind|'anticipation'|'kick'|'whistle'|'tackle'){
+    highlight(kind:HighlightKind|'anticipation'|'kick'|'whistle'|'tackle'|'fulltime'){
       if(!effects||hidden())return;
       if(kind==='kick')sample('kick',.7);
-      else if(kind==='tackle')sample('tackle',.65);
-      else if(['offside','disallowedOffside','disallowedFoul','corner','whistle','foul','yellow','red','halftime','lineup'].includes(kind))sample('whistle',.22);
+      else if(kind==='fulltime')sample('fulltime',.22);
+      else if(['tackle','foul','yellow','red','offside','disallowedOffside','disallowedFoul','corner'].includes(kind))sample('tackle',.22);
+      else if(['whistle','halftime','lineup'].includes(kind))sample('whistle',.22);
       else if(kind!=='anticipation'&&kind!=='injury'&&kind!=='coach')sample(kind==='save'||kind==='post'||kind==='shot'||kind==='penaltyMiss'?'groan':'cheer',.6);
     },
     dispose(){music=false;matchActive=false;stopEffects();syncMusic();document.removeEventListener('visibilitychange',visibility);}

@@ -118,7 +118,7 @@ FCU is an independent project and does not claim affiliation with existing footb
 
 ## Development audio
 
-All eight active sounds are in assets/audio. Replace a WAV with the same filename, then restart npm run dev. Rebuild to update a packaged game; replacing source files does not modify an existing portable build. Normal development and builds do not regenerate or overwrite these files.
+All nine active sounds are in assets/audio. Replace a WAV with the same filename, then restart npm run dev. Rebuild to update a packaged game; replacing source files does not modify an existing portable build. Normal development and builds do not regenerate or overwrite these files.
 
 | File | Used for |
 | --- | --- |
@@ -128,8 +128,9 @@ All eight active sounds are in assets/audio. Replace a WAV with the same filenam
 | cheer.wav | Goal celebration; owner-supplied Cheer.wav |
 | groan.wav | Saved/missed shots, woodwork and missed penalties; owner-supplied Missed.wav |
 | crowd.wav | Looping stadium ambience |
-| whistle.wav | Referee decisions and match boundaries |
-| tackle.wav | Sliding tackle |
+| whistle.wav | Short kickoff/restart and half-time whistle (0.55 seconds) |
+| tackle.wav | Brief foul/decision whistle (0.18 seconds), replacing the tackle sound |
+| fulltime.wav | Two short blasts then a longer blast at full time (1.43 seconds) |
 
 Music and clicks were previously generated at runtime; they are now editable WAVs of the original tune and button note. Original synthesis sources and rejected crowd auditions remain in assets/original/audio; these are not live game inputs. All active sounds can be auditioned in Sound library. Source/credit metadata is in apps/game/src/renderer/audioAssets.ts; preparation records are in assets/audio/edits.json. If a replacement comes from another source, update its metadata too.
 
@@ -138,5 +139,5 @@ Music and clicks were previously generated at runtime; they are now editable WAV
 Kick, music and menu click are original FCU synthesis. Cheer.wav and Missed.wav were supplied by the owner and copied unchanged; author/source attribution was not supplied. The remaining recordings are edited excerpts with level adjustment and edge fades; Freesound inputs used publicly served HQ MP3 previews. Credits also appear in the game and packaged notices.
 
 - Whistle: [referee-whistle.wav](https://freesound.org/people/Pablo-F/sounds/90743/), Pablo-F, CC BY 3.0.
-- Sliding-tackle foley: [Grass Slide,Grass Scuff](https://freesound.org/people/yeemeng/sounds/530467/), yeemeng, CC0 1.0.
+- Foul and full-time whistles: edits of the same Pablo-F referee recording, CC BY 3.0. The preserved source is assets/original/audio/referee-whistle-source.wav; scripts/create-whistle-cues.mjs records the cuts and gaps.
 - Stadium ambience: [noise#01.aif](https://freesound.org/people/huubjeroen/sounds/39733/), huubjeroen, CC0 1.0.
