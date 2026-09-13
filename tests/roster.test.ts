@@ -11,9 +11,11 @@ import {join} from 'node:path';
 import {zipSync,unzipSync,strToU8} from 'fflate';
 import {createArchive,openArchive} from '../packages/roster-pipeline/src/archive.ts';
 import {writeArchive} from '../packages/roster-pipeline/src/store.ts';
+import {createPackedCareer,rosterClubs} from '../packages/simulation/src/roster.ts';
+import {createSaveStore} from '../apps/game/src/main/saves.ts';
 
 describe('Publisher roster boundaries',()=>{
-  it('preserves Unicode and stable identity through reordered snapshots and a transfer',()=>{
+  it('preserves Unicode and stable identity through reordered snapshots and a transfer',async()=>{
     const a=fictionalCandidate(true), b=structuredClone(a);
     b.roster.players[0]!.displayName='Jos\u00e9 M\u00fcller';a.roster.players[0]!.displayName=b.roster.players[0]!.displayName;
     b.roster.players.reverse();b.roster.teams.reverse();b.roster.memberships.reverse();b.roster.gameProfiles.reverse();b.roster.competitions.reverse();b.roster.competitions.forEach(c=>c.participatingTeamIds.reverse());
@@ -23,6 +25,16 @@ describe('Publisher roster boundaries',()=>{
     expect(validateRoster(b.roster,b.audit).ok).toBe(true);
     expect(rosterChanges(a.roster,b.roster)).toEqual([{kind:'transfer',playerId:moved.playerId,name:a.roster.players[3]!.displayName,from:a.roster.teams[0]!.id,to:moved.playingTeamId}]);
     expect(a.roster.memberships[3]!.playingTeamId).toBe(a.roster.teams[0]!.id);
+    const pack={snapshotId:'roster-2026-27.20260912.r1',contentHash:'a'.repeat(64),observedAt:a.audit.extractionCompletedAt,development:true,roster:a.roster};
+    const club=rosterClubs(pack)[0]!.id;
+    const career=createPackedCareer('00000000-0000-4000-8000-000000000001',2026,club,pack);
+    const saves=createSaveStore(await mkdtemp(join(tmpdir(),'fcu-import-career-')));const commit=await saves.save(career,'manual');
+    const loaded=await saves.load(career.careerId,commit);expect(loaded).toEqual(career);expect(loaded.players.some(p=>p.name==='Jos\u00e9 M\u00fcller')).toBe(true);
+    const changed=createPackedCareer('00000000-0000-4000-8000-000000000002',2026,club,{...pack,snapshotId:'roster-2026-27.20260912.r2',roster:b.roster});
+    const originalId=Object.entries(career.rosterOrigin!.playerIds).find(([,source])=>source===moved.playerId)![0];
+    const changedId=Object.entries(changed.rosterOrigin!.playerIds).find(([,source])=>source===moved.playerId)![0];
+    expect(career.players.find(p=>p.id===originalId)!.clubId).not.toBe(changed.players.find(p=>p.id===changedId)!.clubId);
+    expect(await saves.load(career.careerId,commit)).toEqual(career);
   });
   it('blocks incomplete coverage, unresolved identities and malformed roster facts',()=>{
     const input=fictionalCandidate();

@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import {rosterSchema} from './roster.ts';
+export const installedRosterSchema=z.strictObject({snapshotId:z.string().regex(/^roster-\d{4}-\d{2}\.\d{8}\.r[1-9]\d{0,5}$/),contentHash:z.string().regex(/^[a-f0-9]{64}$/),observedAt:z.iso.datetime(),development:z.boolean(),roster:rosterSchema});
+export type InstalledRoster=z.infer<typeof installedRosterSchema>;
 
 export const brand = { title: 'Football Club Universe', short: 'FCU', career: 'FCU Career' } as const;
 export const clubId = z.string().regex(/^club-\d{2,3}$/).brand<'ClubId'>();
@@ -99,7 +102,8 @@ export const competitionFixtureSchema=worldFixtureSchema.extend({id:z.string().m
 export const penaltyKickSchema=z.object({clubId,playerId,scored:z.boolean()});
 export const knockoutMatchSchema=historicalMatchSchema.extend({homeGoals:integer.max(130),awayGoals:integer.max(130),tick:integer.max(130),phase:z.enum(['first','interval','second','extraFirst','extraInterval','extraSecond','finished']),events:z.array(timedEventSchema.extend({tick:integer.max(130),homeGoals:integer.max(130),awayGoals:integer.max(130)})).max(1900),substitutions:z.array(substitutionSchema.extend({tick:integer.min(1).max(129)})).max(10),homeStats:timedStatsSchema.extend({possession:integer.max(1300000),shots:integer.max(130),onTarget:integer.max(130),quality:integer.max(1300000)}),awayStats:timedStatsSchema.extend({possession:integer.max(1300000),shots:integer.max(130),onTarget:integer.max(130),quality:integer.max(1300000)}),competitionClass:competitionClassSchema,neutral:z.boolean(),decider:z.boolean(),aggregate:scoreSchema,extraTime:z.boolean(),penalties:z.array(penaltyKickSchema).max(2048)});
 const disciplineCounter=z.object({yellows:integer.max(2),ban:integer.max(100)});
-export const careerSchema=countryCareerSchema.extend({scouting:scoutingSchema.extend({shortlist:z.array(playerId).max(20000)}),engineVersion:z.literal('0.5.2'),rulesetVersion:z.literal('world-2'),fixtures:z.array(competitionFixtureSchema).max(10000),match:knockoutMatchSchema.nullable(),cupStartSeason:integer.min(2026).max(2101),cups:z.array(cupSchema).max(6),cupDiscipline:z.record(playerId,z.object({domestic:disciplineCounter,continental:disciplineCounter})),history:z.array(worldHistorySchema.extend({fixtures:z.array(competitionFixtureSchema).max(10000),cups:z.array(cupSchema).max(6)})).max(100)});
+export const competitionCareerSchema=countryCareerSchema.extend({scouting:scoutingSchema.extend({shortlist:z.array(playerId).max(20000)}),engineVersion:z.literal('0.5.2'),rulesetVersion:z.literal('world-2'),fixtures:z.array(competitionFixtureSchema).max(10000),match:knockoutMatchSchema.nullable(),cupStartSeason:integer.min(2026).max(2101),cups:z.array(cupSchema).max(6),cupDiscipline:z.record(playerId,z.object({domestic:disciplineCounter,continental:disciplineCounter})),history:z.array(worldHistorySchema.extend({fixtures:z.array(competitionFixtureSchema).max(10000),cups:z.array(cupSchema).max(6)})).max(100)});
+export const careerSchema=competitionCareerSchema.extend({engineVersion:z.literal('0.6.0'),snapshotId:z.string().min(1).max(100),rosterOrigin:z.strictObject({contentHash:z.string().regex(/^[a-f0-9]{64}$/),observedAt:z.iso.datetime(),development:z.boolean(),playerIds:z.record(playerId,z.string().uuid()),clubIds:z.record(clubId,z.string().uuid())}).nullable()});
 export type Career=z.infer<typeof careerSchema>;
 
 
@@ -133,6 +137,7 @@ export type Command = z.infer<typeof commandSchema>;
 export const requestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('NewCareer'), careerId: z.string().uuid(), seed: integer.max(4294967295), clubId,world:z.enum(['exhibition','countries']) }),
   z.object({ type: z.literal('LoadCareer'), state: careerSchema }),
+  z.object({type:z.literal('NewPackedCareer'),careerId:z.string().uuid(),seed:integer.max(4294967295),clubId,pack:installedRosterSchema}),
   z.object({ type: z.literal('Command'), command: commandSchema })
 ]);
 export type Request = z.infer<typeof requestSchema>;
@@ -140,6 +145,8 @@ export type FailureCode = 'OFFER_CHANGED' | 'SQUAD_NEED' | 'SQUAD_FULL' | 'REPUT
 export type Result<T> = { ok: true; value: T } | { ok: false; error: FailureCode };
 export type SaveEntry = { careerId: string; commitId: string; club: string; round: number; tick: number; savedAtUTC: string; kind: 'manual' | 'auto'; valid: boolean; engineVersion:string|null; error: FailureCode | null };
 export interface DesktopBridge {
+  rosterList():Promise<Result<InstalledRoster[]>>;
+  rosterImport():Promise<Result<InstalledRoster|null>>;
   save(state: Career, kind: 'manual' | 'auto'): Promise<Result<string>>;
   list(): Promise<Result<SaveEntry[]>>;
   load(careerId: string, commitId: string): Promise<Result<Career>>;

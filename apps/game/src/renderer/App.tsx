@@ -1,3 +1,5 @@
+import {rosterClubs} from '../../../../packages/simulation/src/roster.ts';
+import type {InstalledRoster} from '../../../../packages/contracts/src/index.ts';
 import {selectionPlayers} from '../../../../packages/simulation/src/discipline.ts';
 import {SeasonHistory} from './SeasonHistory.tsx';
 import {ScoutingMenu} from './ScoutingMenu.tsx';
@@ -25,6 +27,10 @@ type Screen = 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match';
 type CommandPayload<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
 type Action=CommandPayload<Command>;
 export function App() {
+  const [packs,setPacks]=useState<InstalledRoster[]>([]),[packId,setPackId]=useState('');
+  const selectedPack=packs.find(p=>p.snapshotId===packId);
+  useEffect(()=>{void window.fcu.rosterList().then(result=>{if(result.ok)setPacks(result.value);});},[]);
+  async function importPack(){setBusy(true);try{const result=await window.fcu.rosterImport();if(result.ok&&result.value){const pack=result.value;setPacks(previous=>[...previous.filter(p=>p.snapshotId!==pack.snapshotId),pack]);setPackId(pack.snapshotId);setWorldKind('countries');setClub(rosterClubs(pack)[0]!.id);}else if(!result.ok)setNotice(t.errors[result.error]);}finally{setBusy(false);}}
   const [soundLibrary,setSoundLibrary]=useState(false);
   const [state, setState] = useState<Career|null>(null);
   const latest = useRef<Career|null>(null);
@@ -103,7 +109,7 @@ export function App() {
   const navigate=(next:Screen)=>{stop();setNotice('');setScreen(next);};
   async function newCareer() {
     if(!/^\d+$/.test(seed)||Number(seed)>4294967295){setNotice(t.seedInvalid);return;}
-    stop();setBusy(true);const result=await request({type:'NewCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,world:worldKind});
+    stop();setBusy(true);const result=await request(selectedPack?{type:'NewPackedCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,pack:selectedPack}:{type:'NewCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,world:worldKind});
     if(result.ok){accept(result.value);setScreen('home');await save(result.value,'auto');}else setNotice(t.errors[result.error]);setBusy(false);
   }
   async function showSaves() {
@@ -132,7 +138,7 @@ export function App() {
       </header>
       <main data-input-section className={s.gameScreen} key={screen}>
         {screen==='title'&&<TitleScreen start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
-        {screen==='setup'&&<ClubSelect worldKind={worldKind} changeWorld={kind=>{setWorldKind(kind);setClub(clubs[0]!.id);}} club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
+        {screen==='setup'&&<ClubSelect packs={packs} packId={packId} changePack={id=>{setPackId(id);setWorldKind('countries');setClub(clubs[0]!.id);}} importPack={()=>void importPack()} importedClubs={selectedPack?rosterClubs(selectedPack):null} worldKind={worldKind} changeWorld={kind=>{setPackId('');setWorldKind(kind);setClub(clubs[0]!.id);}} club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
         {state&&screen==='home'&&<Clubhouse closeSeason={()=>void command({type:'CloseSeason'})} history={()=>setHistoryOpen(true)} news={id=>{setNewsPlayer(id);setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
