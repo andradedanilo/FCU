@@ -9,7 +9,7 @@ try{
  await click('FCU Dream Club');await click('Begin Dream Club');await page.getByRole('button',{name:'Play next fixture',exact:true}).waitFor();await click('Title screen');
  const reports=[];
  for(let cycle=1;cycle<=10;cycle++){
-  await click('FCU Dream Club');await click('Load');await page.getByRole('button',{name:/^Dream FC \//}).first().click();await click('Play next fixture');
+  await click('FCU Dream Club');await click('Load');await page.getByRole('region',{name:'Saved checkpoints',exact:true}).getByRole('button',{name:'Load',exact:true}).first().click();await click('Play next fixture');
   await page.getByText('Art preview',{exact:true}).click();await click('Preview goal');
   await page.locator('img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
   await click('Skip highlight');await click('Play');await click('Title screen');await page.getByRole('button',{name:'Start a career',exact:true}).waitFor();

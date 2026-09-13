@@ -69,8 +69,8 @@ export function createSaveStore(root:string) {
           const path=filename(dir.name,commitId);if((await stat(path)).size>MAX_BYTES)throw new Error('INVALID_SAVE');
           const {envelope:e,state:s}=decode(await readFile(path));
           if(e.saveCommitId!==commitId||s.careerId!==dir.name)throw new Error('INVALID_SAVE');
-          entries.push({careerId:s.careerId,commitId,club:s.clubs.find(c=>c.id===s.clubId)!.name,round:s.round,tick:s.match?.tick??0,savedAtUTC:e.savedAtUTC,kind:e.kind,valid:true,engineVersion:e.engineVersion,error:null});
-        } catch(error) {entries.push({careerId:dir.name,commitId,club:'',round:0,tick:0,savedAtUTC:'',kind:'manual',valid:false,engineVersion:null,error:error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':'INVALID_SAVE'});}
+          entries.push({careerId:s.careerId,commitId,parentCommitId:e.parentCommitId,season:s.season,club:s.clubs.find(c=>c.id===s.clubId)!.name,round:s.round,tick:s.match?.tick??0,savedAtUTC:e.savedAtUTC,kind:e.kind,valid:true,engineVersion:e.engineVersion,error:null});
+        } catch(error) {entries.push({careerId:dir.name,commitId,parentCommitId:null,season:null,club:'',round:0,tick:0,savedAtUTC:'',kind:'manual',valid:false,engineVersion:null,error:error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':'INVALID_SAVE'});}
       }
     }
     return entries.sort((a,b)=>b.savedAtUTC.localeCompare(a.savedAtUTC)||a.commitId.localeCompare(b.commitId));

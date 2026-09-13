@@ -1,3 +1,4 @@
+import {alternateSaveHeads} from '../packages/presentation/src/saveHistory.ts';
 import { it, expect } from 'vitest';
 import { mkdtemp, writeFile, readFile, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -74,4 +75,21 @@ it('migrates schema-3 plans and roundtrips bench and stored setups without overw
  const migrated=await store.load(s.careerId,id);expect({...migrated,economy:s.economy}).toEqual(s);expect(migrated.economy.ledger).toHaveLength(8);expect(migrated.economy.ledger.every(e=>e.kind==='opening')).toBe(true);migrated.presets[1]={...s.tactics,formation:'4-3-3'};const spare=s.players.find(p=>p.clubId===s.clubId&&!s.lineup.includes(p.id)&&!s.bench.includes(p.id))!;migrated.bench[8]=spare.id;
  const saved=await store.save(migrated,'manual');expect(await store.load(s.careerId,saved)).toEqual(migrated);expect(await readFile(file)).toEqual(old);
  const bad=JSON.parse(gunzipSync(await readFile(join(root,s.careerId,saved+'.save'))).toString());delete bad.payload.presets;bad.checksum=checksum(bad.payload);expect(()=>decode(gzipSync(canonical(bad)))).toThrow();
+});
+
+it('identifies alternate save continuations by ancestry and preserves both after restart',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'fcu-branches-')),store=createSaveStore(root),state=career();
+ const ancestor=await store.save(state,'manual'),first=await store.save(state,'auto');
+ expect(alternateSaveHeads(await store.list()).size).toBe(0);
+ const original=await readFile(join(root,state.careerId,first+'.save'));
+ await store.load(state.careerId,ancestor);const alternative=await store.save(state,'manual');
+ const restarted=createSaveStore(root),entries=await restarted.list();
+ expect(entries.find(entry=>entry.commitId===alternative)?.parentCommitId).toBe(ancestor);
+ expect(entries.every(entry=>entry.season===2026)).toBe(true);
+ expect([...alternateSaveHeads(entries)].sort()).toEqual([first,alternative].sort());
+ await restarted.load(state.careerId,first);const continued=await restarted.save(state,'auto');
+ expect([...alternateSaveHeads(await restarted.list())].sort()).toEqual([continued,alternative].sort());
+ expect(await readFile(join(root,state.careerId,first+'.save'))).toEqual(original);
+ expect(checksum(await restarted.load(state.careerId,alternative))).toBe(checksum(state));
+ expect(await readdir(join(root,state.careerId))).toHaveLength(4);
 });

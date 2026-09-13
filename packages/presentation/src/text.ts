@@ -1,6 +1,7 @@
 import {matchMinute} from './highlights.ts';
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+ saveCheckpoints:'Saved checkpoints',saveAlternatives:'Different continuations share an earlier checkpoint. Choose the one you want to continue. Every alternative stays on disk; loading does not merge or delete saves.',saveBranch:'Alternate continuation',saveCheckpoint:'Checkpoint',
  inputValue:'Value',inputEdit:'Controller text entry',inputChoose:'Choose an option',inputShift:'Uppercase',inputSpace:'Space',inputDelete:'Backspace',inputClear:'Clear',inputApply:'Apply',
  dreamActive:'active players',dreamKeepers:'goalkeepers',dreamConfirmSquad:'Confirm active squad',dreamCollectionHint:'Activate 11 to 30 players, including at least two goalkeepers. Then select your starting eleven in Squad.',dreamFindPlayer:'Find a collected player',dreamRole:'Player role',dreamAllRoles:'All roles',dreamShowing:'players shown',
  dreamBestRole:'Best active player in this role',dreamNoRole:'No active player',dreamRatingDifference:'Overall difference',dreamChooseHint:'Choose to add to your collection',

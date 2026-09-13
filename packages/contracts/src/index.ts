@@ -163,7 +163,7 @@ export const requestSchema = z.discriminatedUnion('type', [
 export type Request = z.infer<typeof requestSchema>;
 export type FailureCode = 'OFFER_CHANGED' | 'SQUAD_NEED' | 'SQUAD_FULL' | 'REPUTATION' | 'SCOUT_BUSY' | 'ALREADY_SCOUTED' | 'NOT_MATCH_DAY' | 'CONTRACT_CHANGED' | 'INSUFFICIENT_FUNDS' | 'WAGE_BUDGET' | 'PLAYER_TERMS' | 'UNAVAILABLE_PLAYER' | 'MATCH_DECISION' | 'INVALID_BENCH' | 'INVALID_SUBSTITUTION' | 'INVALID_LINEUP' | 'STALE_STATE' | 'DUPLICATE_COMMAND' | 'INVALID_COMMAND' | 'INVALID_SAVE' | 'FUTURE_SAVE' | 'IO_ERROR' | 'WORKER_FAILED';
 export type Result<T> = { ok: true; value: T } | { ok: false; error: FailureCode };
-export type SaveEntry = { careerId: string; commitId: string; club: string; round: number; tick: number; savedAtUTC: string; kind: 'manual' | 'auto'; valid: boolean; engineVersion:string|null; error: FailureCode | null };
+export type SaveEntry = { careerId: string; commitId: string; parentCommitId:string|null; season:number|null; club: string; round: number; tick: number; savedAtUTC: string; kind: 'manual' | 'auto'; valid: boolean; engineVersion:string|null; error: FailureCode | null };
 export interface DesktopBridge {
   onPowerState(listener:(state:'suspend'|'resume')=>void):()=>void;
   audioSettings():Promise<Result<AudioSettings>>;

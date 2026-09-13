@@ -1,3 +1,4 @@
+import {SaveHistory} from './SaveHistory.tsx';
 import {usePowerPause} from './usePowerPause.ts';
 import {InputEditor} from './InputEditor.tsx';
 import {DreamClub} from './DreamClub.tsx';
@@ -175,7 +176,7 @@ export function App() {
     {state&&financeOpen&&<FinanceMenu state={state} busy={busy} upgrade={kind=>void command({type:'UpgradeFacility',kind})} close={()=>setFinanceOpen(false)}/>}
     {state&&reportOpen&&<MatchReport state={state} close={()=>setReportOpen(false)}/>}
     {state&&benchOpen&&<BenchMenu state={state} busy={busy} close={()=>setBenchOpen(false)} confirm={bench=>command({type:'SelectBench',bench})}/>}
-    {saves!==null&&<dialog ref={dialog} className={s.dialog} onCancel={()=>setSaves(null)} aria-label={t.saves}><header><h2>{t.saves}</h2><button onClick={()=>setSaves(null)}>{t.close}</button></header><p>{t.recovery}</p><div className={s.saveList}>{saves.length===0?<p>{t.noSaves}</p>:saves.map(entry=><div className={s.saveRow} key={entry.commitId}>{entry.valid?<><span><strong>{entry.club}</strong><small>{entry.savedAtUTC.replace('T',' ').slice(0,19)} UTC / {t[entry.kind]} / {t.round} {entry.round} / {entry.tick}'</small></span><button disabled={busy} onClick={()=>void load(entry)}>{t.load}</button></>:<p>{entry.error==='FUTURE_SAVE'?t.future:t.corrupt}<small>{entry.commitId}</small></p>}</div>)}</div></dialog>}
+    {saves!==null&&<dialog ref={dialog} className={s.dialog} onCancel={()=>setSaves(null)} aria-label={t.saves}><header><h2>{t.saves}</h2><button onClick={()=>setSaves(null)}>{t.close}</button></header><p>{t.recovery}</p><SaveHistory entries={saves} busy={busy} load={entry=>void load(entry)}/></dialog>}
     <InputEditor/>
   </div>;
 }

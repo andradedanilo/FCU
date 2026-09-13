@@ -29,8 +29,8 @@ export function createDreamStore(root:string){
   for(const dir of await readdir(root,{withFileTypes:true})){
    if(!dir.isDirectory()||!z.string().uuid().safeParse(dir.name).success)continue;
    for(const name of await readdir(folder(dir.name))){if(!name.endsWith('.dream'))continue;const commit=name.slice(0,-6);if(!z.string().uuid().safeParse(commit).success)continue;
-    try{const {e,state}=await read(dir.name,commit);entries.push({careerId:dir.name,commitId:commit,club:state.game.clubs[0]!.name,round:state.game.round,tick:state.game.match?.tick??0,savedAtUTC:e.date,kind:'auto',valid:true,engineVersion:state.game.engineVersion,error:null});}
-    catch(error){entries.push({careerId:dir.name,commitId:commit,club:'',round:0,tick:0,savedAtUTC:'',kind:'auto',valid:false,engineVersion:null,error:error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':'INVALID_SAVE'});}
+    try{const {e,state}=await read(dir.name,commit);entries.push({careerId:dir.name,commitId:commit,parentCommitId:e.parent,season:state.game.season,club:state.game.clubs[0]!.name,round:state.game.round,tick:state.game.match?.tick??0,savedAtUTC:e.date,kind:'auto',valid:true,engineVersion:state.game.engineVersion,error:null});}
+    catch(error){entries.push({careerId:dir.name,commitId:commit,parentCommitId:null,season:null,club:'',round:0,tick:0,savedAtUTC:'',kind:'auto',valid:false,engineVersion:null,error:error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':'INVALID_SAVE'});}
    }
   }return entries.sort((a,b)=>b.savedAtUTC.localeCompare(a.savedAtUTC)||a.commitId.localeCompare(b.commitId));
  }
