@@ -1,3 +1,4 @@
+import {Help} from './Help.tsx';
 import {Diagnostics} from './Diagnostics.tsx';
 import {SaveHistory} from './SaveHistory.tsx';
 import {usePowerPause} from './usePowerPause.ts';
@@ -36,6 +37,7 @@ type Action=CommandPayload<Command>;
 export function App() {
   const dreamCheckpoint=useRef<(()=>Promise<boolean>)|null>(null),navigating=useRef(false);
   const [diagnosticsOpen,setDiagnosticsOpen]=useState(false);
+  const [helpOpen,setHelpOpen]=useState(false);
   const [boardOpen,setBoardOpen]=useState(false);
   const [registrationOpen,setRegistrationOpen]=useState(false);
   const [packs,setPacks]=useState<InstalledRoster[]>([]),[packId,setPackId]=useState('');
@@ -176,7 +178,7 @@ export function App() {
       </header>
       <main data-input-section className={s.gameScreen} key={screen}>
         {screen==='title'&&<TitleScreen dream={()=>navigate('dream')} start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
-        {screen==='dream'&&<DreamClub exitCheckpoint={dreamCheckpoint} overlayOpen={diagnosticsOpen||soundLibrary} cue={kind=>audio.current?.highlight(kind)} ambience={value=>audio.current?.match(value)} packs={packs} exit={()=>navigate('title')}/>}
+        {screen==='dream'&&<DreamClub exitCheckpoint={dreamCheckpoint} overlayOpen={diagnosticsOpen||soundLibrary||helpOpen} cue={kind=>audio.current?.highlight(kind)} ambience={value=>audio.current?.match(value)} packs={packs} exit={()=>navigate('title')}/>}
         {screen==='setup'&&<ClubSelect packs={packs} packId={packId} changePack={id=>{setPackId(id);setWorldKind('countries');setClub(clubs[0]!.id);}} importPack={()=>void importPack()} importedClubs={selectedPack?rosterClubs(selectedPack):null} worldKind={worldKind} changeWorld={kind=>{setPackId('');setWorldKind(kind);setClub(clubs[0]!.id);}} club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
         {state&&screen==='home'&&<Clubhouse board={()=>setBoardOpen(true)} closeSeason={()=>void command({type:'CloseSeason'})} history={()=>setHistoryOpen(true)} news={id=>{setNewsPlayer(id);setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen registration={()=>setRegistrationOpen(true)} contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} focus={focus=>{void command({type:'SetTrainingFocus',focus});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
@@ -184,7 +186,7 @@ export function App() {
         {state&&screen==='table'&&<TableScreen state={state}/>}
         {state?.match&&screen==='match'&&<MatchScreen hold={value=>{presentationBusy.current=value;}} acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
       </main>
-      {soundLibrary&&<AudioCredits close={()=>setSoundLibrary(false)}/>}<footer className={s.footer}><button onClick={()=>{stop();setDiagnosticsOpen(true);}}>{t.diagnostics}</button><button onClick={()=>{stop();setSoundLibrary(true);}}>{t.soundLibrary}</button><span>{t.edition} / {t.fullscreenHint}<small title={t.controllerHint}>{t.inputHint}</small></span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
+      {soundLibrary&&<AudioCredits close={()=>setSoundLibrary(false)}/>}<footer className={s.footer}><button onClick={()=>{stop();setHelpOpen(true);}}>{t.help}</button><button onClick={()=>{stop();setDiagnosticsOpen(true);}}>{t.diagnostics}</button><button onClick={()=>{stop();setSoundLibrary(true);}}>{t.soundLibrary}</button><span>{t.edition} / {t.fullscreenHint}<small title={t.controllerHint}>{t.inputHint}</small></span><div role="status">{notice}</div><span>{state?(dirty?t.unsaved:t.savedStatus):t.gameNote}</span></footer>
     </div>
     {state&&tacticsOpen&&<TacticsMenu store={(slot,tactics)=>command({type:'StoreTacticPreset',slot,tactics})} draftLineup={screen==='squad'?lineup:state.lineup} state={state} busy={busy} close={()=>setTacticsOpen(false)} confirm={tactics=>command({type:'SetTactics',tactics})}/>}
     {state&&historyOpen&&<SeasonHistory state={state} close={()=>setHistoryOpen(false)}/>}
@@ -195,6 +197,7 @@ export function App() {
     {state&&reportOpen&&<MatchReport state={state} close={()=>setReportOpen(false)}/>}
     {state&&benchOpen&&<BenchMenu state={state} busy={busy} close={()=>setBenchOpen(false)} confirm={bench=>command({type:'SelectBench',bench})}/>}
     {saves!==null&&<dialog ref={dialog} className={s.dialog} onCancel={()=>setSaves(null)} aria-label={t.saves}><header><h2>{t.saves}</h2><button onClick={()=>setSaves(null)}>{t.close}</button></header><p>{t.recovery}</p><SaveHistory entries={saves} busy={busy} load={entry=>void load(entry)}/></dialog>}
+    {helpOpen&&<Help close={()=>setHelpOpen(false)}/>}
     {diagnosticsOpen&&<Diagnostics close={()=>setDiagnosticsOpen(false)}/>}<InputEditor/>
   </div>;
 }
