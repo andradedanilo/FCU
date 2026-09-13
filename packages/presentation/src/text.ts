@@ -1,6 +1,7 @@
 import {matchMinute} from './highlights.ts';
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+ closeSaveFailed:'FCU could not confirm a final checkpoint.',closeSaveHint:'Retry saving, return to the game, or quit without saving. Your previous confirmed checkpoints remain available.',closeRetry:'Retry saving',closeCancel:'Return to game',closeDiscard:'Quit without saving',
  diagnostics:'Diagnostics',diagnosticsHint:'A local technical report containing build versions, checksums and recent file-operation timings/error codes. It excludes saves, player names, file paths and credentials. Nothing is sent online.',diagnosticsSaved:'Diagnostic report saved.',diagnosticsCancelled:'Export cancelled.',diagnosticsBuild:'Build',diagnosticsPlatform:'Platform',diagnosticsOperations:'Recent operations',diagnosticsContents:'View report contents',diagnosticsExport:'Export local report',diagnosticsUnknown:'Unknown source revision',diagnosticsDirty:'Uncommitted source changes',
  saveCheckpoints:'Saved checkpoints',saveAlternatives:'Different continuations share an earlier checkpoint. Choose the one you want to continue. Every alternative stays on disk; loading does not merge or delete saves.',saveBranch:'Alternate continuation',saveCheckpoint:'Checkpoint',
  inputValue:'Value',inputEdit:'Controller text entry',inputChoose:'Choose an option',inputShift:'Uppercase',inputSpace:'Space',inputDelete:'Backspace',inputClear:'Clear',inputApply:'Apply',

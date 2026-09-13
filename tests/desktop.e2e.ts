@@ -150,4 +150,13 @@ test('chooses an earned Dream player by keyboard and stops audio on exit',async(
   await page.getByRole('button',{name:'FCU Dream Club',exact:true}).click();await page.getByRole('button',{name:'Load',exact:true}).click();await page.getByRole('region',{name:'Saved checkpoints',exact:true}).getByRole('button',{name:'Load',exact:true}).first().click();await page.getByRole('button',{name:'Continue',exact:true}).click();await expect(page.getByTestId('minute')).toHaveAttribute('data-tick',String(Number(minute)+1));
 
  }finally{await app.close();}
+});test('keeps the game open on a failed closing checkpoint and recovers after retry',async()=>{
+ const data=await mkdtemp(join(tmpdir(),'fcu-close-'));let app=await electron.launch({args:['.'],env:{...process.env,FCU_USER_DATA:data}}),closed=false;
+ try{let page=await app.firstWindow();await page.context().setOffline(true);await page.getByRole('button',{name:'Start a career',exact:true}).click();await page.getByRole('button',{name:'Eight-club exhibition',exact:true}).click();await page.getByRole('button',{name:'Begin career',exact:true}).click();await page.getByRole('button',{name:'Kick off',exact:true}).click();await page.getByRole('button',{name:'Play',exact:true}).click();await expect(page.getByTestId('minute')).toHaveAttribute('data-tick','1');await page.getByRole('button',{name:'Pause',exact:true}).click();
+  const folder=resolve(data,'saves'),backup=resolve(data,'closing-recovery');if(dirname(folder)!==resolve(data)||dirname(backup)!==resolve(data))throw Error('Unexpected isolated test path');
+  await rename(folder,backup);await writeFile(folder,'blocked destination');
+  try{await app.evaluate(({dialog})=>{dialog.showMessageBox=async()=>({response:1,checkboxChecked:false});});await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.close());await expect(page.getByRole('status')).toHaveText('The save operation failed. Progress is unsaved; retry Save or choose another checkpoint.');expect(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().length)).toBe(1);}finally{await unlink(folder);await rename(backup,folder);}
+  const exit=app.waitForEvent('close');await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.close());await exit;closed=true;
+  app=await electron.launch({args:['.'],env:{...process.env,FCU_USER_DATA:data}});closed=false;page=await app.firstWindow();await page.context().setOffline(true);await page.getByRole('button',{name:'Load',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await expect(page.getByTestId('minute')).toHaveAttribute('data-tick','1');
+ }finally{if(!closed)await app.close();}
 });

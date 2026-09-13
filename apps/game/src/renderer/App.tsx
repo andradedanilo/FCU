@@ -60,7 +60,8 @@ export function App() {
   const [seed, setSeed] = useState('2026');
   const [lineup, setLineup] = useState<PlayerId[]>([]);
   const [busy, setBusy] = useState(false);
-  const occupied = useRef(false);
+  const occupied = useRef(false),waiters=useRef<(()=>void)[]>([]);
+  function release(){occupied.current=false;setBusy(false);for(const resolve of waiters.current.splice(0))resolve();}
   const [notice, setNotice] = useState('');
   const [dirty, setDirty] = useState(false);
   const [saves, setSaves] = useState<SaveEntry[]|null>(null);
@@ -91,6 +92,13 @@ export function App() {
   }, []);
   useEffect(() => { if(saves===null)return;const previous=document.activeElement;const modal=dialog.current;modal?.showModal();return()=>{modal?.close();if(previous instanceof HTMLElement&&previous.isConnected)previous.focus();}; }, [saves]);
   usePowerPause(value=>{stop();audio.current?.suspend(value==='suspend');},()=>{if(screen!=='dream')void manualSave('auto').catch(()=>setNotice(t.errors.IO_ERROR));},busy);
+  const closeHandler=useRef<()=>Promise<boolean>>(async()=>true);
+  closeHandler.current=async()=>{
+    stop();if(screen==='dream'&&dreamCheckpoint.current)return dreamCheckpoint.current();
+    while(occupied.current)await new Promise<void>(resolve=>waiters.current.push(resolve));
+    occupied.current=true;setBusy(true);try{return await save(latest.current,'auto');}catch{setNotice(t.errors.IO_ERROR);return false;}finally{release();}
+  };
+  useEffect(()=>window.fcu.onCloseRequested(()=>closeHandler.current()),[]);
   const accept = (value:Career,keepDraft=false) => { latest.current=value;setState(value);if(!keepDraft)setLineup(value.lineup); };
   async function save(value=latest.current, kind:'manual'|'auto'='manual') {
     if(!value)return true;
@@ -101,7 +109,7 @@ export function App() {
   async function manualSave(kind:'manual'|'auto'='manual') {
     if(occupied.current)return;
     stop();occupied.current=true;setBusy(true);
-    try {await save(latest.current,kind);} finally {occupied.current=false;setBusy(false);}
+    try {await save(latest.current,kind);} finally {release();}
   }
   async function command(action:Action) {
     const current=latest.current;if(!current||occupied.current)return false;
@@ -123,7 +131,7 @@ export function App() {
       if(result.value.match&&needsDecision(result.value.match))stop();
       if(((result.value.match?.phase==='interval'||result.value.match?.phase==='extraInterval')&&!continuousRef.current)||result.value.match?.phase==='finished')stop();
     } else {setNotice(t.errors[result.error]);stop();}
-    occupied.current=false;setBusy(false);return result.ok;
+    release();return result.ok;
   }
   useEffect(()=>{audio.current?.match(playing);},[playing]);
   const presentationBusy=useRef(false);
@@ -139,19 +147,19 @@ export function App() {
   };
   async function newCareer() {
     if(!/^\d+$/.test(seed)||Number(seed)>4294967295){setNotice(t.seedInvalid);return;}
-    stop();setBusy(true);const result=await request(selectedPack?{type:'NewPackedCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,pack:selectedPack}:{type:'NewCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,world:worldKind});
-    if(result.ok){accept(result.value);setScreen('home');await save(result.value,'auto');}else setNotice(t.errors[result.error]);setBusy(false);
+    stop();occupied.current=true;setBusy(true);const result=await request(selectedPack?{type:'NewPackedCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,pack:selectedPack}:{type:'NewCareer',careerId:crypto.randomUUID(),seed:Number(seed),clubId:club,world:worldKind});
+    if(result.ok){accept(result.value);setScreen('home');await save(result.value,'auto');}else setNotice(t.errors[result.error]);release();
   }
   async function showSaves() {
     stop();setBusy(true);const result=await window.fcu.list();
     if(result.ok)setSaves(result.value);else setNotice(t.errors[result.error]);setBusy(false);
   }
   async function load(entry:SaveEntry) {
-    setBusy(true);const result=await window.fcu.load(entry.careerId,entry.commitId);
+    occupied.current=true;setBusy(true);const result=await window.fcu.load(entry.careerId,entry.commitId);
     if(result.ok) {
       resetWorker();const loaded=await request({type:'LoadCareer',state:result.value});
       if(loaded.ok){accept(loaded.value);setDirty(false);setSaves(null);setScreen(loaded.value.match?'match':'home');setNotice(entry.engineVersion===loaded.value.engineVersion?t.savedStatus:t.tacticalMigration);}else setNotice(t.errors[loaded.error]);
-    }else setNotice(t.errors[result.error]);setBusy(false);
+    }else setNotice(t.errors[result.error]);release();
   }
   const title=screen==='title';
   return <div className={s.app} onClickCapture={event=>{if(event.target instanceof Element&&event.target.closest('button'))audio.current?.click();}}>

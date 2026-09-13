@@ -1,3 +1,4 @@
+import {protectClose} from './close.ts';
 import {createDiagnostics} from './diagnostics.ts';
 import {writeFile} from 'node:fs/promises';
 import type {BuildInfo,DiagnosticRecord} from '../../../../packages/contracts/src/diagnostics.ts';
@@ -33,7 +34,7 @@ else void app.whenReady().then(async()=>{
   powerMonitor.on('suspend',suspend);powerMonitor.on('resume',resume);
   window.on('closed',()=>{powerMonitor.removeListener('suspend',suspend);powerMonitor.removeListener('resume',resume);});
   window.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&input.key==='F11'){event.preventDefault();window.setFullScreen(!window.isFullScreen());}});
-  const trusted=(event:IpcMainInvokeEvent)=>event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame&&(event.senderFrame.url===productionURL||event.senderFrame.url===`${devURL}/`);
+  const trusted=(event:Pick<IpcMainInvokeEvent,'sender'|'senderFrame'>)=>event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame&&(event.senderFrame.url===productionURL||event.senderFrame.url===`${devURL}/`);
   const route=<T>(operation:DiagnosticRecord['operation'],fn:(...args:unknown[])=>Promise<T>)=>async(event:IpcMainInvokeEvent,...args:unknown[]):Promise<Result<T>>=>{
     if(!trusted(event))return {ok:false,error:'INVALID_COMMAND'};
     const started=performance.now();let code:DiagnosticRecord['error']=null;
@@ -56,8 +57,7 @@ else void app.whenReady().then(async()=>{
   window.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   window.webContents.on('will-navigate',event=>event.preventDefault());
   window.webContents.on('will-attach-webview',event=>event.preventDefault());
-  let closing=false;
-  window.on('close',event=>{if(closing)return;event.preventDefault();void Promise.all([store.idle(),dream.idle(),settings.idle()]).then(()=>{closing=true;window.close();});});
+  protectClose(window,trusted,()=>Promise.all([store.idle(),dream.idle(),settings.idle()]));
   window.webContents.on('render-process-gone',()=>{void dialog.showMessageBox({type:'error',message:'FCU stopped unexpectedly. Reopen the game and load a confirmed save.'});});
   app.on('second-instance',()=>{window.restore();window.focus();});
   window.once('ready-to-show',()=>window.show());
