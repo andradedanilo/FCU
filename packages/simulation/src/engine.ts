@@ -10,7 +10,7 @@ import {competitionPlayers,selectionPlayers,cupBookings} from './discipline.ts';
 import {finishKnockout,penaltyScore,validatePenalties} from './penalties.ts';
 import {worldClubs,countryWorld,exhibitionWorld} from '../../contracts/src/world.ts';
 import {closeSeason,validateSeasons} from './season.ts';
-import {callUp} from './academy.ts';
+import {callUp,requiresCallUp} from './academy.ts';
 export {requiresCallUp} from './academy.ts';
 import {compareFixtures,schedule,worldSchedule,nextManagedFixture} from './competition.ts';
 export {schedule,standings} from './competition.ts';
@@ -245,7 +245,12 @@ export function applyCommand(state: Career, command: Command, dream=false): Resu
     // Intermediate ticks change only the match; settled Career records remain untouched.
     if(advanced.phase!=='finished')return {ok:true,value:{...state,match:advanced,revision:state.revision+1,appliedCommands:[...state.appliedCommands,command.commandId].slice(-256)}};
   }
-  const next=copyCareer(state);
+  const upcoming=command.type==='StartMatch'?nextManagedFixture(state):null;
+  const safeKickoff=upcoming&&!requiresCallUp(state,upcoming.home===state.clubId?upcoming.away:upcoming.home,upcoming.competitionClass);
+  const editing=['SelectLineup','SelectBench','SetTactics','StoreTacticPreset','SetTraining','SetTrainingFocus','SetAssisted','AcknowledgeMatch','Substitute'].includes(command.type);
+  // These edits cannot settle a fixture or mutate world records. Kickoff falls back
+  // to a full writable world whenever academy cover could be generated.
+  const next=editing||safeKickoff?{...state,match:state.match?structuredClone(state.match):null,presets:[...state.presets],personnel:{...state.personnel},board:{...state.board}}:copyCareer(state);
   if(command.type==='SetTransferListing'||command.type==='RespondBid'){const error=outgoingCommand(next,command);if(error)return {ok:false,error};}
   else if(command.type==='AcceptJob'){if(!acceptJob(next,command.clubId))return {ok:false,error:'INVALID_COMMAND'};}
   else if(command.type==='RetireManager'){if(state.board.status==='retired')return {ok:false,error:'INVALID_COMMAND'};if(state.board.status==='employed')next.board.history.push({clubId:state.clubId,from:state.board.since,to:state.date,reason:'retirement'});next.board.status='retired';next.board.vacancies=[];}
