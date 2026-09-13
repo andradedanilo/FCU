@@ -56,3 +56,5 @@
 .development{max-height:340px;overflow:auto;flex-shrink:0}.tacticsPitch{min-height:240px}
 
 @media(max-height:850px){.management label,.management .matchControls>span{font-size:16px}.management h3{font-size:16px}.management .matchControls{gap:12px}.management .playControls{gap:10px}.management{padding:12px}.management h3{margin-bottom:10px}.hudActions button{min-height:44px;font-size:14px}}
+
+@media(max-width:1300px){.squadBody{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}.squadList{grid-template-columns:1fr}.squadList>label{min-height:48px;gap:12px}.squadList strong,.squadList b,.squadList>label>small,.role{font-size:16px}.squadList strong>small{font-size:16px}.lineupActions strong,.lineupActions button,.lineupPanel>p,.training p,.training button{font-size:16px}.lineupActions button,.training button{min-height:44px}.tacticsPitch small{font-size:16px}.tacticsPitch span{font-size:14px}.sectionTitle>p:last-child{font-size:16px}.tableWrap th,.tableWrap td{font-size:16px}.lineupActions{flex-shrink:0}.lineupPanel>.eyebrow{letter-spacing:0}}

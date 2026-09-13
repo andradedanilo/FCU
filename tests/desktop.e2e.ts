@@ -113,7 +113,14 @@ test('chooses an earned Dream player by keyboard and stops audio on exit',async(
   await page.getByRole('button',{name:'Reveal earned choices',exact:true}).click();
   const choices=page.getByRole('group',{name:'Choose one player',exact:true});await expect(choices.getByRole('button')).toHaveCount(3);
   await expect(choices.getByRole('button').first()).toBeFocused();await expect(choices).toContainText('Best active player in this role');
+  const earned=await choices.getByRole('button').first().locator('strong').textContent();
   await page.keyboard.press('Enter');await expect(choices).toHaveCount(0);await expect(page.getByRole('button',{name:'Play next fixture',exact:true})).toBeFocused();
+  await page.getByRole('button',{name:'Collection and active squad',exact:true}).click();
+  const collection=page.getByRole('region',{name:'Collection and active squad',exact:true});
+  await expect(collection.getByLabel('Find a collected player')).toBeFocused();await collection.getByLabel('Find a collected player').fill(earned!);
+  await expect(collection.getByRole('checkbox')).toHaveCount(1);await collection.getByRole('checkbox').check();
+  await collection.getByRole('button',{name:'Confirm active squad',exact:true}).click();await expect(collection).toHaveCount(0);
+  await expect(page.getByRole('checkbox',{name:'Start '+earned,exact:true})).toBeVisible();await page.getByRole('button',{name:'Back',exact:true}).first().click();
   await page.getByRole('button',{name:'Play next fixture',exact:true}).click();await page.getByRole('button',{name:'Play',exact:true}).click();
   await expect.poll(audible).toBe(1);await page.getByRole('button',{name:'Title screen',exact:true}).click();
   await expect(page.getByRole('button',{name:'Start a career',exact:true})).toBeVisible();await expect.poll(audible).toBe(0);
