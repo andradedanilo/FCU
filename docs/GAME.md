@@ -67,7 +67,7 @@ Audio work is deferred by the owner while match layout takes priority; keep the 
 
 The v0.2 result line shows outcome, points earned and rank at full time. Match report lists scorers, on-target attempts and chance quality; it is available again from the clubhouse until the next kickoff. These are factual projections of committed state, not generated coaching claims.
 
-Keyboard arrows/Tab navigate, Enter confirms, Escape backs out, P toggles Play/Pause and Q/E change control sections. Standard gamepads share those actions through D-pad/stick, south/east buttons, shoulders and Start. Dialogs retain and restore focus; text editing keeps native keys. Controller confirm on a text/numeric field opens an offline onscreen entry panel; dropdowns open focusable choices. Apply commits the draft, Close/Back cancels and focus returns to the original field. Physical keyboard entry preserves Unicode. Steam-specific text input, glyphs and physical-controller verification remain deferred.
+Keyboard arrows/Tab navigate, Enter confirms, Escape backs out, P toggles Play/Pause and Q/E change control sections. Standard gamepads share those actions through D-pad/stick, south/east buttons, shoulders and Start. Dialogs retain and restore focus; text editing keeps native keys. Controller confirm on a text/numeric field opens an offline onscreen entry panel; dropdowns open focusable choices. Apply commits the draft, Close/Back cancels and focus returns to the original field. Physical keyboard entry preserves Unicode. System suspend pauses playback and requests a checkpoint; resume leaves the match paused for an explicit Play. Steam-specific text input, glyphs and physical-controller verification remain deferred.
 
 ## 3. Players, squads and tactics
 

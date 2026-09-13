@@ -1,3 +1,4 @@
+import {usePowerPause} from './usePowerPause.ts';
 import {InputEditor} from './InputEditor.tsx';
 import {DreamClub} from './DreamClub.tsx';
 import {BoardMenu} from './BoardMenu.tsx';
@@ -85,6 +86,7 @@ export function App() {
     return () => {active=false;if(timer.current)clearTimeout(timer.current);resetWorker();audio.current?.dispose();};
   }, []);
   useEffect(() => { if(saves===null)return;const previous=document.activeElement;const modal=dialog.current;modal?.showModal();return()=>{modal?.close();if(previous instanceof HTMLElement&&previous.isConnected)previous.focus();}; }, [saves]);
+  usePowerPause(value=>{stop();audio.current?.suspend(value==='suspend');},()=>{if(screen!=='dream')void manualSave('auto').catch(()=>setNotice(t.errors.IO_ERROR));},busy);
   const accept = (value:Career,keepDraft=false) => { latest.current=value;setState(value);if(!keepDraft)setLineup(value.lineup); };
   async function save(value=latest.current, kind:'manual'|'auto'='manual') {
     if(!value)return;
@@ -92,10 +94,10 @@ export function App() {
     const result=await window.fcu.save(value,kind);
     setNotice(result.ok?t.saved:t.errors[result.error]);setDirty(!result.ok);
   }
-  async function manualSave() {
+  async function manualSave(kind:'manual'|'auto'='manual') {
     if(occupied.current)return;
     stop();occupied.current=true;setBusy(true);
-    try {await save();} finally {occupied.current=false;setBusy(false);}
+    try {await save(latest.current,kind);} finally {occupied.current=false;setBusy(false);}
   }
   async function command(action:Action) {
     const current=latest.current;if(!current||occupied.current)return false;

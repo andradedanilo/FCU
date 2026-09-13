@@ -1,3 +1,4 @@
+import {usePowerPause} from './usePowerPause.ts';
 import type {MatchCue} from './useMatchBroadcast.ts';
 import d from './DreamClub.module.css';
 import {minuteDuration} from '../../../../packages/presentation/src/highlights.ts';
@@ -51,6 +52,7 @@ export function DreamClub({packs,exit,cue,ambience}:{packs:InstalledRoster[];exi
    target.onmessage=(event:MessageEvent<Result<Dream>>)=>finish(event.data);target.onerror=fail;target.postMessage(request);
   });
  }
+ usePowerPause(()=>stop(),()=>{if(latest.current&&!occupied.current){occupied.current=true;setBusy(true);void persist(latest.current).catch(()=>{setDurable(false);setNotice(t.errors.IO_ERROR);}).finally(()=>{occupied.current=false;setBusy(false);});}},busy);
  async function persist(value:Dream){const result=await window.fcu.dreamSave(value);setDurable(result.ok);setNotice(result.ok?t.saved:t.errors[result.error]);return result.ok;}
  async function act(request:DreamRequest){
   if(occupied.current)return false;occupied.current=true;setBusy(true);
