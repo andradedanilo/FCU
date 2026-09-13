@@ -3,7 +3,7 @@
   "version": "0.9.0",
   "private": true,
   "type": "module",
-  "description": "Football Club Universe offline exhibition prototype",
+  "description": "Football Club Universe offline football management prototype",
   "author": "FCU",
   "main": "dist-electron/main.js",
   "workspaces": [
