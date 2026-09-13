@@ -1,6 +1,8 @@
+import {assistantReport} from '../../../../packages/simulation/src/assistant.ts';
+import {money} from '../../../../packages/presentation/src/money.ts';
 import {seasonComplete} from '../../../../packages/simulation/src/competition.ts';
 import {OfferPanel,type MarketAction} from './OfferPanel.tsx';
-import {useRef,useState} from 'react';
+import {useRef,useState,useMemo} from 'react';
 import type {Career,Command,Role,PlayerId} from '../../../../packages/contracts/src/index.ts';
 import {knownAbility} from '../../../../packages/simulation/src/scouting.ts';
 import {overall} from '../../../../packages/simulation/src/ratings.ts';
@@ -9,7 +11,8 @@ import {text as t} from '../../../../packages/presentation/src/text.ts';
 import {useModal} from './input.ts';
 import s from './ContractsMenu.module.css';
 type ScoutAction=Omit<Extract<Command,{type:'ScoutPlayer'}>,'careerId'|'commandId'|'expectedRevision'>|Omit<Extract<Command,{type:'SetShortlist'}>,'careerId'|'commandId'|'expectedRevision'>;
-export function ScoutingMenu({state,initialPlayer,busy,command,close}:{state:Career;initialPlayer:PlayerId|null;busy:boolean;command:(action:ScoutAction|MarketAction)=>Promise<boolean>;close:()=>void}){
+export function ScoutingMenu({state,initialPlayer,busy,command,close,squad}:{state:Career;initialPlayer:PlayerId|null;busy:boolean;command:(action:ScoutAction|MarketAction)=>Promise<boolean>;close:()=>void;squad:()=>void}){
+ const advice=useMemo(()=>assistantReport(state),[state]);
  const dialog=useRef<HTMLDialogElement>(null);useModal(dialog);
  const [query,setQuery]=useState(''),[page,setPage]=useState(0);const [marketView,setMarketView]=useState(initialPlayer&&state.offers.some(o=>o.buyerId===state.clubId&&o.playerId===initialPlayer)?'offers':'all');
  const [negotiating,setNegotiating]=useState(!!initialPlayer&&state.offers.some(o=>o.buyerId===state.clubId&&o.playerId===initialPlayer));
@@ -20,6 +23,7 @@ export function ScoutingMenu({state,initialPlayer,busy,command,close}:{state:Car
  const own=player?state.players.filter(p=>p.clubId===state.clubId&&p.role===player.role).sort((a,b)=>overall(b)-overall(a))[0]:null;
  const ability=player?knownAbility(state,player):null;
  return <dialog ref={dialog} className={s.dialog} aria-label={t.scouting} onCancel={close}><header><h2>{t.scouting}</h2><button onClick={close}>{t.close}</button></header>
+  <details><summary>{t.assistantReview} / {advice.date}</summary><p>{t.assistantHint}</p><div className={s.review}>{advice.weaknesses.map(w=><button key={w.role} onClick={squad}>{w.role}: {w.count}/{w.target} {t.seniorPlayers} / {t.ability}: {w.ability}</button>)}</div><div className={s.actions}>{advice.suggestions.map(c=><button key={c.playerId} onClick={()=>{setQuery('' );setRole('all');setShortlisted(false);setMarketView('all');setSelected(c.playerId);setNegotiating(false);}}>{state.players.find(p=>p.id===c.playerId)!.name}<br/>{t.estimatedAbility}: {c.low}-{c.high}<br/>{t.fee}: {money(c.fee)} / {t.weeklyWage}: {money(c.wage)}</button>)}</div>{!advice.suggestions.length&&<p>{t.noAffordableCandidates}</p>}</details>
   <p>{state.scouting.active?`${t.scoutDue}: ${state.players.find(p=>p.id===state.scouting.active!.playerId)!.name} / ${state.scouting.active.due}`:t.scoutFree}</p>
   <div className={`${s.fields} ${s.filters}`}><label>{t.marketFilter}<select value={marketView} onChange={e=>setMarketView(e.target.value)}><option value="all">{t.allMarket}</option><option value="free">{t.freeAgents}</option><option value="offers">{t.negotiations}</option></select></label><label>{t.position}<select value={role} onChange={e=>setRole(e.target.value as Role|'all')}><option value="all">{t.allPositions}</option>{(['GK','DEF','MID','FWD'] as const).map(r=><option key={r}>{r}</option>)}</select></label><button aria-pressed={shortlisted} onClick={()=>setShortlisted(!shortlisted)}>{t.shortlistOnly}</button></div>
   <label>{t.searchPlayers}<input value={query} onChange={e=>{setQuery(e.target.value);setPage(0);}}/></label><nav aria-label={t.scoutCandidates}><button disabled={currentPage===0} onClick={()=>setPage(currentPage-1)}>{t.previousPage}</button> {currentPage+1} / {lastPage+1} <button disabled={currentPage===lastPage} onClick={()=>setPage(currentPage+1)}>{t.nextPage}</button></nav><div className={s.body}><div className={s.players} role="group" aria-label={t.scoutCandidates}>{visible.map(p=>{const known=knownAbility(state,p);return <button key={p.id} aria-pressed={player?.id===p.id} onClick={()=>setSelected(p.id)}><strong>{p.name}</strong><small>{state.clubs.find(c=>c.id===p.clubId)?.short??t.freeAgent} / {p.role}</small><span>{t.estimatedAbility}: {known.low}-{known.high}</span></button>;})}</div>

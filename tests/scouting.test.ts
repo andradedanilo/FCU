@@ -1,3 +1,4 @@
+import {assistantReport} from '../packages/simulation/src/assistant.ts';
 import {it,expect} from 'vitest';
 import {createCareer,applyCommand,validateCareer} from '../packages/simulation/src/engine.ts';
 import {knownAbility} from '../packages/simulation/src/scouting.ts';
@@ -10,6 +11,7 @@ function act(s:Career,action:Payload<Command>):Career {const result=applyCommand
 function fixture(s:Career){s=act(s,{type:'StartMatch'});while(s.match!.phase!=='finished'){if(s.match!.pendingDismissal||s.match!.pendingInjuries.length)s=act(s,{type:'AcknowledgeMatch'});s=act(s,{type:'AdvanceMatch',minutes:90});}return s;}
 it('keeps estimates stable and delivers one dated report without simulating the next fixture',()=>{
  let s=initial();const player=s.players[22]!,estimate=knownAbility(s,player),before=canonical(s);
+ const advice=assistantReport(s);expect(advice.weaknesses).toHaveLength(2);expect(advice.suggestions).toHaveLength(3);expect(assistantReport(validateCareer(JSON.parse(before)))).toEqual(advice);const poor=structuredClone(s);poor.economy.ledger=[];expect(assistantReport(poor).suggestions).toHaveLength(0);
  expect(knownAbility(validateCareer(JSON.parse(before)),player)).toEqual(estimate);expect(canonical(s)).toBe(before);
  s=act(s,{type:'SetShortlist',playerId:player.id,listed:true});s=act(s,{type:'SetShortlist',playerId:player.id,listed:true});expect(s.scouting.shortlist).toEqual([player.id]);s=act(s,{type:'ScoutPlayer',playerId:player.id});
  expect(()=>act(s,{type:'ScoutPlayer',playerId:s.players[23]!.id})).toThrow('SCOUT_BUSY');expect(()=>act(s,{type:'AdvanceCalendar',target:'event'})).toThrow('INVALID_COMMAND');

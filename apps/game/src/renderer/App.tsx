@@ -153,7 +153,7 @@ export function App() {
     </div>
     {state&&tacticsOpen&&<TacticsMenu store={(slot,tactics)=>command({type:'StoreTacticPreset',slot,tactics})} draftLineup={screen==='squad'?lineup:state.lineup} state={state} busy={busy} close={()=>setTacticsOpen(false)} confirm={tactics=>command({type:'SetTactics',tactics})}/>}
     {state&&historyOpen&&<SeasonHistory state={state} close={()=>setHistoryOpen(false)}/>}
-    {state&&scoutingOpen&&<ScoutingMenu initialPlayer={newsPlayer} state={state} busy={busy} command={command} close={()=>setScoutingOpen(false)}/>}
+    {state&&scoutingOpen&&<ScoutingMenu squad={()=>{setScoutingOpen(false);navigate('squad');}} initialPlayer={newsPlayer} state={state} busy={busy} command={command} close={()=>setScoutingOpen(false)}/>}
     {state&&contractsOpen&&<ContractsMenu state={state} busy={busy} confirm={command} close={()=>setContractsOpen(false)}/>}
     {state&&screen!=='title'&&screen!=='setup'&&(boardOpen||state.board.status!=='employed')&&<BoardMenu state={state} busy={busy} close={()=>setBoardOpen(false)} assisted={enabled=>void command({type:'SetAssisted',enabled})} job={clubId=>{void command({type:'AcceptJob',clubId}).then(ok=>{if(ok){setBoardOpen(false);setScreen('home');}});}} retire={()=>void command({type:'RetireManager'})} newCareer={()=>{setBoardOpen(false);navigate('setup');}}/>}
     {state&&financeOpen&&<FinanceMenu state={state} busy={busy} upgrade={kind=>void command({type:'UpgradeFacility',kind})} close={()=>setFinanceOpen(false)}/>}

@@ -99,3 +99,5 @@ The shipped WAV effects are excerpts from the following free recordings, with le
 Club finances also offers academy and recovery upgrades, paid from available funds and completed after 30 in-game days. Squad also shows training focus, potential and senior minutes. Players develop or decline annually, retire with age, and clubs receive four academy prospects each new season. Dream Club is still planned.
 
 Board and career shows your season objective and confidence. Poor results or prolonged negative cash can end your job; choose an offered club to continue with your manager history intact, or retire. Assisted career prevents dismissal. Recovery loans are capped at annual sponsorship and repaid in 52 weekly installments without interest.
+
+Scouting includes an Assistant review with two squad priorities and up to three affordable candidate links. Review the estimated ability and costs, then scout or negotiate through the normal controls.
