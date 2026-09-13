@@ -1,10 +1,11 @@
+import {selectableCount} from './selection.ts';
 import {newPerson} from './personnel.ts';
 import {competitionPlayers,nextCompetition} from './discipline.ts';
 import type {Career,ClubId,Role,PlayerId,CompetitionClass} from '../../contracts/src/index.ts';
 import {available} from './availability.ts';
 import {initialContract} from './contracts.ts';
 export function requiresCallUp(state:Career,club:ClubId=state.clubId,kind:CompetitionClass=nextCompetition(state)):boolean {
- const eligible=competitionPlayers({...state,players:state.players.filter(p=>p.clubId===club)},kind).filter(p=>p.clubId===club&&available(p,state.date));return eligible.length<11||!eligible.some(p=>p.role==='GK');
+ const eligible=competitionPlayers({...state,players:state.players.filter(p=>p.clubId===club)},kind).filter(p=>p.clubId===club&&available(p,state.date));return selectableCount(eligible)<11||!eligible.some(p=>p.role==='GK');
 }
 export function callUp(state:Career,club:ClubId,kind:CompetitionClass=nextCompetition(state)):boolean {
  const squad=competitionPlayers({...state,players:state.players.filter(p=>p.clubId===club)},kind).filter(p=>p.clubId===club);if(squad.filter(p=>p.academy).length>=8||!requiresCallUp(state,club,kind))return false;

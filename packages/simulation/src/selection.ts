@@ -17,3 +17,5 @@ export function pickBench(players:Player[],club:ClubId,lineup:PlayerId[],date='2
  const reserves=players.filter(p=>p.clubId===club&&!lineup.includes(p.id)&&available(p,date)).sort((a,b)=>effectiveRating(b)-effectiveRating(a)||compare(a.id,b.id));
  return [...reserves.filter(p=>p.role==='GK').slice(0,1),...reserves.filter(p=>p.role!=='GK').slice(0,8)].map(p=>p.id);
 }
+
+export function selectableCount(players:Player[]):number{return players.filter(p=>p.role!=='GK').length+Number(players.some(p=>p.role==='GK'));}

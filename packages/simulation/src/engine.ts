@@ -11,7 +11,7 @@ export {requiresCallUp} from './academy.ts';
 import {compareFixtures,schedule,worldSchedule,nextManagedFixture} from './competition.ts';
 export {schedule,standings} from './competition.ts';
 import {validateLoans} from './loans.ts';
-import {autoPick,validLineup,pickBench} from './selection.ts';
+import {autoPick,validLineup,pickBench,selectableCount} from './selection.ts';
 export {autoPick,validLineup,pickBench} from './selection.ts';
 import {marketCommand,validateMarket,freePlayers} from './market.ts';
 import {nextFixtureDate,advanceCalendar} from './calendar.ts';
@@ -138,7 +138,7 @@ function awardForfeit(match:Match,club:ClubId){
 }
 function validSelection(state:Career,lineup:PlayerId[]):boolean {
  const eligible=selectionPlayers(state).filter(p=>p.clubId===state.clubId&&available(p,state.date));
- return validLineup(state.players,state.clubId,lineup)&&lineup.length===Math.min(11,eligible.length)&&(!eligible.some(p=>p.role==='GK')||lineup.some(id=>state.players.find(p=>p.id===id)?.role==='GK'));
+ return validLineup(state.players,state.clubId,lineup)&&lineup.length===Math.min(11,selectableCount(eligible))&&(!eligible.some(p=>p.role==='GK')||lineup.some(id=>state.players.find(p=>p.id===id)?.role==='GK'));
 }
 export function substitutePlayer(m:Match,players:Player[],club:ClubId,out:PlayerId,incoming:PlayerId):boolean {
  if(m.tick<1||m.phase==='finished')return false;
@@ -266,7 +266,7 @@ export function applyCommand(state: Career, command: Command, dream=false): Resu
     if(!validBench(state.players,state.clubId,next.lineup,next.bench))next.bench=pickBench(selectionPlayers(state),state.clubId,next.lineup,state.date);
   } else if(command.type==='ForfeitMatch') {
     if(state.date!==nextFixtureDate(state))return {ok:false,error:'NOT_MATCH_DAY'};
-    if(!nextManagedFixture(state)||(state.match&&state.match.phase!=='finished')||selectionPlayers(state).filter(p=>p.clubId===state.clubId&&available(p,state.date)).length>=7||state.players.filter(p=>p.clubId===state.clubId&&p.academy).length<8)return {ok:false,error:'INVALID_COMMAND'};
+    if(!nextManagedFixture(state)||(state.match&&state.match.phase!=='finished')||selectableCount(selectionPlayers(state).filter(p=>p.clubId===state.clubId&&available(p,state.date)))>=7||state.players.filter(p=>p.clubId===state.clubId&&p.academy).length<8)return {ok:false,error:'INVALID_COMMAND'};
     next.match=startMatch(state,nextManagedFixture(state)!);awardForfeit(next.match,state.clubId);
   } else if(command.type==='CallUp') {
     if((state.match&&state.match.phase!=='finished')||!callUp(next,state.clubId))return {ok:false,error:'INVALID_COMMAND'};
