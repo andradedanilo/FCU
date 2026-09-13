@@ -6,7 +6,11 @@ Owner-selected title: **Football Club Universe**, abbreviated **FCU**. Modes are
 
 Build a fast, offline football management game for Steam, inspired by the feeling of Elifoot 98: select a team, make a few meaningful decisions, experience a match, and want another season. This is an original game, not a reproduction of Elifoot assets, code, screens, names, or database. Football Manager informs selected depth, not the size of the feature list.
 
-## Current visual priority
+## Current completion priority
+
+Owner direction: complete pending match rules and automate broader Career/Dream progression, economy and balance checks before the dedicated UI/audio pass. Test ceilings no longer block meaningful verification. Preserve the approved visual direction; technical and external release checks still require actual evidence. Automated balance signals do not certify enjoyment.
+
+## Approved visual direction
 
 The owner approved the navy/gold manager-and-stadium artwork for the main screen. Reuse the original master with large accessible menu controls and preserve its composition. Apply a coherent game identity to the clubhouse, squad/tactics/player details, market/finance/board and Dream screens in complete visual slices. Preserve the approved match stills and four-panel layout. UI quality and owner visual acceptance are release criteria, not optional polish after functionality. Continue independent implementation; record feedback-dependent decisions for later review.
 
@@ -54,7 +58,7 @@ All eight Markdown files and .gitignore use basic ASCII, saved as UTF-8 without 
 
 Continue Football Club Universe autonomously until the owner manually stops work or says to stop. Inspect the current ROADMAP gate and repository status, choose the next concrete independent slice, implement it, check only the affected risks, update the existing references, commit and verify the push to origin/main. Do not pause after a slice or milestone for routine approval. When credentials, hardware, feedback or publication authorization are unavailable, defer that item in ROADMAP and continue other authorized work. Never invent external verification or mark an incomplete gate passed. Publication, purchases and external messages still require their separate authorization. The original v0.1-only starter request is superseded and must not govern current work.
 
-Keep the current test ceiling and per-task allowance; do not manufacture extra work, duplicate verification or hide new cases. Prioritize the owner-requested UI redesign over release preparation; the earlier feature freeze does not block this explicit visual scope. Working systems and version numbers do not establish v1.0 completion. Requested future match rules remain recorded separately from current supported events.
+Remove numerical test ceilings and per-task allowances as blockers; retain focused verification and recorded workloads. Complete the owner-requested gameplay and automated validation work before the dedicated UI/audio pass; the earlier feature freeze does not block this scope. Working systems and version numbers do not establish v1.0 completion. Requested future match rules remain recorded separately from current supported events.
 
 ## Decisions to revisit at the appropriate gate
 
