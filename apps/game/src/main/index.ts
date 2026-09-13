@@ -1,3 +1,4 @@
+import {createDreamStore} from './dreamSaves.ts';
 import {createRosterStore} from './rosters.ts';
 import { app, BrowserWindow, ipcMain, session, dialog, type IpcMainInvokeEvent } from 'electron';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -13,6 +14,7 @@ if(process.env.FCU_USER_DATA && !app.isPackaged)app.setPath('userData',process.e
 const locked=app.requestSingleInstanceLock();
 if(!locked)app.quit();
 else void app.whenReady().then(async()=>{
+  const dream=createDreamStore(join(app.getPath('userData'),'dream-saves'));
   const store=createSaveStore(join(app.getPath('userData'),'saves'));
   const rosters=createRosterStore(join(app.getPath('userData'),'rosters'),!app.isPackaged);
   const productionURL=pathToFileURL(join(here,'../dist/index.html')).href;
@@ -27,6 +29,9 @@ else void app.whenReady().then(async()=>{
   };
   ipcMain.handle('roster-list',route(async()=>rosters.list()));
   ipcMain.handle('roster-import',route(async()=>{const selected=await dialog.showOpenDialog(window,{filters:[{name:'FCU roster pack',extensions:['zip']}],properties:['openFile']});return selected.canceled?null:rosters.install(selected.filePaths[0]!);}));
+  ipcMain.handle('dream-save',route(async(state)=>dream.save(state)));
+  ipcMain.handle('dream-list',route(async()=>dream.list()));
+  ipcMain.handle('dream-load',route(async(id,commit)=>dream.load(z.string().uuid().parse(id),z.string().uuid().parse(commit))));
   ipcMain.handle('save',route(async(state,kind)=>store.save(state,z.enum(['manual','auto']).parse(kind))));
   ipcMain.handle('list',route(async()=>store.list()));
   ipcMain.handle('load',route(async(career,commit)=>store.load(z.string().uuid().parse(career),z.string().uuid().parse(commit))));
@@ -36,7 +41,7 @@ else void app.whenReady().then(async()=>{
   window.webContents.on('will-navigate',event=>event.preventDefault());
   window.webContents.on('will-attach-webview',event=>event.preventDefault());
   let closing=false;
-  window.on('close',event=>{if(closing)return;event.preventDefault();void store.idle().then(()=>{closing=true;window.close();});});
+  window.on('close',event=>{if(closing)return;event.preventDefault();void Promise.all([store.idle(),dream.idle()]).then(()=>{closing=true;window.close();});});
   window.webContents.on('render-process-gone',()=>{void dialog.showMessageBox({type:'error',message:'FCU stopped unexpectedly. Reopen the game and load a confirmed save.'});});
   app.on('second-instance',()=>{window.restore();window.focus();});
   window.once('ready-to-show',()=>window.show());

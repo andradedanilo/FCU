@@ -3,7 +3,7 @@ import {rosterSchema} from './roster.ts';
 export const installedRosterSchema=z.strictObject({snapshotId:z.string().regex(/^roster-\d{4}-\d{2}\.\d{8}\.r[1-9]\d{0,5}$/),contentHash:z.string().regex(/^[a-f0-9]{64}$/),observedAt:z.iso.datetime(),development:z.boolean(),roster:rosterSchema});
 export type InstalledRoster=z.infer<typeof installedRosterSchema>;
 
-export const brand = { title: 'Football Club Universe', short: 'FCU', career: 'FCU Career' } as const;
+export const brand = { title: 'Football Club Universe', short: 'FCU', career: 'FCU Career', dreamClub:'FCU Dream Club' } as const;
 export const clubId = z.string().regex(/^club-\d{2,3}$/).brand<'ClubId'>();
 export const playerId = z.string().regex(/^player-\d{2,3}-\d{2,5}$/).brand<'PlayerId'>();
 export type ClubId = z.infer<typeof clubId>;
@@ -162,6 +162,9 @@ export type FailureCode = 'OFFER_CHANGED' | 'SQUAD_NEED' | 'SQUAD_FULL' | 'REPUT
 export type Result<T> = { ok: true; value: T } | { ok: false; error: FailureCode };
 export type SaveEntry = { careerId: string; commitId: string; club: string; round: number; tick: number; savedAtUTC: string; kind: 'manual' | 'auto'; valid: boolean; engineVersion:string|null; error: FailureCode | null };
 export interface DesktopBridge {
+  dreamSave(state:import('./dream.ts').Dream):Promise<Result<string>>;
+  dreamList():Promise<Result<SaveEntry[]>>;
+  dreamLoad(id:string,commit:string):Promise<Result<import('./dream.ts').Dream>>;
   rosterList():Promise<Result<InstalledRoster[]>>;
   rosterImport():Promise<Result<InstalledRoster|null>>;
   save(state: Career, kind: 'manual' | 'auto'): Promise<Result<string>>;

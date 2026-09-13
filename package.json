@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "preview:dream": "node scripts/dream-preview.mjs",
     "start": "electron .",
     "typecheck": "node node_modules/@typescript/native/bin/tsc --noEmit",
     "lint": "eslint .",

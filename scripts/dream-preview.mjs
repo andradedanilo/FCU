@@ -1,0 +1,15 @@
+import {mkdtemp} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {spawn} from 'node:child_process';
+import electron from 'electron';
+import {newDream,dreamCommand} from '../packages/simulation/src/dreamSeason.ts';
+import {createDreamStore} from '../apps/game/src/main/dreamSaves.ts';
+const profile=await mkdtemp(join(tmpdir(),'fcu-dream-preview-'));
+let state=newDream({type:'New',id:crypto.randomUUID(),seed:2026,name:'Preview FC',tier:'starter',pack:null});
+for(let round=0;round<3;round++)state=dreamCommand(state,{type:'Instant'});
+state=dreamCommand(state,{type:'Reveal'});
+await createDreamStore(join(profile,'dream-saves')).save(state);
+console.log('Isolated preview: select FCU Dream Club, then Load and the Preview FC checkpoint. Your normal saves are unchanged.');
+const child=spawn(electron,['.'],{stdio:'inherit',env:{...process.env,FCU_USER_DATA:profile}});
+child.on('exit',code=>{process.exitCode=code??1;});

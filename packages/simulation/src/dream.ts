@@ -55,7 +55,7 @@ export function validateCollection(input:unknown,pool:readonly RewardPlayer[]):C
  const c=collectionSchema.parse(input),ids=new Set(pool.map(p=>p.id));
  const unique=(values:readonly unknown[])=>new Set(values).size===values.length;
  const packs=[...c.queued,...c.consumed.map(p=>p.id),...(c.pending?[c.pending.id]:[])];
- if(ids.size!==pool.length||pool.some(p=>!Number.isInteger(p.ability)||p.ability<1||p.ability>100)||!unique(c.consumed.map(p=>p.playerId))||!unique(c.unlocked)||c.unlocked.some(id=>!ids.has(id))||!unique(c.fixtures)||!unique(c.seasons)||!unique(packs)||packs.some(id=>id>c.earned)||c.progress!==c.fixtures.length%3||c.consumed.some(p=>!c.unlocked.includes(p.playerId)))throw Error('INVALID_SAVE');
+ if(c.earned>Math.floor(c.fixtures.length/3)+c.seasons.length||ids.size!==pool.length||pool.some(p=>!Number.isInteger(p.ability)||p.ability<1||p.ability>100)||!unique(c.consumed.map(p=>p.playerId))||!unique(c.unlocked)||c.unlocked.some(id=>!ids.has(id))||!unique(c.fixtures)||!unique(c.seasons)||!unique(packs)||packs.some(id=>id>c.earned)||c.progress!==c.fixtures.length%3||c.consumed.some(p=>!c.unlocked.includes(p.playerId)))throw Error('INVALID_SAVE');
  if(c.pending&&(!unique(c.pending.candidates)||c.pending.candidates.some(id=>c.unlocked.includes(id)||!pool.some(p=>p.id===id&&p.ability>=50))))throw Error('INVALID_SAVE');
  return c;
 }

@@ -1,3 +1,4 @@
+import {DreamClub} from './DreamClub.tsx';
 import {BoardMenu} from './BoardMenu.tsx';
 import {RegistrationMenu} from './RegistrationMenu.tsx';
 import {rosterClubs} from '../../../../packages/simulation/src/roster.ts';
@@ -25,7 +26,7 @@ import { TacticsMenu } from './TacticsMenu.tsx';
 import { MatchScreen } from './MatchScreen.tsx';
 import s from './App.module.css';
 
-type Screen = 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match';
+type Screen = 'dream' | 'title' | 'setup' | 'home' | 'squad' | 'table' | 'match';
 type CommandPayload<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
 type Action=CommandPayload<Command>;
 export function App() {
@@ -135,13 +136,14 @@ export function App() {
         <div className={s.hudActions}>
           <button aria-label={`${t.music} ${music?t.on:t.off}`} aria-pressed={music} onClick={()=>{audio.current?.music(!music);setMusic(!music);}}>{t.music}<span>{music?t.on:t.off}</span></button>
           <button aria-label={`${t.effects} ${effects?t.on:t.off}`} aria-pressed={effects} onClick={()=>{audio.current?.effects(!effects);setEffects(!effects);}}>{t.effects}<span>{effects?t.on:t.off}</span></button>
-          {!title&&<button disabled={busy} onClick={()=>void showSaves()}>{t.load}</button>}
-          {state&&!title&&<button disabled={busy} onClick={()=>void manualSave()}>{t.save}</button>}
-          {!title&&<button data-input-back disabled={busy} onClick={()=>navigate(screen==='setup'?'title':screen==='home'?'title':'home')}>{screen==='setup'||screen==='home'?t.back:t.clubhouse}</button>}
+          {!title&&screen!=='dream'&&<button disabled={busy} onClick={()=>void showSaves()}>{t.load}</button>}
+          {state&&!title&&screen!=='dream'&&<button disabled={busy} onClick={()=>void manualSave()}>{t.save}</button>}
+          {!title&&screen!=='dream'&&<button data-input-back disabled={busy} onClick={()=>navigate(screen==='setup'?'title':screen==='home'?'title':'home')}>{screen==='setup'||screen==='home'?t.back:t.clubhouse}</button>}
         </div>
       </header>
       <main data-input-section className={s.gameScreen} key={screen}>
-        {screen==='title'&&<TitleScreen start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
+        {screen==='title'&&<TitleScreen dream={()=>navigate('dream')} start={()=>navigate('setup')} load={()=>void showSaves()} resume={state?()=>navigate('home'):null}/>}
+        {screen==='dream'&&<DreamClub cue={kind=>audio.current?.highlight(kind)} ambience={value=>audio.current?.match(value)} packs={packs} exit={()=>navigate('title')}/>} 
         {screen==='setup'&&<ClubSelect packs={packs} packId={packId} changePack={id=>{setPackId(id);setWorldKind('countries');setClub(clubs[0]!.id);}} importPack={()=>void importPack()} importedClubs={selectedPack?rosterClubs(selectedPack):null} worldKind={worldKind} changeWorld={kind=>{setPackId('');setWorldKind(kind);setClub(clubs[0]!.id);}} club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
         {state&&screen==='home'&&<Clubhouse board={()=>setBoardOpen(true)} closeSeason={()=>void command({type:'CloseSeason'})} history={()=>setHistoryOpen(true)} news={id=>{setNewsPlayer(id);setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
         {state&&screen==='squad'&&<SquadScreen registration={()=>setRegistrationOpen(true)} contracts={()=>setContractsOpen(true)} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} focus={focus=>{void command({type:'SetTrainingFocus',focus});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
@@ -155,7 +157,7 @@ export function App() {
     {state&&historyOpen&&<SeasonHistory state={state} close={()=>setHistoryOpen(false)}/>}
     {state&&scoutingOpen&&<ScoutingMenu squad={()=>{setScoutingOpen(false);navigate('squad');}} initialPlayer={newsPlayer} state={state} busy={busy} command={command} close={()=>setScoutingOpen(false)}/>}
     {state&&contractsOpen&&<ContractsMenu state={state} busy={busy} confirm={command} close={()=>setContractsOpen(false)}/>}
-    {state&&screen!=='title'&&screen!=='setup'&&(boardOpen||state.board.status!=='employed')&&<BoardMenu state={state} busy={busy} close={()=>setBoardOpen(false)} assisted={enabled=>void command({type:'SetAssisted',enabled})} job={clubId=>{void command({type:'AcceptJob',clubId}).then(ok=>{if(ok){setBoardOpen(false);setScreen('home');}});}} retire={()=>void command({type:'RetireManager'})} newCareer={()=>{setBoardOpen(false);navigate('setup');}}/>}
+    {state&&screen!=='title'&&screen!=='setup'&&screen!=='dream'&&(boardOpen||state.board.status!=='employed')&&<BoardMenu state={state} busy={busy} close={()=>setBoardOpen(false)} assisted={enabled=>void command({type:'SetAssisted',enabled})} job={clubId=>{void command({type:'AcceptJob',clubId}).then(ok=>{if(ok){setBoardOpen(false);setScreen('home');}});}} retire={()=>void command({type:'RetireManager'})} newCareer={()=>{setBoardOpen(false);navigate('setup');}}/>}
     {state&&financeOpen&&<FinanceMenu state={state} busy={busy} upgrade={kind=>void command({type:'UpgradeFacility',kind})} close={()=>setFinanceOpen(false)}/>}
     {state&&reportOpen&&<MatchReport state={state} close={()=>setReportOpen(false)}/>}
     {state&&benchOpen&&<BenchMenu state={state} busy={busy} close={()=>setBenchOpen(false)} confirm={bench=>command({type:'SelectBench',bench})}/>}
