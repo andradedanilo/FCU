@@ -1,3 +1,4 @@
+import {createSaveSummaries} from './saveSummaries.ts';
 import manifest from '../../../../package.json' with {type:'json'};
 import { mkdir, open, readFile, readdir, rename, stat } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -49,7 +50,7 @@ export function decode(bytes:Uint8Array) {
   return {envelope:e,state};
 }
 export function createSaveStore(root:string) {
-  const parents=new Map<string,string>();
+  const parents=new Map<string,string>(),summary=createSaveSummaries();
   let pending:Promise<unknown>=Promise.resolve();
   const directory=(careerId:string)=>join(root,z.string().uuid().parse(careerId));
   const filename=(careerId:string,commitId:string)=>join(directory(careerId),`${z.string().uuid().parse(commitId)}.save`);
@@ -60,6 +61,12 @@ export function createSaveStore(root:string) {
     if(decoded.state.careerId!==careerId||decoded.envelope.saveCommitId!==commitId)throw new Error('INVALID_SAVE');
     parents.set(careerId,commitId);return decoded.state;
   }
+  function describe(careerId:string,commitId:string,bytes:Uint8Array):SaveEntry{
+    return summary(careerId+'/'+commitId,bytes,()=>{
+      const {envelope:e,state:s}=decode(bytes);if(e.saveCommitId!==commitId||s.careerId!==careerId)throw Error('INVALID_SAVE');
+      return {careerId,commitId,parentCommitId:e.parentCommitId,appVersion:e.appVersion,season:s.season,club:s.clubs.find(c=>c.id===s.clubId)!.name,round:s.round,tick:s.match?.tick??0,savedAtUTC:e.savedAtUTC,kind:e.kind,valid:true,engineVersion:e.engineVersion,error:null};
+    });
+  }
   async function list():Promise<SaveEntry[]> {
     await mkdir(root,{recursive:true});const entries:SaveEntry[]=[];
     for(const dir of await readdir(root,{withFileTypes:true})) {
@@ -69,9 +76,7 @@ export function createSaveStore(root:string) {
         if(!z.string().uuid().safeParse(commitId).success)continue;
         try {
           const path=filename(dir.name,commitId);if((await stat(path)).size>MAX_BYTES)throw new Error('INVALID_SAVE');
-          const {envelope:e,state:s}=decode(await readFile(path));
-          if(e.saveCommitId!==commitId||s.careerId!==dir.name)throw new Error('INVALID_SAVE');
-          entries.push({careerId:s.careerId,commitId,parentCommitId:e.parentCommitId,appVersion:e.appVersion,season:s.season,club:s.clubs.find(c=>c.id===s.clubId)!.name,round:s.round,tick:s.match?.tick??0,savedAtUTC:e.savedAtUTC,kind:e.kind,valid:true,engineVersion:e.engineVersion,error:null});
+          entries.push(describe(dir.name,commitId,await readFile(path)));
         } catch(error) {entries.push({careerId:dir.name,commitId,parentCommitId:null,appVersion:null,season:null,club:'',round:0,tick:0,savedAtUTC:'',kind:'manual',valid:false,engineVersion:null,error:error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':'INVALID_SAVE'});}
       }
     }
@@ -85,7 +90,7 @@ export function createSaveStore(root:string) {
       const temp=join(folder,`${saveCommitId}.tmp`);const handle=await open(temp,'wx');
       try {await handle.writeFile(gzipSync(canonical(envelope)));await handle.sync();}finally{await handle.close();}
       decode(await readFile(temp));await rename(temp,filename(state.careerId,saveCommitId));
-      decode(await readFile(filename(state.careerId,saveCommitId)));parents.set(state.careerId,saveCommitId);return saveCommitId;
+      describe(state.careerId,saveCommitId,await readFile(filename(state.careerId,saveCommitId)));parents.set(state.careerId,saveCommitId);return saveCommitId;
     });
     pending=action.catch(()=>undefined);return action;
   }

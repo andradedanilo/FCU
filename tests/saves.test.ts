@@ -40,7 +40,7 @@ it('roundtrips a Unicode mid-match checkpoint with the same continuation hash',a
 it('preserves previous commits and ignores an interrupted temporary write',async()=>{
   const root=await mkdtemp(join(tmpdir(),'fcu-save-'));const store=createSaveStore(root);const s=career();const first=await store.save(s,'manual');
   await writeFile(join(root,s.careerId,'interrupted.tmp'),'partial');const second=await store.save(s,'auto');
-  expect((await store.list()).map(e=>e.commitId)).toEqual(expect.arrayContaining([first,second]));expect((await store.list())).toHaveLength(2);
+  expect((await store.list()).map(e=>e.commitId)).toEqual(expect.arrayContaining([first,second]));expect((await store.list())).toHaveLength(2);const shown=await store.list();shown[0]!.club='Changed display';expect((await store.list()).some(entry=>entry.club==='Changed display')).toBe(false);
   expect(checksum(await store.load(s.careerId,first))).toBe(checksum(s));
 });
 it('lists corruption for recovery, rejects future versions and preserves original files',async()=>{

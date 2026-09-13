@@ -1,3 +1,4 @@
+import {createSaveSummaries} from './saveSummaries.ts';
 import manifest from '../../../../package.json' with {type:'json'};
 import {mkdir,open,readFile,readdir,rename,stat} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -20,17 +21,23 @@ export function decodeDream(bytes:Uint8Array){
  return {e,state:validateDream(payload)};
 }
 export function createDreamStore(root:string){
- let pending:Promise<unknown>=Promise.resolve();const parents=new Map<string,string>();
+ let pending:Promise<unknown>=Promise.resolve();const parents=new Map<string,string>(),summary=createSaveSummaries();
  const folder=(id:string)=>join(root,z.string().uuid().parse(id));
  const file=(id:string,commit:string)=>join(folder(id),`${z.string().uuid().parse(commit)}.dream`);
  async function read(id:string,commit:string){const path=file(id,commit);if((await stat(path)).size>limit)throw Error('INVALID_SAVE');const decoded=decodeDream(await readFile(path));if(decoded.state.game.careerId!==id||decoded.e.commit!==commit)throw Error('INVALID_SAVE');return decoded;}
  async function load(id:string,commit:string){const decoded=await read(id,commit);parents.set(id,commit);return decoded.state;}
+ function describe(id:string,commit:string,bytes:Uint8Array):SaveEntry{
+  return summary(id+'/'+commit,bytes,()=>{
+   const {e,state}=decodeDream(bytes);if(state.game.careerId!==id||e.commit!==commit)throw Error('INVALID_SAVE');
+   return {careerId:id,commitId:commit,parentCommitId:e.parent,appVersion:e.appVersion??null,season:state.game.season,club:state.game.clubs[0]!.name,round:state.game.round,tick:state.game.match?.tick??0,savedAtUTC:e.date,kind:'auto',valid:true,engineVersion:state.game.engineVersion,error:null};
+  });
+ }
  async function list():Promise<SaveEntry[]>{
   await mkdir(root,{recursive:true});const entries:SaveEntry[]=[];
   for(const dir of await readdir(root,{withFileTypes:true})){
    if(!dir.isDirectory()||!z.string().uuid().safeParse(dir.name).success)continue;
    for(const name of await readdir(folder(dir.name))){if(!name.endsWith('.dream'))continue;const commit=name.slice(0,-6);if(!z.string().uuid().safeParse(commit).success)continue;
-    try{const {e,state}=await read(dir.name,commit);entries.push({careerId:dir.name,commitId:commit,parentCommitId:e.parent,appVersion:e.appVersion??null,season:state.game.season,club:state.game.clubs[0]!.name,round:state.game.round,tick:state.game.match?.tick??0,savedAtUTC:e.date,kind:'auto',valid:true,engineVersion:state.game.engineVersion,error:null});}
+    try{const path=file(dir.name,commit);if((await stat(path)).size>limit)throw Error('INVALID_SAVE');entries.push(describe(dir.name,commit,await readFile(path)));}
     catch(error){entries.push({careerId:dir.name,commitId:commit,parentCommitId:null,appVersion:null,season:null,club:'',round:0,tick:0,savedAtUTC:'',kind:'auto',valid:false,engineVersion:null,error:error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':'INVALID_SAVE'});}
    }
   }return entries.sort((a,b)=>b.savedAtUTC.localeCompare(a.savedAtUTC)||a.commitId.localeCompare(b.commitId));
@@ -39,7 +46,7 @@ export function createDreamStore(root:string){
   const task=pending.then(async()=>{const state=validateDream(input),id=state.game.careerId,commit=randomUUID();await mkdir(folder(id),{recursive:true});
    const e={schema:4,appVersion:manifest.version,gameMode:'dreamClub',commit,parent:parents.get(id)??null,date:new Date().toISOString(),checksum:checksum(state),payload:state};
    const temp=join(folder(id),`${commit}.tmp`),handle=await open(temp,'wx');try{await handle.writeFile(gzipSync(canonical(e)));await handle.sync();}finally{await handle.close();}
-   decodeDream(await readFile(temp));await rename(temp,file(id,commit));await read(id,commit);parents.set(id,commit);return commit;
+   decodeDream(await readFile(temp));await rename(temp,file(id,commit));describe(id,commit,await readFile(file(id,commit)));parents.set(id,commit);return commit;
   });pending=task.catch(()=>undefined);return task;
  }
  return {save,load,list,idle:()=>pending};
