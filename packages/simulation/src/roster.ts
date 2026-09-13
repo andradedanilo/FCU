@@ -46,7 +46,7 @@ export function createPackedCareer(careerId:string,seed:number,clubId:ClubId,pac
       const source=sourcePlayers.get(membership.playerId),profile=profiles.get(membership.playerId);
       if(!source||!profile)throw Error('INVALID_ROSTER_PLAYER');
       const id=playerId.parse(`player-${destination.slice(5)}-${String(i+1).padStart(2,'0')}`);playerIds[id]=source.id;
-      players.push({id,clubId:destination,name:source.displayName,role:source.primaryRole,...profile.attributes,condition:100000,morale:70,registered:true,academy:false,injuryUntil:null,leagueYellows:0,leagueBan:0});
+      players.push({id,clubId:destination,name:source.displayName,role:source.primaryRole,secondaryRoles:[...source.secondaryRoles],...profile.attributes,condition:100000,morale:70,registered:true,academy:false,injuryUntil:null,leagueYellows:0,leagueBan:0});
     }
   }
   if(new Set(Object.values(playerIds)).size!==pack.roster.players.length)throw Error('INVALID_ROSTER_PLAYER');

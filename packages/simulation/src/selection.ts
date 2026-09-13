@@ -1,9 +1,15 @@
 import {formationCounts,type Player,type ClubId,type PlayerId,type Tactics} from '../../contracts/src/index.ts';
 import {available} from './availability.ts';
-import {effectiveRating} from './ratings.ts';
+import {effectiveRating,naturalRole} from './ratings.ts';
 const compare=(a:string,b:string)=>a<b?-1:a>b?1:0;
 export function autoPick(players: Player[], club: ClubId,formation:Tactics['formation']='4-4-2',date='2026-07-01'): PlayerId[] {
   const natural=(['GK','DEF','MID','FWD'] as const).flatMap((role, i) => players.filter(p => p.clubId === club && p.role === role && available(p,date)).sort((a,b) => effectiveRating(b)-effectiveRating(a) || compare(a.id,b.id)).slice(0, formationCounts[formation][i]).map(p => p.id));
+  const primary=new Set(natural);
+  for(const [i,role] of (['GK','DEF','MID','FWD'] as const).entries()){
+    const used=[...primary].filter(id=>players.find(p=>p.id===id)?.role===role).length;
+    const candidates=players.filter(p=>p.clubId===club&&available(p,date)&&!natural.includes(p.id)&&naturalRole(p,role)).sort((a,b)=>effectiveRating(b,role)-effectiveRating(a,role)||compare(a.id,b.id));
+    natural.push(...candidates.slice(0,Math.max(0,formationCounts[formation][i]!-used)).map(p=>p.id));
+  }
   const extras=players.filter(p=>p.clubId===club&&p.role!=='GK'&&available(p,date)&&!natural.includes(p.id)).sort((a,b)=>effectiveRating(b)-effectiveRating(a)||compare(a.id,b.id));
   return [...natural,...extras.map(p=>p.id)].slice(0,11);
 }
