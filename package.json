@@ -24,6 +24,7 @@
     "package:win": "node scripts/package.mjs win32",
     "package:linux": "node scripts/package.mjs linux",
     "start:packaged": "node scripts/start-packaged.mjs",
+    "steam:preview": "node scripts/steam-preview.ts",
     "roster:check": "node scripts/roster-check.ts",
     "roster:sync": "node scripts/roster-sync.ts",
     "roster:build": "node scripts/build-roster.mjs",
