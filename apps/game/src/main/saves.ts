@@ -9,6 +9,7 @@ import { canonical, type SaveEntry } from '../../../../packages/contracts/src/in
 import { migrateRecordsCareer, migrateOutgoingCareer, migratePositionCareer, migratePreAttackCareer, migrateArchivedCareer, migrateBoardCareer, migratePersonnelCareer, migrateFacilitiesCareer, migrateRegistrationCareer, migrateRosterCareer, migrateCompetitionCareer, validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer, migrateExhibitionCareer, migrateRepeatingCareer, migrateCountryCareer } from '../../../../packages/simulation/src/engine.ts';
 
 const MAX_BYTES=32*1024*1024;
+const MAX_PAYLOAD_BYTES=256*1024*1024;
 export const checksum=(value:unknown)=>createHash('sha256').update(canonical(value)).digest('hex');
 const formats=[
  {app:'0.1.0',rules:'exhibition-1',read:migrateLegacyCareer},
@@ -43,7 +44,7 @@ const formats=[
 const envelopeSchema=z.object({schema:z.number().int().min(1).max(formats.length),appVersion:z.string().regex(/^\d+\.\d+\.\d+$/).max(20),engineVersion:z.string().max(20),rulesetVersion:z.string().max(40),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.string().min(1).max(100),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decode(bytes:Uint8Array) {
   if(bytes.length>MAX_BYTES)throw new Error('INVALID_SAVE');
-  const raw:unknown=JSON.parse(gunzipSync(bytes,{maxOutputLength:MAX_BYTES}).toString('utf8'));
+  const raw:unknown=JSON.parse(gunzipSync(bytes,{maxOutputLength:MAX_PAYLOAD_BYTES}).toString('utf8'));
   if(typeof raw==='object'&&raw!==null&&'schema' in raw&&typeof raw.schema==='number'&&raw.schema>formats.length)throw new Error('FUTURE_SAVE');
   const e=envelopeSchema.parse(raw);
   if(checksum(e.payload)!==e.checksum)throw new Error('INVALID_SAVE');

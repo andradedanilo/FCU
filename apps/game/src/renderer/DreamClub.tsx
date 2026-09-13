@@ -1,4 +1,5 @@
-import {PlayerRecords} from './PlayerRecords.tsx';
+import {lazy,Suspense} from 'react';
+const PlayerRecords=lazy(()=>import('./PlayerRecords.tsx').then(module=>({default:module.PlayerRecords})));
 import {SaveHistory} from './SaveHistory.tsx';
 import {usePowerPause} from './usePowerPause.ts';
 import type {MatchCue} from './useMatchBroadcast.ts';
@@ -111,7 +112,7 @@ export function DreamClub({packs,exit,cue,ambience,overlayOpen,exitCheckpoint}:{
  {!collection&&screen==='squad'&&<SquadScreen records={()=>setRecordsOpen(true)} dream state={g} busy={busy} lineup={lineup} change={setLineup} registration={()=>setCollection(true)} contracts={()=>{}} forfeit={()=>{}} callUp={()=>{}} training={()=>{}} focus={()=>{}} bench={()=>setBench(true)} tactics={()=>setTactics(true)} suggest={()=>setLineup(autoPick(selectionPlayers(g),g.clubId,g.tactics.formation,g.date))} confirm={()=>void match({type:'SelectLineup',lineup})}/>}
  {screen==='match'&&g.match&&<MatchScreen state={g} busy={busy} playing={playing} hold={value=>{hold.current=value;}} play={play} pause={stop} continuousHalf={continuous} changeContinuous={value=>{continuousRef.current=value;setContinuous(value);}} acknowledge={()=>void match({type:'AcknowledgeMatch'})} substitute={(out,incoming)=>match({type:'Substitute',out,in:incoming})} tactics={()=>{stop();setTactics(true);}} report={()=>setReport(true)} done={()=>setScreen('home')} goal={cue}/>}
  {tactics&&<TacticsMenu state={g} busy={busy} draftLineup={lineup} store={(slot,tactics)=>match({type:'StoreTacticPreset',slot,tactics})} confirm={tactics=>match({type:'SetTactics',tactics})} close={()=>setTactics(false)}/>}
- {recordsOpen&&<PlayerRecords state={g} close={()=>setRecordsOpen(false)}/>}
+ {recordsOpen&&<Suspense fallback={<p>{t.loadingRecords}</p>}><PlayerRecords state={g} close={()=>setRecordsOpen(false)}/></Suspense>}
  {bench&&<BenchMenu state={g} busy={busy} confirm={bench=>match({type:'SelectBench',bench})} close={()=>setBench(false)}/>}
  {report&&<MatchReport state={g} close={()=>setReport(false)}/>}
  </>}

@@ -160,3 +160,27 @@ test('chooses an earned Dream player by keyboard and stops audio on exit',async(
   app=await electron.launch({args:['.'],env:{...process.env,FCU_USER_DATA:data}});closed=false;page=await app.firstWindow();await page.context().setOffline(true);await page.getByRole('button',{name:'Load',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await expect(page.getByTestId('minute')).toHaveAttribute('data-tick','1');
  }finally{if(!closed)await app.close();}
 });
+import {createCareer,applyCommand} from '../packages/simulation/src/engine.ts';
+import {clubs} from '../packages/contracts/src/identity.ts';
+import {youthIntake} from '../packages/simulation/src/personnel.ts';
+import {marketCommand,processMarket} from '../packages/simulation/src/market.ts';
+import {desiredTerms} from '../packages/simulation/src/contracts.ts';
+import {createSaveStore} from '../apps/game/src/main/saves.ts';
+import type {Command} from '../packages/contracts/src/index.ts';
+test('reviews player records promotes a prospect and accepts a sale through the desktop',async()=>{
+ const data=await mkdtemp(join(tmpdir(),'fcu-management-'));let state=createCareer(crypto.randomUUID(),2026,clubs[0]!.id);
+ const act=(action:Command)=>{const result=applyCommand(state,{...action,careerId:state.careerId,commandId:crypto.randomUUID(),expectedRevision:state.revision});if(!result.ok)throw Error(result.error);state=result.value;};
+ const common={careerId:state.careerId,commandId:crypto.randomUUID(),expectedRevision:0};act({...common,type:'StartMatch'});
+ while(state.match!.phase!=='finished'){if(state.match!.pendingDismissal||state.match!.pendingInjuries.length)act({...common,type:'AcknowledgeMatch'});act({...common,type:'AdvanceMatch',minutes:90});}
+ youthIntake(state);const prospect=state.players.find(p=>p.clubId===state.clubId&&p.academy)!,seller=state.players.find(p=>p.clubId===state.clubId&&p.role==='MID')!;
+ act({...common,type:'SetTransferListing',playerId:seller.id,listing:{kind:'sale',fee:10000000,share:100}});
+ const error=marketCommand(state,{...common,commandId:crypto.randomUUID(),type:'SubmitOffer',playerId:seller.id,fee:10000000},clubs[1]!.id);if(error)throw Error(error);
+ const offer=state.offers.at(-1)!;offer.terms={...desiredTerms(state,seller),years:2,role:'rotation'};act({...common,type:'AdvanceCalendar',target:'day'});processMarket(state);
+ await createSaveStore(join(data,'saves')).save(state,'manual');const app=await electron.launch({args:['.'],env:{...process.env,FCU_USER_DATA:data}});
+ try{const page=await app.firstWindow();await page.context().setOffline(true);const click=(name:string)=>page.getByRole('button',{name,exact:true}).click();
+  await click('Load');await page.getByRole('dialog').getByRole('button',{name:'Load',exact:true}).first().click();await page.getByRole('button',{name:'Continue',exact:false}).click();await click('Squad');await click('Player records');const records=page.getByRole('dialog',{name:'Player records',exact:true});await expect(records.getByRole('table')).toBeVisible();await expect(records).toContainText('All tracked seasons');await page.screenshot({path:'work/player-records.png'});await records.getByRole('button',{name:'Close',exact:true}).click();
+  await click('Player contracts');let dialog=page.getByRole('dialog',{name:'Player contracts',exact:true});await dialog.getByRole('button').filter({hasText:prospect.name}).click();await dialog.getByRole('button',{name:'Review renewal',exact:true}).click();await dialog.getByRole('button',{name:'Confirm senior contract',exact:true}).click();await expect(dialog).toHaveCount(0);
+  await click('Player contracts');dialog=page.getByRole('dialog',{name:'Player contracts',exact:true});await dialog.getByRole('button').filter({hasText:seller.name}).click();await expect(dialog.getByRole('button',{name:'Accept and authorize departure',exact:true})).toBeEnabled();await page.screenshot({path:'work/outgoing-transfer.png'});await dialog.getByRole('button',{name:'Accept and authorize departure',exact:true}).click();await expect(dialog).toHaveCount(0);
+  await click('Save');await expect(page.getByRole('status')).toHaveText('Saved to disk.');const loaded=await page.evaluate(async()=>{const entries=await window.fcu.list();if(!entries.ok||!entries.value[0])throw Error('No save');const row=entries.value[0],result=await window.fcu.load(row.careerId,row.commitId);if(!result.ok)throw Error(result.error);return result.value;});expect(loaded.players.find(p=>p.id===prospect.id)?.academy).toBe(false);expect(loaded.players.find(p=>p.id===seller.id)?.clubId).toBe(clubs[1]!.id);expect(loaded.players.some(p=>p.performance?.length)).toBe(true);
+ }finally{await app.close();}
+});

@@ -1,4 +1,5 @@
-import {PlayerRecords} from './PlayerRecords.tsx';
+import {lazy,Suspense} from 'react';
+const PlayerRecords=lazy(()=>import('./PlayerRecords.tsx').then(module=>({default:module.PlayerRecords})));
 import {Help} from './Help.tsx';
 import {Diagnostics} from './Diagnostics.tsx';
 import {SaveHistory} from './SaveHistory.tsx';
@@ -12,7 +13,7 @@ import type {InstalledRoster} from '../../../../packages/contracts/src/index.ts'
 import {selectionPlayers} from '../../../../packages/simulation/src/discipline.ts';
 import {SeasonHistory} from './SeasonHistory.tsx';
 import {ScoutingMenu} from './ScoutingMenu.tsx';
-import {ContractsMenu} from './ContractsMenu.tsx';
+const ContractsMenu=lazy(()=>import('./ContractsMenu.tsx').then(module=>({default:module.ContractsMenu})));
 import {FinanceMenu} from './FinanceMenu.tsx';
 import {needsDecision} from '../../../../packages/simulation/src/availability.ts';
 import { useRef, useState, useEffect } from 'react';
@@ -195,8 +196,8 @@ export function App() {
     {state&&tacticsOpen&&<TacticsMenu store={(slot,tactics)=>command({type:'StoreTacticPreset',slot,tactics})} draftLineup={screen==='squad'?lineup:state.lineup} state={state} busy={busy} close={()=>setTacticsOpen(false)} confirm={tactics=>command({type:'SetTactics',tactics})}/>}
     {state&&historyOpen&&<SeasonHistory state={state} close={()=>setHistoryOpen(false)}/>}
     {state&&scoutingOpen&&<ScoutingMenu squad={()=>{setScoutingOpen(false);navigate('squad');}} initialPlayer={newsPlayer} state={state} busy={busy} command={command} close={()=>setScoutingOpen(false)}/>}
-    {state&&recordsOpen&&<PlayerRecords state={state} close={()=>setRecordsOpen(false)}/>}
-    {state&&contractsOpen&&<ContractsMenu initialPlayer={newsPlayer} state={state} busy={busy} confirm={command} close={()=>setContractsOpen(false)}/>}
+    {state&&recordsOpen&&<Suspense fallback={<p>{t.loadingRecords}</p>}><PlayerRecords state={state} close={()=>setRecordsOpen(false)}/></Suspense>}
+    {state&&contractsOpen&&<Suspense fallback={<p>{t.contracts}</p>}><ContractsMenu initialPlayer={newsPlayer} state={state} busy={busy} confirm={command} close={()=>setContractsOpen(false)}/></Suspense>}
     {state&&screen!=='title'&&screen!=='setup'&&screen!=='dream'&&(boardOpen||state.board.status!=='employed')&&<BoardMenu state={state} busy={busy} close={()=>setBoardOpen(false)} assisted={enabled=>void command({type:'SetAssisted',enabled})} job={clubId=>{void command({type:'AcceptJob',clubId}).then(ok=>{if(ok){setBoardOpen(false);setScreen('home');}});}} retire={()=>void command({type:'RetireManager'})} newCareer={()=>{setBoardOpen(false);navigate('setup');}}/>}
     {state&&financeOpen&&<FinanceMenu state={state} busy={busy} upgrade={kind=>void command({type:'UpgradeFacility',kind})} close={()=>setFinanceOpen(false)}/>}
     {state&&reportOpen&&<MatchReport state={state} close={()=>setReportOpen(false)}/>}

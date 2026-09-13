@@ -119,3 +119,10 @@ it('records the writer app separately from the unchanged engine and preserves pr
  const missing={...raw.e};delete missing.appVersion;expect(()=>decodeDream(gzipSync(canonical(missing)))).toThrow('INVALID_SAVE');
  expect((await store.list())[0]?.appVersion).toBe(manifest.version);expect((await dreamStore.list())[0]?.appVersion).toBe(manifest.version);
 });
+it('reads expanded career history without relaxing the compressed file limit',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'fcu-expanded-save-')),state=createCareer(crypto.randomUUID(),2026,clubs[0]!.id),store=createSaveStore(root),id=await store.save(state,'manual');
+ const raw=JSON.parse(gunzipSync(await readFile(join(root,state.careerId,id+'.save'))).toString('utf8'));
+ // Forward-compatible envelope metadata exercises inflation independently of domain-size fixtures.
+ raw.padding='x'.repeat(34*1024*1024);const bytes=gzipSync(JSON.stringify(raw));expect(bytes.length).toBeLessThan(32*1024*1024);expect(decode(bytes).state).toEqual(state);
+ expect(()=>decode(new Uint8Array(32*1024*1024+1))).toThrow('INVALID_SAVE');
+});

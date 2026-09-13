@@ -28,6 +28,6 @@ export function ContractsMenu({state,busy,confirm,close,initialPlayer}:{initialP
    <div className={s.review}><p>{t.signingBonus}: <b>{money(action.bonus)}</b></p><p>{t.weeklyWages}: <b>{money(weekly)} / {money(bank.wage)}</b></p><p>{t.cashAfter}: <b>{money(bank.cash-action.bonus)}</b></p><p>{t.contractUntil}: <b>{contractEnd(state.date,draft.years)}</b></p></div>
    <p>{player.academy?t.promotionHint:t.renewalHint}</p>{error&&<p role="status">{t.errors[error]}</p>}
    {review?<><strong>{t.renewalReview}</strong><div className={s.actions}><button disabled={busy} onClick={()=>setReview(false)}>{t.editTerms}</button><button disabled={busy||!!error} onClick={()=>void confirm(action).then(ok=>{if(ok)close();})}>{player.academy?t.promoteAcademy:t.confirmRenewal}</button></div></>:<button disabled={busy||!!error} onClick={()=>setReview(true)}>{t.reviewRenewal}</button>}
-   <OutgoingPanel key={player.id} state={state} player={player} busy={busy} command={confirm}/>
+   <OutgoingPanel key={player.id} state={state} player={player} busy={busy} command={action=>confirm(action).then(ok=>{if(ok&&action.type==='RespondBid'&&action.accept)close();return ok;})}/>
   </section></div></dialog>;
 }

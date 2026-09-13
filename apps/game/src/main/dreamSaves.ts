@@ -9,10 +9,11 @@ import {canonical,preRecordsCareerSchema,preOutgoingCareerSchema,prePositionCare
 import {validateDream} from '../../../../packages/simulation/src/dreamSeason.ts';
 import {checksum} from './saves.ts';
 const limit=32*1024*1024;
+const payloadLimit=256*1024*1024;
 const envelope=z.strictObject({schema:z.number().int().min(1).max(8),appVersion:z.string().regex(/^\d+\.\d+\.\d+$/).max(20).optional(),gameMode:z.literal('dreamClub'),commit:z.string().uuid(),parent:z.string().uuid().nullable(),date:z.iso.datetime(),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decodeDream(bytes:Uint8Array){
  if(bytes.length>limit)throw Error('INVALID_SAVE');
- const raw:unknown=JSON.parse(gunzipSync(bytes,{maxOutputLength:limit}).toString('utf8'));
+ const raw:unknown=JSON.parse(gunzipSync(bytes,{maxOutputLength:payloadLimit}).toString('utf8'));
  if(typeof raw==='object'&&raw!==null&&'schema' in raw&&typeof raw.schema==='number'&&raw.schema>8)throw Error('FUTURE_SAVE');
  const e=envelope.parse(raw);if(e.schema>=4&&!e.appVersion)throw Error('INVALID_SAVE');if(checksum(e.payload)!==e.checksum)throw Error('INVALID_SAVE');
  let payload=e.payload;
