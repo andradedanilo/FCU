@@ -11,6 +11,11 @@ it('keeps one recorded ambience loop, fixed audio speed and immediate SFX mute',
  try{audio.match(true);const first=clips[0]!;expect(first.loop).toBe(true);audio.match(true);expect(first.paused).toBe(true);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(1);
  audio.suspend(true);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(0);audio.suspend(false);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(1);
  audio.highlight('kick');expect(clips.at(-1)!.src).toContain('kick.wav');expect(clips.at(-1)!.playbackRate).toBe(1);audio.match(false);expect(clips.filter(c=>c.loop&&!c.paused)).toHaveLength(0);audio.effects(false);expect(clips.every(c=>c.paused)).toBe(true);const count=clips.length;audio.highlight('whistle');expect(clips).toHaveLength(count);
+ audio.music(true);const song=clips.at(-1)!;expect(song.src).toContain('music.wav');expect(song.loop).toBe(true);expect(song.paused).toBe(false);
+ audio.effects(true);audio.click();expect(clips.at(-1)!.src).toContain('click.wav');audio.effects(false);expect(song.paused).toBe(false);
+ audio.effects(true);audio.highlight('save');expect(clips.at(-1)!.src).toContain('groan.wav');audio.highlight('goal');expect(clips.at(-1)!.src).toContain('cheer.wav');
+ audio.suspend(true);expect(clips.every(c=>c.paused)).toBe(true);audio.suspend(false);const resumed=clips.at(-1)!;expect(resumed.src).toContain('music.wav');audio.music(false);expect(resumed.paused).toBe(true);
+ audio.music(true);audio.dispose();expect(clips.every(c=>c.paused)).toBe(true);
  }finally{audio.dispose();vi.unstubAllGlobals();}
 });
 import {createCareer,startMatch,advanceMatch,applyCommand,standings} from '../packages/simulation/src/engine.ts';

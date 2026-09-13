@@ -4,9 +4,9 @@ import {join} from 'node:path';import {tmpdir} from 'node:os';import {createHash
 // Input recordings are downloaded separately from the credited public sources.
 const input=process.argv[2];if(!input)throw Error('Pass the directory containing kick.wav and the four source MP3 previews.');
 const app=await _electron.launch({args:['.'],env:{...process.env,FCU_USER_DATA:mkdtempSync(join(tmpdir(),'fcu-audio-'))}});
-const selected=process.argv.slice(3);const names=selected.length?selected:['kick','whistle','cheer','groan','crowd','tackle'];
+const selected=process.argv.slice(3);const names=selected.length?selected:['whistle','crowd','tackle'];
 if(names.some(name=>!['kick','whistle','cheer','groan','crowd','tackle'].includes(name)))throw Error('Unknown audio cue');
-const edits=JSON.parse(readFileSync('apps/game/src/renderer/assets/audio/edits.json','utf8')).filter(entry=>!names.includes(entry.file.replace('.wav','')));
+const edits=JSON.parse(readFileSync('assets/audio/edits.json','utf8')).filter(entry=>!names.includes(entry.file.replace('.wav','')));
 try{const page=await app.firstWindow();await page.context().setOffline(true);
  for(const name of names){
   const raw=readFileSync(join(input,name+(name==='kick'?'.wav':'.mp3')));
@@ -24,8 +24,8 @@ try{const page=await app.firstWindow();await page.context().setOffline(true);
    for(let i=0;i<count;i++){const fade=Math.min(1,i/(rate*.008),(count-i)/(rate*(name==='kick'?.025:.2)));for(let c=0;c<channels;c++)output[i*channels+c]=Math.round(buffer.getChannelData(c)[Math.round(start*rate)+i]*gain*fade*32767);}
    return {samples:Array.from(output),rate,channels,start,duration:count/rate,gain};
   },{encoded:raw.toString('base64'),name});
-  const data=Buffer.alloc(44+result.samples.length*2);data.write('RIFF');data.writeUInt32LE(data.length-8,4);data.write('WAVEfmt ',8);data.writeUInt32LE(16,16);data.writeUInt16LE(1,20);data.writeUInt16LE(result.channels,22);data.writeUInt32LE(result.rate,24);data.writeUInt32LE(result.rate*result.channels*2,28);data.writeUInt16LE(result.channels*2,32);data.writeUInt16LE(16,34);data.write('data',36);data.writeUInt32LE(data.length-44,40);result.samples.forEach((v,i)=>data.writeInt16LE(v,44+i*2));writeFileSync('apps/game/src/renderer/assets/audio/'+name+'.wav',data);
+  const data=Buffer.alloc(44+result.samples.length*2);data.write('RIFF');data.writeUInt32LE(data.length-8,4);data.write('WAVEfmt ',8);data.writeUInt32LE(16,16);data.writeUInt16LE(1,20);data.writeUInt16LE(result.channels,22);data.writeUInt32LE(result.rate,24);data.writeUInt32LE(result.rate*result.channels*2,28);data.writeUInt16LE(result.channels*2,32);data.writeUInt16LE(16,34);data.write('data',36);data.writeUInt32LE(data.length-44,40);result.samples.forEach((v,i)=>data.writeInt16LE(v,44+i*2));writeFileSync('assets/audio/'+name+'.wav',data);
   edits.push({file:name+'.wav',sourceSha256:createHash('sha256').update(raw).digest('hex'),startSeconds:result.start,durationSeconds:result.duration,gain:result.gain,sampleRate:result.rate,channels:result.channels});
  }
- writeFileSync('apps/game/src/renderer/assets/audio/edits.json',JSON.stringify(edits,null,2)+'\n');console.log(edits);
+ writeFileSync('assets/audio/edits.json',JSON.stringify(edits,null,2)+'\n');console.log(edits);
 }finally{await app.close();}

@@ -1,0 +1,59 @@
+[
+  {
+    "file": "whistle.wav",
+    "sourceSha256": "68b815d65b169d0d634d9bd31fd0b6fb5be6b5d66e1cf7046b23d574c3119d86",
+    "startSeconds": 0,
+    "durationSeconds": 2.1084791666666667,
+    "gain": 1.0668806717249102,
+    "sampleRate": 48000,
+    "channels": 1
+  },
+  {
+    "file": "crowd.wav",
+    "sourceSha256": "476935dd27a03ed88f13ec1df224d26e3814ce21011207eaf6239ea391c365ee",
+    "startSeconds": 10,
+    "durationSeconds": 20,
+    "gain": 1.529108848941608,
+    "sampleRate": 48000,
+    "channels": 2
+  },
+  {
+    "file": "tackle.wav",
+    "sourceSha256": "857e64a8dfbe741faac29ac879f6457e25412858d5f54631211f1d2f1cf98635",
+    "startSeconds": 1.0950000000000002,
+    "durationSeconds": 1.2,
+    "gain": 1.293847545701634,
+    "sampleRate": 48000,
+    "channels": 2
+  },
+  {
+    "file": "kick.wav",
+    "source": "Original approved deep-ball-kick.wav",
+    "sha256": "ba58a08a9ee39c23c0c52d28105540e7d01ae3c097753bee10400a5a0c6bfc74",
+    "edit": "No post-render or post-copy processing."
+  },
+  {
+    "file": "cheer.wav",
+    "source": "Owner-supplied Cheer.wav",
+    "sha256": "b3bc59884810208bdc9ce10632bed316c6188f925a1873d60989efade3b7dcca",
+    "edit": "No post-render or post-copy processing."
+  },
+  {
+    "file": "groan.wav",
+    "source": "Owner-supplied Missed.wav",
+    "sha256": "91d3e4177db731162ebf2ee5f10dc9c4dca687fd5183b05832e78b25650da938",
+    "edit": "No post-render or post-copy processing."
+  },
+  {
+    "file": "music.wav",
+    "source": "scripts/create-menu-audio.mjs",
+    "sha256": "9898a2bc2e0330fffc4d85a07a05ff99c80053bf88dfc33d61187b455ac6e0be",
+    "edit": "No post-render or post-copy processing."
+  },
+  {
+    "file": "click.wav",
+    "source": "scripts/create-menu-audio.mjs",
+    "sha256": "437f1b17d8458c9ae77b0e0bea470f2a4b3513db3d220a844f04cec8f5774edc",
+    "edit": "No post-render or post-copy processing."
+  }
+]
