@@ -1,3 +1,4 @@
+import {initialBoard} from './board.ts';
 import {initialPersonnel} from './personnel.ts';
 import {loanEnd} from './loans.ts';
 import {type Career,type InstalledRoster,type ClubId,type Player,type PlayerId,clubSchema,playerId,offerId} from '../../contracts/src/index.ts';
@@ -67,6 +68,7 @@ export function createPackedCareer(careerId:string,seed:number,clubId:ClubId,pac
   state.economy=createEconomy(state,overall,state.world.divisions.filter(d=>d.tier===2).flatMap(d=>d.clubs));state.contracts=createContracts(state);
   for(const p of players){const sourceId=playerIds[p.id];if(!sourceId)continue;const profile=profiles.get(sourceId as typeof pack.roster.players[number]['id'])!,source=sourcePlayers.get(sourceId as typeof pack.roster.players[number]['id'])!;state.economy.wages[p.id]=profile.generatedContract.weeklyWageCents;state.contracts[p.id]!.birthDate=source.dateOfBirth;state.contracts[p.id]!.ends=profile.generatedContract.expires;}
   for(const loan of state.loans){const contract=state.contracts[loan.playerId]!;contract.ownerId=loan.parent;if(!contract.ends||contract.ends<loan.ends)contract.ends=loan.ends;}
+  state.board=initialBoard(state);
   state.personnel=initialPersonnel(state.players,state.clubs,state.date);
   for(const [id,source] of Object.entries(state.rosterOrigin!.playerIds)){const profile=pack.roster.gameProfiles.find(p=>p.playerId===source);if(profile)state.personnel.players[id as PlayerId]!.potential=profile.potential;}
   settleDay(state,state.date);return validateCareer(state);

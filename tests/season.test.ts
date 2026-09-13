@@ -40,7 +40,8 @@ it('closes a season atomically with prizes, expiry, preserved history and determ
  expect(nextFixtureDate(s)).toBe('2027-08-14');s=act(s,{type:'AdvanceCalendar',target:'event'});while(s.date!==nextFixtureDate(s))s=act(s,{type:'AdvanceCalendar',target:'event'});s=act(s,{type:'SelectLineup',lineup:autoPick(s.players,s.clubId,s.tactics.formation,s.date)});s=act(s,{type:'StartMatch'});expect(s.match!.fixtureId).toContain('2027');expect(validateCareer(s)).toEqual(s);
 });
 it('retains two seasons of unique fixtures and refuses corrupted history or early closing',()=>{
- let s=initial();expect(()=>act(s,{type:'CloseSeason'})).toThrow('INVALID_COMMAND');s=act(finish(s),{type:'CloseSeason'});s=act(finish(s),{type:'CloseSeason'});expect(s.history.map(h=>h.year)).toEqual([2026,2027]);expect(new Set([...s.history.flatMap(h=>h.fixtures),...s.fixtures].map(f=>f.id)).size).toBe(168);expect(s.fixtures).toEqual(schedule(s.clubs.map(c=>c.id),2028));expect(validateCareer(s)).toEqual(s);
+ // Assisted mode keeps this workload focused on season accounting; dismissal has its own scenario.
+ let s=initial();s.board.assisted=true;expect(()=>act(s,{type:'CloseSeason'})).toThrow('INVALID_COMMAND');s=act(finish(s),{type:'CloseSeason'});s=act(finish(s),{type:'CloseSeason'});expect(s.history.map(h=>h.year)).toEqual([2026,2027]);expect(new Set([...s.history.flatMap(h=>h.fixtures),...s.fixtures].map(f=>f.id)).size).toBe(168);expect(s.fixtures).toEqual(schedule(s.clubs.map(c=>c.id),2028));expect(validateCareer(s)).toEqual(s);
  const corrupt=structuredClone(s);corrupt.history[0]!.table[0]!.points++;expect(()=>validateCareer(corrupt)).toThrow();const missing=structuredClone(s);missing.history[0]!.fixtures.pop();expect(()=>validateCareer(missing)).toThrow();
 });
 

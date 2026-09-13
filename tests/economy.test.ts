@@ -6,7 +6,25 @@ import {canonical} from '../packages/contracts/src/index.ts';
 import {advanceCalendar} from '../packages/simulation/src/calendar.ts';
 import {facilityCosts} from '../packages/simulation/src/facilities.ts';
 import {migrateRegistrationCareer} from '../packages/simulation/src/engine.ts';
+import {boardDay,boardFixture} from '../packages/simulation/src/board.ts';
 const initial=()=>createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);
+it('issues one bounded recovery loan and offers a valid job after dismissal',()=>{
+ const s=initial(),club=s.clubId;
+ s.economy.ledger=[];s.economy.ledger.push({id:'deficit',date:s.date,kind:'opening',postings:[{account:club,amount:-600000000},{account:'external',amount:600000000}]});
+ boardDay(s);s.date='2026-07-29';boardDay(s);
+ expect(s.board.clubs[club]!.loan?.principal).toBe(500000000);expect(cash(s.economy,club)).toBe(-100000000);
+ boardDay(s);expect(s.economy.ledger.filter(e=>e.kind==='boardLoan')).toHaveLength(1);
+ s.date='2026-08-03';boardDay(s);const paid=s.board.clubs[club]!.loan!.paid;boardDay(s);expect(s.board.clubs[club]!.loan!.paid).toBe(paid);expect(paid).toBe(1);
+ s.date='2026-08-26';boardDay(s);expect(s.board.status).toBe('dismissed');expect(s.board.vacancies).toHaveLength(3);
+ const job=s.board.vacancies[0]!,before=s.board.history.length;
+ // All fixture results are a completed historical setup before the job decision.
+ s.fixtures.filter(f=>f.date<=s.date).forEach(f=>{f.score=[0,0];});s.round=s.fixtures.filter(f=>f.score!==null&&(f.home===club||f.away===club)).length;
+ const command={type:'AcceptJob' as const,clubId:job,careerId:s.careerId,expectedRevision:s.revision,commandId:crypto.randomUUID()};
+ const result=applyCommand(s,command);if(!result.ok)throw Error(result.error);
+ expect(result.value.clubId).toBe(job);expect(result.value.board.status).toBe('employed');expect(result.value.board.history).toHaveLength(before);expect(result.value.lineup).toHaveLength(11);
+ expect(validateCareer(JSON.parse(canonical(result.value)))).toEqual(result.value);expect(applyCommand(result.value,command).ok).toBe(false);
+ const protectedCareer=initial();protectedCareer.board.assisted=true;protectedCareer.board.clubs[club]!.confidence=0;protectedCareer.board.clubs[club]!.played=11;protectedCareer.fixtures[0]!.score=[0,1];boardFixture(protectedCareer,protectedCareer.fixtures[0]!);expect(protectedCareer.board.status).toBe('employed');
+});
 it('charges facilities once, preserves reserves and completes recovery construction on its due date',()=>{
  const old=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id,'countries');
  const migrated=migrateRegistrationCareer({...old,engineVersion:'0.6.1'});expect(migrated).toEqual(old);

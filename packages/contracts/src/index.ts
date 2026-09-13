@@ -112,7 +112,9 @@ export const facilitiesCareerSchema=registrationCareerSchema.extend({engineVersi
 export const focusSchema=z.enum(['balanced','defence','attack','fitness']);
 export const personSchema=z.strictObject({potential:integer.min(1).max(100),retired:integer.min(2026).nullable(),minutes:integer.max(100000),starts:integer.max(1000),eligible:integer.max(1000)});
 export const personnelSchema=z.strictObject({players:z.record(playerId,personSchema),focus:focusSchema,lastReview:z.iso.date(),training:z.record(clubId,z.strictObject({days:integer.max(366),intensity:integer.max(50000),balanced:integer.max(366),defence:integer.max(366),attack:integer.max(366),fitness:integer.max(366)})),reports:z.array(z.strictObject({playerId,clubId:clubId.nullable(),kind:z.enum(['development','retired','arrived','released','role']),change:z.number().int().min(-100).max(100),date:z.iso.date()})).max(60000)});
-export const careerSchema=facilitiesCareerSchema.extend({engineVersion:z.literal('0.7.1'),personnel:personnelSchema});
+export const personnelCareerSchema=facilitiesCareerSchema.extend({engineVersion:z.literal('0.7.1'),personnel:personnelSchema});
+export const boardSchema=z.strictObject({assisted:z.boolean(),status:z.enum(['employed','dismissed','retired']),since:z.iso.date(),vacancies:z.array(clubId).max(3),history:z.array(z.strictObject({clubId,from:z.iso.date(),to:z.iso.date(),reason:z.enum(['performance','debt','retirement'])})).max(1000),clubs:z.record(clubId,z.strictObject({confidence:integer.max(100),target:integer.min(1).max(100),played:integer.max(100),negativeSince:z.iso.date().nullable(),loan:z.strictObject({principal:integer.positive(),remaining:integer,started:z.iso.date(),paid:integer.max(52)}).nullable()}))});
+export const careerSchema=personnelCareerSchema.extend({engineVersion:z.literal('0.7.2'),board:boardSchema,economy:personnelCareerSchema.shape.economy.extend({ledger:z.array(personnelCareerSchema.shape.economy.shape.ledger.element.extend({kind:z.enum(['opening','sponsor','wages','overhead','gate','signingBonus','transferFee','prize','facility','boardLoan','boardRepayment'])})).max(100000)})});
 export type Career=z.infer<typeof careerSchema>;
 
 
@@ -135,6 +137,9 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({...commandBase,type:z.literal('SetTraining'),training:trainingSchema}),
   z.object({...commandBase,type:z.literal('UpgradeFacility'),kind:facilityKind}),
   z.object({...commandBase,type:z.literal('SetTrainingFocus'),focus:focusSchema}),
+  z.object({...commandBase,type:z.literal('SetAssisted'),enabled:z.boolean()}),
+  z.object({...commandBase,type:z.literal('AcceptJob'),clubId}),
+  z.object({...commandBase,type:z.literal('RetireManager')}),
   z.object({...commandBase,type:z.literal('SetRegistration'),players:z.array(playerId).min(11).max(30)}),
   z.object({...commandBase,type:z.literal('AcknowledgeMatch')}),
   z.object({...commandBase,type:z.literal('CallUp')}),
