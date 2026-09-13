@@ -28,7 +28,9 @@
     "roster:check": "node scripts/roster-check.ts",
     "roster:sync": "node scripts/roster-sync.ts",
     "roster:build": "node scripts/build-roster.mjs",
-    "roster:start": "electron dist-roster-electron/main.js"
+    "roster:start": "electron dist-roster-electron/main.js",
+    "validate:career": "node scripts/long-career.ts",
+    "validate:dream": "node scripts/dream-career.ts"
   },
   "dependencies": {
     "fflate": "0.8.3",
