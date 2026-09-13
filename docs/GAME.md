@@ -214,3 +214,7 @@ New country careers include cups immediately. Existing pre-cup country saves kee
 ### Facilities implementation (v0.7.0)
 
 Club finances now offers academy and recovery upgrades through levels 0-3. Costs are EUR250k, EUR500k and EUR1m; only one project can run per club and its cost must fit after wage/overhead reserves. Construction completes after 30 calendar days and Continue stops at completion. Recovery adds 1 condition point per level each day; academy adds 2 to the base ability of newly generated academy cover. Annual four-player intake and potential/development remain the next youth slice. Existing facilities survive season changes; historical saves start at level zero.
+
+### Personnel implementation (v0.7.1)
+
+Squad now exposes training focus, potential, senior minutes and dated development/role reports. Annual growth follows section 8 budgets, intensity averages and focus-day weights; unused attribute points at bounds are discarded. Initial fictional potential is overall +10 capped at 100; imported potential remains pinned. Senior minutes count substitutions and injury/dismissal cutoffs. Every 28 days eligible starts drive promised-role morale; injured or banned players are excluded. Retirement retains history and disables market/scouting eligibility. Four 17-year-old prospects arrive at each season rollover, with academy facility bonuses; no retroactive initial-year intake is added to old saves. Academy overflow releases the lowest potential, then oldest, then stable ID. Long-career drift verification is still pending.

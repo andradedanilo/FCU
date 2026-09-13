@@ -108,7 +108,11 @@ export const rosterCareerSchema=competitionCareerSchema.extend({engineVersion:z.
 export const registrationCareerSchema=rosterCareerSchema.extend({engineVersion:z.literal('0.6.1'),players:z.array(registeredPlayerSchema).min(176).max(60000),loans:z.array(loanSchema.extend({source:z.enum(['market','roster'])})).max(5000)});
 export const facilityKind=z.enum(['academy','recovery']);
 export const facilitySchema=z.strictObject({academy:integer.max(3),recovery:integer.max(3),construction:z.strictObject({kind:facilityKind,level:integer.min(1).max(3),started:z.iso.date(),due:z.iso.date()}).nullable()});
-export const careerSchema=registrationCareerSchema.extend({engineVersion:z.literal('0.7.0'),facilities:z.record(clubId,facilitySchema),economy:worldEconomySchema.extend({ledger:z.array(worldEconomySchema.shape.ledger.element.extend({kind:z.enum(['opening','sponsor','wages','overhead','gate','signingBonus','transferFee','prize','facility'])})).max(100000)})});
+export const facilitiesCareerSchema=registrationCareerSchema.extend({engineVersion:z.literal('0.7.0'),facilities:z.record(clubId,facilitySchema),economy:worldEconomySchema.extend({ledger:z.array(worldEconomySchema.shape.ledger.element.extend({kind:z.enum(['opening','sponsor','wages','overhead','gate','signingBonus','transferFee','prize','facility'])})).max(100000)})});
+export const focusSchema=z.enum(['balanced','defence','attack','fitness']);
+export const personSchema=z.strictObject({potential:integer.min(1).max(100),retired:integer.min(2026).nullable(),minutes:integer.max(100000),starts:integer.max(1000),eligible:integer.max(1000)});
+export const personnelSchema=z.strictObject({players:z.record(playerId,personSchema),focus:focusSchema,lastReview:z.iso.date(),training:z.record(clubId,z.strictObject({days:integer.max(366),intensity:integer.max(50000),balanced:integer.max(366),defence:integer.max(366),attack:integer.max(366),fitness:integer.max(366)})),reports:z.array(z.strictObject({playerId,clubId:clubId.nullable(),kind:z.enum(['development','retired','arrived','released','role']),change:z.number().int().min(-100).max(100),date:z.iso.date()})).max(60000)});
+export const careerSchema=facilitiesCareerSchema.extend({engineVersion:z.literal('0.7.1'),personnel:personnelSchema});
 export type Career=z.infer<typeof careerSchema>;
 
 
@@ -130,6 +134,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({...commandBase,type:z.literal('RenewContract'),playerId,contractRevision:integer,years:z.number().int().min(1).max(5),wage:integer.max(10000000000),bonus:integer.max(1000000000000),role:promisedRoleSchema}),
   z.object({...commandBase,type:z.literal('SetTraining'),training:trainingSchema}),
   z.object({...commandBase,type:z.literal('UpgradeFacility'),kind:facilityKind}),
+  z.object({...commandBase,type:z.literal('SetTrainingFocus'),focus:focusSchema}),
   z.object({...commandBase,type:z.literal('SetRegistration'),players:z.array(playerId).min(11).max(30)}),
   z.object({...commandBase,type:z.literal('AcknowledgeMatch')}),
   z.object({...commandBase,type:z.literal('CallUp')}),

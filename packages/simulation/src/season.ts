@@ -1,3 +1,4 @@
+import {annualDevelopment,youthIntake} from './personnel.ts';
 import {completeFacilities} from './facilities.ts';
 import {initialCups,cupFixtures,validateCups} from './cupSeason.ts';
 import {cupChampion} from './cups.ts';
@@ -32,6 +33,7 @@ export function closeSeason(state:Career):FailureCode|null {
   state.economy.clubs.find(c=>c.clubId===row.clubId)!.lastPrizes=prize;
  }
  state.history.push({year:state.season,cups:structuredClone(state.cups),fixtures:structuredClone(state.fixtures),table,divisions:structuredClone(state.world.divisions),prizes,balances:Object.fromEntries(state.clubs.map(c=>[c.id,cash(state.economy,c.id)]))});
+ annualDevelopment(state);
  moveDivisions(state.world,table);
  for(const player of state.players){
   player.leagueYellows=0;const counters=state.cupDiscipline[player.id];if(counters){counters.domestic.yellows=0;counters.continental.yellows=0;}const contract=state.contracts[player.id]!;
@@ -39,7 +41,7 @@ export function closeSeason(state:Career):FailureCode|null {
  }
  for(const offer of state.offers)if(['submitted','countered','accepted','ready','queued'].includes(offer.status)){offer.status='expired';offer.activation=null;}
  state.season++;state.date=`${state.season}-07-01`;state.round=0;state.match=null;state.fixtures=worldSchedule(state.world,state.season);state.cups=initialCups(state);state.fixtures.push(...state.cups.flatMap(cupFixtures));state.fixtures.sort(compareFixtures);
- completeFacilities(state);
+ completeFacilities(state);youthIntake(state);
  for(const club of state.clubs)while(callUp(state,club.id)){ /* At most eight active academy players per club. */ }
  for(const club of state.economy.clubs){const tier=state.world.divisions.find(d=>d.clubs.includes(club.clubId))!.tier;Object.assign(club,financialProfile(tier));}
  state.lineup=autoPick(state.players,state.clubId,state.tactics.formation,state.date);state.bench=pickBench(state.players,state.clubId,state.lineup,state.date);

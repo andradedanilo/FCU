@@ -6,7 +6,28 @@ import {nextFixtureDate} from '../packages/simulation/src/calendar.ts';
 import {seasonEnd,schedule,nextManagedFixture,standings} from '../packages/simulation/src/competition.ts';
 import {clubs} from '../packages/contracts/src/identity.ts';
 import {canonical,type Career,type Command} from '../packages/contracts/src/index.ts';
+import {annualDevelopment,youthIntake,personnelDay,recordAppearances} from '../packages/simulation/src/personnel.ts';
+import {startMatch} from '../packages/simulation/src/engine.ts';
 const initial=()=>createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);
+it('develops players deterministically, retires age forty and retains bounded academy intake',()=>{
+ const s=initial(),veteran=s.players[0]!,young=s.players[2]!;
+ s.contracts[veteran.id]!.birthDate='1986-07-01';s.contracts[young.id]!.birthDate='2008-07-01';s.personnel.players[young.id]!.minutes=1000;
+ s.players.filter(p=>p.clubId===s.clubId).slice(2,10).forEach(p=>{p.academy=true;s.contracts[p.id]!.role='prospect';});
+ const copy=structuredClone(s);annualDevelopment(s);annualDevelopment(copy);expect(canonical(s)).toBe(canonical(copy));
+ expect(s.personnel.players[veteran.id]!.retired).toBe(2026);expect(veteran.clubId).toBeNull();expect(veteran.registered).toBe(false);expect(s.economy.wages[veteran.id]).toBe(0);
+ const before=s.players.length;s.season=2027;s.date='2027-07-01';youthIntake(s);
+ expect(s.players).toHaveLength(before+32);expect(s.players.filter(p=>p.clubId===s.clubId&&p.academy)).toHaveLength(8);
+ expect(s.personnel.reports.filter(r=>r.kind==='arrived')).toHaveLength(32);expect(s.personnel.reports.filter(r=>r.kind==='released'&&r.clubId===s.clubId)).toHaveLength(4);
+ expect(s.players.slice(before).every(p=>s.contracts[p.id]!.birthDate==='2010-07-01'&&s.personnel.players[p.id]!.potential>=30)).toBe(true);
+});
+it('records senior minutes and excludes injured players from repeated role reviews',()=>{
+ const s=initial(),match=startMatch(s,s.fixtures[0]!);match.tick=90;
+ const starter=s.players.find(p=>p.id===match.homeLineup[0])!,bench=s.players.find(p=>p.id===match.homeBench[0])!,injured=s.players.find(p=>p.id===match.homeBench[1])!;
+ injured.injuryUntil='2026-08-01';s.contracts[bench.id]!.role='starter';
+ recordAppearances(s,match);expect(s.personnel.players[starter.id]!.minutes).toBe(90);expect(s.personnel.players[injured.id]!.eligible).toBe(0);
+ s.date='2026-07-29';personnelDay(s);expect(starter.morale).toBe(72);expect(bench.morale).toBe(65);expect(injured.morale).toBe(70);
+ s.date='2026-07-30';personnelDay(s);expect(bench.morale).toBe(65);expect(s.personnel.reports.filter(r=>r.playerId===bench.id)).toHaveLength(1);
+});
 type Action<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
 function act(s:Career,action:Action<Command>):Career{const r=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:crypto.randomUUID()});if(!r.ok)throw Error(r.error);return r.value;}
 function finish(s:Career){while(nextManagedFixture(s)){while(s.date!==nextFixtureDate(s))s=act(s,{type:'AdvanceCalendar',target:'event'});s=act(s,{type:'SelectLineup',lineup:autoPick(s.players,s.clubId,s.tactics.formation,s.date)});s=act(s,{type:'StartMatch'});while(s.match!.phase!=='finished'){if(s.match!.pendingDismissal||s.match!.pendingInjuries.length)s=act(s,{type:'AcknowledgeMatch'});s=act(s,{type:'AdvanceMatch',minutes:90});}}while(s.date<seasonEnd(s.season))s=act(s,{type:'AdvanceCalendar',target:'event'});return s;}

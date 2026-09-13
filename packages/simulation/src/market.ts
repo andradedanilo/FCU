@@ -19,7 +19,7 @@ function sellerNeeds(state:Career,offer:Offer){
  return others.length<18||others.filter(p=>p.role==='GK').length<2;
 }
 export function dealError(state:Career,offer:Offer,knownBudget?:ReturnType<typeof budgets>):FailureCode|null {
- if(!ownership(state,offer)||state.loans.some(l=>l.playerId===offer.playerId&&l.status==='active'))return 'OFFER_CHANGED';
+ if(state.personnel.players[offer.playerId]?.retired!==null||!ownership(state,offer)||state.loans.some(l=>l.playerId===offer.playerId&&l.status==='active'))return 'OFFER_CHANGED';
  if(sellerNeeds(state,offer))return 'SQUAD_NEED';
  if(state.match&&state.match.phase!=='finished')return 'INVALID_COMMAND';
  if(occupiedPlaces(state,offer.buyerId)>=30)return 'SQUAD_FULL';
@@ -57,7 +57,7 @@ export function marketCommand(state:Career,action:MarketCommand,buyer:ClubId=sta
  if(action.type==='SubmitOffer'||action.type==='SubmitLoan'){
   if(state.date>=seasonEnd(state.season))return 'INVALID_COMMAND';
   const player=state.players.find(p=>p.id===action.playerId),fee=action.type==='SubmitLoan'?0:action.fee;
-  if(!player||player.clubId===buyer||player.academy||state.loans.some(l=>l.playerId===player.id&&l.status==='active')||(action.type==='SubmitLoan'&&player.clubId===null)||state.offers.length>=5000||state.offers.some(o=>o.playerId===player.id&&o.buyerId===buyer&&activeOffer(o))||(player.clubId===null&&fee!==0))return 'INVALID_COMMAND';
+  if(!player||state.personnel.players[player.id]?.retired!==null||player.clubId===buyer||player.academy||state.loans.some(l=>l.playerId===player.id&&l.status==='active')||(action.type==='SubmitLoan'&&player.clubId===null)||state.offers.length>=5000||state.offers.some(o=>o.playerId===player.id&&o.buyerId===buyer&&activeOffer(o))||(player.clubId===null&&fee!==0))return 'INVALID_COMMAND';
   state.offers.push({id:action.commandId as OfferId,playerId:player.id,buyerId:buyer,sellerId:player.clubId,contractRevision:state.contracts[player.id]!.revision,fee,loanShare:action.type==='SubmitLoan'?action.share:null,date:state.date,responseDate:addDays(state.date,1),expires:addDays(state.date,7),activation:null,buyerCounters:0,sellerCounters:0,status:player.clubId===null?'accepted':'submitted',reason:null,terms:null});return null;
  }
  const offer=state.offers.find(o=>o.id===action.offerId&&o.buyerId===buyer);

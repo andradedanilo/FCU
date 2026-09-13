@@ -13,7 +13,7 @@ export function knownAbility(state:Career,player:Player){
 }
 export function startScouting(state:Career,id:PlayerId):FailureCode|null {
  const player=state.players.find(p=>p.id===id);
- if(!player||player.clubId===state.clubId||player.academy||seasonComplete(state))return 'INVALID_COMMAND';
+ if(!player||state.personnel.players[player.id]?.retired!==null||player.clubId===state.clubId||player.academy||seasonComplete(state))return 'INVALID_COMMAND';
  if(state.scouting.active)return 'SCOUT_BUSY';if(state.scouting.reports[id])return 'ALREADY_SCOUTED';
  state.scouting.active={playerId:id,due:addDays(state.date,7)};return null;
 }
