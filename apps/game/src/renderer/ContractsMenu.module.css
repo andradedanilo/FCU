@@ -2,3 +2,5 @@
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fields label:last-child{grid-column:1/-1}.review b{display:block}.dialog header{position:sticky;top:-22px;background:var(--panel);z-index:1}
 
 .filters{grid-template-columns:1fr 1fr auto;align-items:end}@media(max-width:700px){.filters{grid-template-columns:1fr 1fr}.filters button{grid-column:1/-1}}
+
+.dialog{display:flex;flex-direction:column;gap:12px;overflow:hidden}.dialog:not([open]){display:none}.dialog header{position:static;margin-bottom:0;flex-shrink:0}.dialog>details{max-height:28dvh;overflow:auto;flex-shrink:0}.dialog>p,.dialog>label,.dialog>.fields,.dialog>nav{flex-shrink:0}.body{min-height:0;overflow:hidden}.players{max-height:none;min-height:0;padding:4px}.players small{font-size:16px}.terms{min-height:0;overflow:auto;padding:4px}.fields input,.fields select{min-width:0;width:100%}.review{min-width:0}.review p{overflow-wrap:anywhere}@media(max-width:700px){.body{overflow:auto}.players{max-height:180px}.terms{overflow:visible}}
