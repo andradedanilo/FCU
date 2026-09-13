@@ -17,8 +17,38 @@ import {applyCommand,validateCareer} from '../packages/simulation/src/engine.ts'
 import {returnLoans,validateLoans} from '../packages/simulation/src/loans.ts';
 import {available} from '../packages/simulation/src/availability.ts';
 import {fictionalProvider,syncFictional} from '../packages/roster-pipeline/src/fictional-provider.ts';
+import {sportmonksProvider,sportmonksTransport} from '../packages/roster-pipeline/src/sportmonks.ts';
 
 describe('Publisher roster boundaries',()=>{
+  it('maps a season-specific provider fixture without inventing roles or membership history',async()=>{
+    const responses:Record<string,unknown>={
+      'leagues/1?include=seasons':{data:{id:1,seasons:[{id:2,league_id:1,starting_at:'2026-08-01'}]}},
+      'teams/seasons/2':{data:[{id:3,name:'Fixture club'}]},
+      'squads/seasons/2/teams/3':{data:[{player_id:4,team_id:3,season_id:2}]},
+      'players/4':{data:{id:4,name:'Jos\u00e9 Fixture',date_of_birth:'2000-01-01',position_id:25}}
+    };
+    const provider=sportmonksProvider(async path=>responses[path],{'25':'DEF'});
+    expect((await provider.capabilities()).membership).toBe('season');
+    expect((await provider.listSeasons('1')).items).toEqual([{ref:'2',startYear:2026}]);
+    expect((await provider.listTeams('2',null)).items[0]?.ref).toBe('3');
+    expect((await provider.fetchSquad('3','2',null)).items).toEqual([{playerRef:'4',teamRef:'3'}]);
+    expect((await provider.fetchPlayers(['4'],null)).items[0]).toMatchObject({name:'Jos\u00e9 Fixture',role:'DEF'});
+    responses['players/4']={data:{id:4,name:'Fixture',date_of_birth:'2000-01-01',position_id:999}};
+    await expect(provider.fetchPlayers(['4'],null)).rejects.toThrow('UNMAPPED_PROVIDER_ROLE');
+    responses['squads/seasons/2/teams/3']={data:[{player_id:4,team_id:3,season_id:99}]};
+    await expect(provider.fetchSquad('3','2',null)).rejects.toThrow('PROVIDER_ID_MISMATCH');
+  });
+  it('honors provider backoff, stops authentication failures and keeps tokens out of URLs',async()=>{
+    let count=0,time=0;const waits:number[]=[],urls:string[]=[];
+    const request=sportmonksTransport({token:'fixture-secret',requestsPerMinute:60,now:()=>time,wait:async ms=>{waits.push(ms);time+=ms;},fetch:async(input,options)=>{
+      urls.push(String(input));expect(options?.headers).toMatchObject({Authorization:'fixture-secret'});count++;
+      return count===1?new Response('',{status:429,headers:{'Retry-After':'3'}}):Response.json({data:[]});
+    }});
+    expect(await request('teams/seasons/2')).toEqual({data:[]});expect(count).toBe(2);expect(waits).toContain(3000);expect(urls.join()).not.toContain('fixture-secret');
+    let denied=0;const unauthorized=sportmonksTransport({token:'fixture-secret',requestsPerMinute:60,wait:async()=>{},fetch:async()=>{denied++;return new Response('',{status:403});}});
+    await expect(unauthorized('teams/seasons/2')).rejects.toThrow('PROVIDER_ACCESS_DENIED');expect(denied).toBe(1);
+    await expect(request('https://example.com')).rejects.toThrow('INVALID_PROVIDER_PATH');
+  });
   it('builds the offline candidate through every adapter page and rejects a missing squad',async()=>{
     const result=await syncFictional();
     expect(result.audit.completedTeamIds).toHaveLength(96);
