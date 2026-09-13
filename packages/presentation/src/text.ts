@@ -1,6 +1,7 @@
 import {matchMinute} from './highlights.ts';
 import type { Career, MatchEvent } from '../../contracts/src/index.ts';
 export const text = {
+ noRenewableContracts:'There are no owned senior players to renew. Academy players and players on loan do not use senior contract renewals. Close this screen to continue managing your squad or recruit through Scouting.',
  help:'How to play',helpIntro:'A few decisions between fixtures. A story in every match. Choose a topic below; closing help leaves the match paused.',
  helpTopics:[
   {title:'Your first Career fixture',paragraphs:['Choose a club and open Squad. Select eleven eligible players, confirm the lineup and choose your bench. Suggest lineup is a starting point; check condition and natural roles before kickoff.','In the Clubhouse, advance to the next event when the fixture date has not arrived. Kick off opens the match board; press Play beside the clock. Afterwards, Continue returns to your club.']},
