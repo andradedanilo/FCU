@@ -1,3 +1,5 @@
+import {overall} from '../packages/simulation/src/ratings.ts';
+import {newDream} from '../packages/simulation/src/dreamSeason.ts';
 import {it,expect} from 'vitest';
 import {createCareer,applyCommand,validateCareer} from '../packages/simulation/src/engine.ts';
 import {clubs} from '../packages/contracts/src/identity.ts';
@@ -15,4 +17,12 @@ it('does not manufacture money or bypass reserves when the policy cannot afford 
  const state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id),balance=cash(state.economy,state.clubId);
  post(state.economy,{id:'validation/expense',date:state.date,kind:'overhead',postings:[{account:state.clubId,amount:-balance},{account:'external',amount:balance}]});
  const before=canonical(state),actions={renewals:0,signings:0,upgrades:0,substitutions:0};maintainSquad(()=>state,()=>{throw Error('Unaffordable action');},actions);expect(canonical(state)).toBe(before);expect(actions).toEqual({renewals:0,signings:0,upgrades:0,substitutions:0});
+});
+
+it('provides honest fictional tier coverage without altering existing or exhibition rosters',()=>{
+ const world=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id,'countries');expect(world.snapshotId).toBe('fictional-world-2026-v2');
+ const before=canonical(world);const dream=newDream({type:'New',id:world.careerId,seed:2026,name:'Tier FC',tier:'elite',pack:null});
+ expect(dream.snapshotId).toBe(world.snapshotId);expect(canonical(world)).toBe(before);
+ const opponents=dream.game.players.filter(p=>p.clubId!==dream.game.clubId);expect(opponents.every(p=>overall(p)>=75&&overall(p)<=84)).toBe(true);
+ const exhibition=createCareer(world.careerId,2026,clubs[0]!.id);expect(exhibition.snapshotId).toBe('fictional-2026-v1');expect(exhibition.players.filter(p=>p.clubId).every(p=>overall(p)>=55&&overall(p)<=70)).toBe(true);
 });

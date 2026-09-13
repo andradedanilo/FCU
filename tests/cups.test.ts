@@ -40,7 +40,7 @@ it('uses reversed second legs, no away-goals advantage and penalties only for le
 });
 it('resumes a saved domestic tie through both extra-time periods without added minutes',()=>{
  const state=createCareer('00000000-0000-4000-8000-000000000003',2026,countryWorld.divisions[0]!.clubs[0]!,'countries');
- const old=migrateCountryCareer({...state,engineVersion:'0.5.1',rulesetVersion:'world-1',fixtures:state.fixtures.filter(f=>f.competitionClass==='league')});expect(old.cups).toEqual([]);expect(old.cupStartSeason).toBe(2027);expect(old.fixtures).toHaveLength(2952);
+ const old=migrateCountryCareer({...state,snapshotId:'fictional-world-2026-v1',engineVersion:'0.5.1',rulesetVersion:'world-1',fixtures:state.fixtures.filter(f=>f.competitionClass==='league')});expect(old.cups).toEqual([]);expect(old.cupStartSeason).toBe(2027);expect(old.fixtures).toHaveLength(2952);
  const fixture=state.fixtures.find(f=>f.competitionClass==='domestic')!;
  state.clubId=fixture.home;state.date=fixture.date;
  for(const f of state.fixtures)if(f.date<state.date)f.score=[0,0];

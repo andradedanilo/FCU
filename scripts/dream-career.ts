@@ -11,8 +11,10 @@ for(const [index,tier] of (['starter','club','elite'] as const).entries()){
  const isolated=canonical({economy:state.game.economy,personnel:state.game.personnel,board:state.game.board});
  const opponent=state.game.players.filter(p=>p.clubId!==state.game.clubId),opponentMean=opponent.reduce((sum,p)=>sum+overall(p),0)/opponent.length;
  const initialMean=state.game.players.filter(p=>p.clubId===state.game.clubId).reduce((n,p)=>n+overall(p),0)/22;
+ const seasons=[];
  let games=0,wins=0,draws=0,goals=0,against=0,restores=0,choices=0;
  for(let year=0;year<10;year++){
+  const previousWins=wins,previousGoals=goals,previousAgainst=against;
   for(let fixture=0;fixture<14;fixture++){
    state=dreamCommand(state,{type:'Next'});
    if(year===0&&fixture===0){
@@ -36,11 +38,12 @@ for(const [index,tier] of (['starter','club','elite'] as const).entries()){
   }
   validateDream(state);assert.equal(state.collection.earned,Math.floor(games/3)+year+1,'Reward cadence changed');
   assert.equal(canonical({economy:state.game.economy,personnel:state.game.personnel,board:state.game.board}),isolated,'Career processing leaked into Dream');
+  const squad=state.game.players.filter(p=>p.clubId===state.game.clubId&&p.registered);seasons.push({season:state.game.season,wins:wins-previousWins,goalsFor:goals-previousGoals,goalsAgainst:against-previousAgainst,activeMean:squad.reduce((sum,p)=>sum+overall(p),0)/squad.length});
   state=dreamCommand(state,{type:'Season',tier});
  }
  const active=state.game.players.filter(p=>p.clubId===state.game.clubId&&p.registered),finalMean=active.reduce((n,p)=>n+overall(p),0)/active.length;
  assert.equal(new Set(state.collection.unlocked).size,state.collection.unlocked.length);assert.equal(choices,56);assert.equal(state.collection.unlocked.length,22+choices);
- reports.push({seed,tier,seasons:10,games,wins,draws,losses:games-wins-draws,goalsFor:goals,goalsAgainst:against,choices,restores,initialMean,finalMean,opponentMean,unlocked:state.collection.unlocked.length,warnings:opponentMean<(tier==='elite'?75:tier==='club'?65:55)?['Fictional pool does not fill the advertised opponent rating band']:[]});
+ reports.push({seed,tier,seasonReports:seasons,seasons:10,games,wins,draws,losses:games-wins-draws,goalsFor:goals,goalsAgainst:against,choices,restores,initialMean,finalMean,opponentMean,unlocked:state.collection.unlocked.length,warnings:opponentMean<(tier==='elite'?75:tier==='club'?65:55)?['Fictional pool does not fill the advertised opponent rating band']:[]});
  console.log(JSON.stringify(reports.at(-1)));
 }
 console.log(JSON.stringify({workload:'Three seeds 2026..2028, ten Dream seasons each, best-rating reward choices and role-balanced 22-player registration',matches:420,passed:true,seconds:(performance.now()-started)/1000,heapMB:Math.round(process.memoryUsage().heapUsed/1048576)}));

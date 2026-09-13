@@ -30,7 +30,8 @@
     "roster:build": "node scripts/build-roster.mjs",
     "roster:start": "electron dist-roster-electron/main.js",
     "validate:career": "node scripts/long-career.ts",
-    "validate:dream": "node scripts/dream-career.ts"
+    "validate:dream": "node scripts/dream-career.ts",
+    "validate:balance": "node scripts/validate-balance.mjs"
   },
   "dependencies": {
     "fflate": "0.8.3",

@@ -20,6 +20,8 @@ All default clubs and players are fictional. Development builds can import unsig
 
 The scoreboard, clock and Play/Pause sit above four equal panels: statistics and team management on the left, commentary and highlights on the right. Matches use a fixed 2x pace. Pause to change tactics or make substitutions; changes affect future play. Half-time pauses unless Continue through half-time is enabled.
 
+Offsides stop attacks, goals can be disallowed for offside or an attacking foul, corners can produce follow-up chances, and shots can hit the woodwork. Awarded in-play penalties affect the match score; cup shootouts remain a separate tiebreak.
+
 Original pixel-art still sequences build anticipation, then reveal a goal, save or missed chance. Blue/white represents your side and red/white the opponent. These are illustrations, not continuous player animation or playable action football. Commentary remains available if artwork cannot load. Skip highlight dismisses the illustration without skipping match time. Injuries and dismissals pause for a decision.
 
 Music and SFX have independent settings remembered on this computer. Audio plays at normal speed regardless of match pace. Open Sound library to audition the recordings and read their credits; audio quality is still being refined.
@@ -60,7 +62,7 @@ Gamepad confirm opens an offline keyboard or chooser for supported fields. Physi
 
 Save creates a new checkpoint, including during a match. Completed Career rounds and mandatory Dream rewards save automatically. Returning to the title or closing FCU requests a final checkpoint. If saving fails, retry or return to the game; Quit without saving loses only progress after your last confirmed checkpoint.
 
-Load shows earlier checkpoints and alternate continuations in pages of 20. Choosing one preserves the others. Older supported saves migrate when loaded; original files remain untouched. A new save uses Career schema 24 or Dream envelope 4, with app 0.9.0 and engine 0.7.4. Older builds cannot read these newer formats.
+Load shows earlier checkpoints and alternate continuations in pages of 20. Choosing one preserves the others. Older supported saves migrate when loaded; original files remain untouched. A new save uses Career schema 25 or Dream envelope 5, with app 0.9.0 and engine 0.7.5. Older builds cannot read these newer formats.
 
 Saves live outside the installation folder:
 
@@ -98,7 +100,9 @@ npm run test:e2e
 npm run check:docs
 ```
 
-The current inventory is 79 unit/integration cases and three Electron journeys. Typechecking uses TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API. Audit reporting remains enabled; an audit with no known advisories is not a guarantee against all vulnerabilities.
+The current inventory is 92 unit/integration cases and three Electron journeys. Typechecking uses TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API. Audit reporting remains enabled; an audit with no known advisories is not a guarantee against all vulnerabilities.
+
+Run the fixed match, maintained Career and Dream validation workloads with `npm run validate:balance`. The JSON report at `work/validation/latest.json` records the source revision, platform, metrics and failures. Individual workloads are `npm run probe`, `npm run validate:career` and `npm run validate:dream`. These check progression and balance signals; they cannot establish enjoyment.
 
 ## Current limits
 
@@ -106,7 +110,7 @@ The current inventory is 79 unit/integration cases and three Electron journeys. 
 - All checkpoints are retained; automatic pruning is not implemented.
 - Native Linux, low-end hardware, physical controllers and Steam Deck remain unverified.
 - Steam integration and publication are incomplete. No compatibility badge is claimed.
-- Offside, cancelled goals, corners, post hits and awarded in-play penalties are not simulated. Cup penalty shootouts are implemented.
+- New match events use commentary where dedicated illustrations are still pending.
 
 FCU is an independent project and does not claim affiliation with existing football games, clubs or leagues.
 
