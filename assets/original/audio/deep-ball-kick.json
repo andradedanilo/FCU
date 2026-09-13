@@ -1,0 +1,13 @@
+{
+  "title": "FCU deep ball kick audition",
+  "origin": "Original mathematical synthesis created for FCU; no external recordings or samples.",
+  "generator": "scripts/create-kick-audition.mjs",
+  "seed": 13092026,
+  "sampleRate": 48000,
+  "channels": 1,
+  "bitsPerSample": 16,
+  "durationSeconds": 0.48,
+  "peakDbfs": -1.2,
+  "sha256": "ba58a08a9ee39c23c0c52d28105540e7d01ae3c097753bee10400a5a0c6bfc74",
+  "status": "Audition only; owner listening acceptance pending; not installed in match playback."
+}
