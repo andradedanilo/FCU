@@ -1,3 +1,4 @@
+import {resolveAttack,validateAttackEvents} from './attacks.ts';
 import {copyCareer} from './state.ts';
 import {initialBoard,boardFixture,validateBoard,acceptJob} from './board.ts';
 import {initialPersonnel,recordAppearances,validatePersonnel} from './personnel.ts';
@@ -23,7 +24,7 @@ export {overall,effectiveRating} from './ratings.ts';
 import {createEconomy,carryLedger,settleDay,settleGate,validateEconomy} from './economy.ts';
 import {halfBoundary,regulationBoundary,completeMinute,validateMatchTiming} from './matchTime.ts';
 import {available,activeLineup,needsDecision,incidents,settleAvailability,addDays,validDate} from './availability.ts';
-import { archivedCareerSchema, boardCareerSchema, personnelCareerSchema, facilitiesCareerSchema, registrationCareerSchema, rosterCareerSchema, competitionCareerSchema, careerSchema, countryCareerSchema, repeatingCareerSchema, exhibitionCareerSchema, recruitingCareerSchema, transferCareerSchema, scoutingCareerSchema, renewalCareerSchema, financialCareerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
+import { preAttackCareerSchema, archivedCareerSchema, boardCareerSchema, personnelCareerSchema, facilitiesCareerSchema, registrationCareerSchema, rosterCareerSchema, competitionCareerSchema, careerSchema, countryCareerSchema, repeatingCareerSchema, exhibitionCareerSchema, recruitingCareerSchema, transferCareerSchema, scoutingCareerSchema, renewalCareerSchema, financialCareerSchema, timedCareerSchema, availabilityCareerSchema, legacyCareerSchema, previousCareerSchema, tacticalCareerSchema, planningCareerSchema, conditionCareerSchema, defaultTactics, formationCounts, type Tactics, type Career, type ClubId, type Player, type PlayerId, type Role, type Fixture, type Match, type Command, type Result } from '../../contracts/src/index.ts';
 import { clubs } from '../../contracts/src/identity.ts';
 import { draw, stream } from './rng.ts';
 
@@ -44,7 +45,7 @@ export function createCareer(careerId: string, seed: number, club:ClubId,kind:Ca
   }));
   players.push(...freePlayers());
   if (!identities.some(c => c.id === club)) throw new Error('INVALID_COMMAND');
-  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], season:2026,history:[],rosterOrigin:null,facilities:initialFacilities(identities),engineVersion:'0.7.4',marketArchive:[],cupStartSeason:2026,cups:[],cupDiscipline:{},world,training:'balanced', rulesetVersion:rules.version, snapshotId:kind==='countries'?'fictional-world-2026-v1':'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:kind==='countries'?2:1, date:'2026-07-01', clubs:identities, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:worldSchedule(world,2026), round:0, match:null };
+  const base={ careerId, seed, clubId:club, revision:0, appliedCommands:[], season:2026,history:[],rosterOrigin:null,facilities:initialFacilities(identities),engineVersion:'0.7.5',marketArchive:[],cupStartSeason:2026,cups:[],cupDiscipline:{},world,training:'balanced', rulesetVersion:rules.version, snapshotId:kind==='countries'?'fictional-world-2026-v1':'fictional-2026-v1', identityProfileId:'fcu-city-v1', identityProfileVersion:kind==='countries'?2:1, date:'2026-07-01', clubs:identities, players, tactics:{...defaultTactics},presets:[null,null,null],bench:pickBench(players,club,autoPick(players,club)),lineup:autoPick(players,club), fixtures:worldSchedule(world,2026), round:0, match:null };
   const state=careerSchema.parse({...base,board:initialBoard(base),personnel:initialPersonnel(players,identities,base.date),economy:createEconomy(base,overall,world.divisions.filter(d=>d.tier===2).flatMap(d=>d.clubs)),contracts:createContracts(base),scouting:{shortlist:[],active:null,reports:{}},offers:[],loans:[]});state.cups=initialCups(state);state.fixtures.push(...state.cups.flatMap(cupFixtures));state.fixtures.sort(compareFixtures);settleDay(state,state.date);return state;
 }
 const emptyStats = () => ({shots:0,onTarget:0,quality:0,possession:0});
@@ -103,7 +104,7 @@ export function migrateRepeatingCareer(input:unknown):Career {
 }
 export function migrateCountryCareer(input:unknown):Career {
  const old=countryCareerSchema.parse(input),league={competitionClass:'league' as const,neutral:false,decider:false,cupTieId:null,shootout:null,forfeit:null};
- const next=careerSchema.parse({...old,board:initialBoard({...old,players:old.players.map(p=>({...p,registered:true}))}),personnel:initialPersonnel(old.players.map(p=>({...p,registered:true})),old.clubs,old.date),facilities:initialFacilities(old.clubs),players:old.players.map(p=>({...p,registered:true})),loans:old.loans.map(l=>({...l,source:'market'})),rosterOrigin:null,engineVersion:'0.7.4',marketArchive:[],rulesetVersion:'world-2',cupStartSeason:old.world.kind==='exhibition'?2026:old.season+1,cups:[],cupDiscipline:{},fixtures:old.fixtures.map(f=>({...f,...league,forfeit:old.match?.fixtureId===f.id?old.match.forfeit:null})),history:old.history.map(h=>({...h,cups:[],fixtures:h.fixtures.map(f=>({...f,...league}))})),match:old.match?{...old.match,competitionClass:'league',neutral:false,decider:false,aggregate:[0,0],extraTime:false,penalties:[]}:null});carryLedger(next);return validateCareer(next);
+ const next=careerSchema.parse({...old,board:initialBoard({...old,players:old.players.map(p=>({...p,registered:true}))}),personnel:initialPersonnel(old.players.map(p=>({...p,registered:true})),old.clubs,old.date),facilities:initialFacilities(old.clubs),players:old.players.map(p=>({...p,registered:true})),loans:old.loans.map(l=>({...l,source:'market'})),rosterOrigin:null,engineVersion:'0.7.5',marketArchive:[],rulesetVersion:'world-2',cupStartSeason:old.world.kind==='exhibition'?2026:old.season+1,cups:[],cupDiscipline:{},fixtures:old.fixtures.map(f=>({...f,...league,forfeit:old.match?.fixtureId===f.id?old.match.forfeit:null})),history:old.history.map(h=>({...h,cups:[],fixtures:h.fixtures.map(f=>({...f,...league}))})),match:old.match?{...old.match,competitionClass:'league',neutral:false,decider:false,aggregate:[0,0],extraTime:false,penalties:[]}:null});carryLedger(next);return validateCareer(next);
 }
 export function validBench(players:Player[],club:ClubId,lineup:PlayerId[],bench:PlayerId[]):boolean {
  return bench.length<=9&&new Set(bench).size===bench.length&&bench.every(id=>!lineup.includes(id)&&players.some(p=>p.id===id&&p.clubId===club));
@@ -201,21 +202,10 @@ export function advanceMatch(previous: Match, players: Player[], minutes: number
     for(const side of order) {
       const own=strengths[side]!; const other=strengths[1-side]!;
       const chance=chanceProbability(own,other,side===0&&!match.neutral,tactics[side]!,tactics[1-side]!);
-      if(roll()>=chance) continue;
-      const shooter=weighted(lineups[side]!.filter(p=>p.role!=='GK'),p=>p.shooting*(p.role==='FWD'?3:p.role==='MID'?2:1));
-      const passer=weighted(lineups[side]!.filter(p=>p.id!==shooter.id),p=>p.passing);
-      const team=side===0?match.home:match.away;
-      const emit=(type:'pass'|'shot'|'save'|'goal', id:PlayerId, assistId:PlayerId|null=null)=>match.events.push({tick:match.tick,order:match.events.length,clubId:team,playerId:id,assistId,type,homeGoals:match.homeGoals,awayGoals:match.awayGoals});
-      emit('pass',passer.id);
-      const target=clamp(rules.target+(shooter.shooting-other.D)*40,2000,6000);
-      const goal=clamp(rules.goal+(shooter.shooting-other.K)*40,1200,5500);
-      const stats=side===0?match.homeStats:match.awayStats;
-      stats.shots++;stats.quality+=Math.round(target*goal/10000);
-      if(roll()>=target){emit('shot',shooter.id);continue;}
-      stats.onTarget++;
-      if(roll()>=goal){emit('save',shooter.id);continue;}
-      if(side===0)match.homeGoals++;else match.awayGoals++;
-      emit('goal',shooter.id,roll()<rules.assist?passer.id:null);
+      const opponent=side===0?match.away:match.home;
+      const penalty=match.events.some(e=>e.tick===match.tick&&e.clubId===opponent&&e.type==='foul')&&roll()<rules.boxFoul;
+      if(!penalty&&roll()>=chance)continue;
+      resolveAttack(match,side,lineups[side]!,lineups[1-side]!,other,roll,weighted,penalty);
     }
     if(completeMinute(match)||needsDecision(match))break;
   }
@@ -329,14 +319,15 @@ export function applyCommand(state: Career, command: Command, dream=false): Resu
 function compare(a:string,b:string){return a<b?-1:a>b?1:0;}
 
 export function migrateCompetitionCareer(input:unknown):Career {
- const old=competitionCareerSchema.parse(input);return validateCareer({...old,board:initialBoard({...old,players:old.players.map(p=>({...p,registered:true}))}),personnel:initialPersonnel(old.players.map(p=>({...p,registered:true})),old.clubs,old.date),facilities:initialFacilities(old.clubs),engineVersion:'0.7.4',marketArchive:[],players:old.players.map(p=>({...p,registered:true})),loans:old.loans.map(l=>({...l,source:'market'})),rosterOrigin:null});
+ const old=competitionCareerSchema.parse(input);return validateCareer({...old,board:initialBoard({...old,players:old.players.map(p=>({...p,registered:true}))}),personnel:initialPersonnel(old.players.map(p=>({...p,registered:true})),old.clubs,old.date),facilities:initialFacilities(old.clubs),engineVersion:'0.7.5',marketArchive:[],players:old.players.map(p=>({...p,registered:true})),loans:old.loans.map(l=>({...l,source:'market'})),rosterOrigin:null});
 }
-export function migrateRosterCareer(input:unknown):Career {const old=rosterCareerSchema.parse(input);return validateCareer({...old,board:initialBoard({...old,players:old.players.map(p=>({...p,registered:true}))}),personnel:initialPersonnel(old.players.map(p=>({...p,registered:true})),old.clubs,old.date),facilities:initialFacilities(old.clubs),engineVersion:'0.7.4',marketArchive:[],players:old.players.map(p=>({...p,registered:true})),loans:old.loans.map(l=>({...l,source:'market'}))});}
-export function migrateRegistrationCareer(input:unknown):Career {const old=registrationCareerSchema.parse(input);return validateCareer({...old,board:initialBoard({...old,players:old.players.map(p=>({...p,registered:true}))}),personnel:initialPersonnel(old.players,old.clubs,old.date),engineVersion:'0.7.4',marketArchive:[],facilities:initialFacilities(old.clubs)});}
-export function migrateFacilitiesCareer(input:unknown):Career {const old=facilitiesCareerSchema.parse(input);return validateCareer({...old,board:initialBoard(old),engineVersion:'0.7.4',marketArchive:[],personnel:initialPersonnel(old.players,old.clubs,old.date)});}
-export function migratePersonnelCareer(input:unknown):Career {const old=personnelCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.7.4',marketArchive:[],board:initialBoard(old)});}
-export function migrateArchivedCareer(input:unknown):Career {const old=archivedCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.7.4'});}
-export function migrateBoardCareer(input:unknown):Career {const old=boardCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.7.4',marketArchive:[]});}
+export function migrateRosterCareer(input:unknown):Career {const old=rosterCareerSchema.parse(input);return validateCareer({...old,board:initialBoard({...old,players:old.players.map(p=>({...p,registered:true}))}),personnel:initialPersonnel(old.players.map(p=>({...p,registered:true})),old.clubs,old.date),facilities:initialFacilities(old.clubs),engineVersion:'0.7.5',marketArchive:[],players:old.players.map(p=>({...p,registered:true})),loans:old.loans.map(l=>({...l,source:'market'}))});}
+export function migrateRegistrationCareer(input:unknown):Career {const old=registrationCareerSchema.parse(input);return validateCareer({...old,board:initialBoard({...old,players:old.players.map(p=>({...p,registered:true}))}),personnel:initialPersonnel(old.players,old.clubs,old.date),engineVersion:'0.7.5',marketArchive:[],facilities:initialFacilities(old.clubs)});}
+export function migrateFacilitiesCareer(input:unknown):Career {const old=facilitiesCareerSchema.parse(input);return validateCareer({...old,board:initialBoard(old),engineVersion:'0.7.5',marketArchive:[],personnel:initialPersonnel(old.players,old.clubs,old.date)});}
+export function migratePersonnelCareer(input:unknown):Career {const old=personnelCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.7.5',marketArchive:[],board:initialBoard(old)});}
+export function migrateArchivedCareer(input:unknown):Career {const old=archivedCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.7.5'});}
+export function migrateBoardCareer(input:unknown):Career {const old=boardCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.7.5',marketArchive:[]});}
+export function migratePreAttackCareer(input:unknown):Career {const old=preAttackCareerSchema.parse(input);return validateCareer({...old,engineVersion:'0.7.5'});}
 export function validateCareer(input: unknown): Career {
   const state=careerSchema.parse(input);
   validateBoard(state);validatePersonnel(state);validateFacilities(state);validateEconomy(state);validateContracts(state);validateScouting(state);validateMarket(state);validateLoans(state);validateSeasons(state);validateCups(state);
@@ -357,7 +348,7 @@ export function validateMatchState(state:Career):Career {
   if(state.match){const m=state.match;const f=state.fixtures.find(f=>f.id===m.fixtureId);if(!f||f.date!==m.date||f.home!==m.home||f.away!==m.away||f.competitionClass!==m.competitionClass||f.neutral!==m.neutral||f.decider!==m.decider||(f.score!==null)!==(m.phase==='finished')||(!(m.forfeit&&m.tick===0)&&m.forfeit!==m.home&&!validLineup(historical,m.home,m.homeLineup))||(!(m.forfeit&&m.tick===0)&&m.forfeit!==m.away&&!validLineup(historical,m.away,m.awayLineup))||m.events.some((e,i)=>e.order!==i||e.tick>m.tick||!historical.some(p=>p.id===e.playerId&&p.clubId===e.clubId)))throw new Error('INVALID_SAVE');}
   if(state.match){
     const m=state.match;
-    validateMatchTiming(m);validatePenalties(m);
+    validateMatchTiming(m);validatePenalties(m);validateAttackEvents(m);
     const ownFixture=state.fixtures.find(f=>f.id===m.fixtureId)!,firstLeg=ownFixture.cupTieId?state.fixtures.find(f=>f.cupTieId===ownFixture.cupTieId&&f.date<ownFixture.date):null;
     const aggregate=firstLeg?.score?[firstLeg.score[firstLeg.home===m.home?0:1],firstLeg.score[firstLeg.home===m.home?1:0]]:[0,0];if(m.aggregate[0]!==aggregate[0]||m.aggregate[1]!==aggregate[1])throw Error('INVALID_SAVE');
     if(m.phase==='finished'){const fixture=state.fixtures.find(f=>f.id===m.fixtureId)!;if(JSON.stringify(fixture.shootout)!==JSON.stringify(penaltyScore(m))||fixture.forfeit!==m.forfeit)throw Error('INVALID_SAVE');const score=fixture.score;if(!score||score[0]!==m.homeGoals||score[1]!==m.awayGoals)throw new Error('INVALID_SAVE');}

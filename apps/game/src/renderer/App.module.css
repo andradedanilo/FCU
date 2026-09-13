@@ -18,7 +18,7 @@
 .teamName h2{font-size:clamp(21px,2vw,36px);max-width:420px}
 .teamName .badge{width:clamp(44px,4vw,70px);height:clamp(53px,4.8vw,84px)}
 .teamName .badge b{font-size:clamp(14px,1.4vw,22px)}
-.matchStats{display:flex;flex-direction:column;justify-content:center;flex:1;min-height:0;overflow:auto;padding:8px 14px 14px;background:linear-gradient(145deg,#203958,#152941)}
+.matchStats{display:flex;flex-direction:column;justify-content:flex-start;flex:1;min-height:0;overflow:auto;padding:8px 14px 14px;background:linear-gradient(145deg,#203958,#152941)}
 .matchStats h3{font:900 clamp(16px,1.4vw,23px) monospace;text-transform:uppercase;letter-spacing:2px;color:#ffe3a0;margin:10px 0 20px}
 .matchStats header{display:flex;justify-content:space-between;color:#94bfd1;font:900 clamp(15px,1.2vw,20px) monospace;padding-bottom:12px;border-bottom:2px solid #61768f}
 .matchStats>div{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px 14px;padding:clamp(12px,2vh,24px) 0;border-bottom:1px solid #415772}

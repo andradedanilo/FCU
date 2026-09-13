@@ -1,5 +1,5 @@
 import type { Career, Match, MatchEvent } from '../../contracts/src/index.ts';
-export type HighlightKind='goal'|'save'|'shot'|'foul'|'yellow'|'red'|'injury'|'substitution'|'coach'|'penaltyGoal'|'penaltyMiss'|'lineup'|'halftime'|'win';
+export type HighlightKind='offside'|'disallowedOffside'|'disallowedFoul'|'corner'|'post'|'penaltySave'|'goal'|'save'|'shot'|'foul'|'yellow'|'red'|'injury'|'substitution'|'coach'|'penaltyGoal'|'penaltyMiss'|'lineup'|'halftime'|'win';
 export type HighlightSide='blue'|'red';
 export type Highlight={kind:HighlightKind;player:string;color:string;side:HighlightSide;tick:number;score:string;penaltyIndex?:number};
 export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEvent|undefined {
@@ -7,13 +7,14 @@ export function selectHighlight(events:MatchEvent[],afterOrder:number):MatchEven
   const fresh=events.filter(event=>{
     if(event.type==='shot')misses++;
     if(event.type==='foul')fouls++;
-    return event.order>afterOrder&&(event.type==='goal'||event.type==='save'||event.type==='red'||event.type==='secondYellow'||event.type==='yellow'||event.type==='injury'||(event.type==='foul'&&fouls%6===0)||(event.type==='shot'&&misses%3===0));
+    return event.order>afterOrder&&(events[event.order-1]?.type==='penalty'||['offside','disallowedOffside','disallowedFoul','corner','post'].includes(event.type)||event.type==='goal'||event.type==='save'||event.type==='red'||event.type==='secondYellow'||event.type==='yellow'||event.type==='injury'||(event.type==='foul'&&fouls%6===0)||(event.type==='shot'&&misses%3===0));
   });
-  return fresh.find(e=>e.type==='red'||e.type==='secondYellow')??fresh.find(e=>e.type==='injury')??fresh.find(e=>e.type==='goal')??fresh.find(e=>e.type==='yellow')??fresh.find(e=>e.type==='save')??fresh.at(-1);
+  return fresh.find(e=>e.type==='red'||e.type==='secondYellow')??fresh.find(e=>e.type==='injury')??fresh.find(e=>events[e.order-1]?.type==='penalty')??fresh.find(e=>e.type==='disallowedOffside'||e.type==='disallowedFoul'||e.type==='post')??fresh.find(e=>e.type==='goal')??fresh.find(e=>e.type==='yellow')??fresh.find(e=>e.type==='save')??fresh.at(-1);
 }
 export function projectHighlight(state:Career,event:MatchEvent):Highlight|null {
-  if(event.type==='pass')return null;
-  return {kind:event.type==='secondYellow'?'red':event.type,player:state.players.find(p=>p.id===event.playerId)!.name,color:state.clubs.find(c=>c.id===event.clubId)!.color,side:event.clubId===state.clubId?'blue':'red',tick:event.tick,score:`${event.homeGoals} - ${event.awayGoals}`};
+  if(event.type==='pass'||event.type==='penalty'||event.type==='clearance')return null;
+  const penalty=state.match?.events[event.order-1]?.type==='penalty';
+  return {kind:penalty?(event.type==='goal'?'penaltyGoal':event.type==='save'?'penaltySave':'penaltyMiss'):event.type==='secondYellow'?'red':event.type,player:state.players.find(p=>p.id===event.playerId)!.name,color:state.clubs.find(c=>c.id===event.clubId)!.color,side:event.clubId===state.clubId?'blue':'red',tick:event.tick,score:`${event.homeGoals} - ${event.awayGoals}`};
 }
 export function nextHighlight(previous:Career,state:Career):Highlight|null {
   if(!previous.match||!state.match||previous.match.fixtureId!==state.match.fixtureId||state.match.tick<previous.match.tick)return null;
@@ -50,7 +51,8 @@ export function clockLabel(tick:number,elapsed:number,duration:number,match?:Pic
 export type HighlightFrame='prepare'|'tackle'|'penalty'|HighlightKind;
 export function highlightFrame(kind:HighlightKind,progress:number):HighlightFrame {
   if(kind==='foul'||kind==='yellow'||kind==='red')return progress<.4?'tackle':kind;
-  if(kind==='penaltyGoal'||kind==='penaltyMiss')return progress<.4?'penalty':kind==='penaltyGoal'?'goal':'penaltyMiss';
+  if(kind==='penaltyGoal'||kind==='penaltyMiss'||kind==='penaltySave')return progress<.4?'penalty':kind==='penaltyGoal'?'goal':kind==='penaltySave'?'save':'penaltyMiss';
+  if(kind==='post'||kind==='disallowedOffside'||kind==='disallowedFoul')return progress<.4?'prepare':kind;
   if(kind==='goal'||kind==='save'||kind==='shot')return progress<.4?'prepare':kind;
   return kind;
 }

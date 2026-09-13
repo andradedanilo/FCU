@@ -6,7 +6,7 @@ export function checkTestBudget(){
  if(process.env.FCU_TEST_DISCOVERY==='1')return;
  const env:NodeJS.ProcessEnv={...process.env,FCU_TEST_DISCOVERY:'1'};delete env.NO_COLOR;
  const discover=(script:string,args:string[])=>JSON.parse(execFileSync(process.execPath,[script,...args],{encoding:'utf8',env,timeout:15000,windowsHide:true}));
- const units=z.array(z.object({name:z.string(),file:z.string()})).parse(discover('node_modules/vitest/vitest.mjs',['list','--json']));
+ const units=z.array(z.object({name:z.string(),file:z.string()})).parse(discover('node_modules/vitest/vitest.mjs',['list','--no-static-parse','--json']));
  const desktop=z.object({suites:z.array(z.unknown()),errors:z.array(z.unknown())}).parse(discover('node_modules/@playwright/test/cli.js',['test','--list','--reporter=json']));
  if(desktop.errors.length)throw Error('Electron test discovery failed.');
  const files=new Set(units.map(t=>resolve(t.file)));let journeys=0;

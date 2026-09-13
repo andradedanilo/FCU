@@ -63,8 +63,8 @@ export function createGameAudio() {
       if(!effects||(document.hidden||suspended))return;
       if(kind==='kick')sample('kick',.7);
       else if(kind==='tackle')sample('tackle',.65);
-      else if(['whistle','foul','yellow','red','halftime','lineup'].includes(kind))sample('whistle',.22);
-      else if(kind!=='anticipation'&&kind!=='injury'&&kind!=='coach')sample(kind==='shot'||kind==='penaltyMiss'?'groan':'cheer',.6);
+      else if(['offside','disallowedOffside','disallowedFoul','corner','whistle','foul','yellow','red','halftime','lineup'].includes(kind))sample('whistle',.22);
+      else if(kind!=='anticipation'&&kind!=='injury'&&kind!=='coach')sample(kind==='post'||kind==='shot'||kind==='penaltyMiss'?'groan':'cheer',.6);
     },
     dispose() { music = false;matchActive=false;ambient(); stopNotes(); document.removeEventListener('visibilitychange', visibility); void context?.close(); }
   };
