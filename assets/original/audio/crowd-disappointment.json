@@ -1,14 +1,15 @@
 {
   "title": "FCU original crowd crowd-disappointment",
-  "revision": 2,
-  "origin": "Original mathematical voice, collective breath, crowd roar and reflection synthesis; no recordings or external samples.",
+  "revision": 3,
+  "origin": "Original mathematical voice, restrained breath and reflection synthesis; no recordings or external samples.",
   "generator": "scripts/create-crowd-auditions.mjs",
   "seed": 13092028,
   "sampleRate": 48000,
   "channels": 2,
   "bitsPerSample": 16,
   "durationSeconds": 3.2,
-  "peakDbfs": -1.5,
-  "sha256": "dcc3a39c254df007d9380440b1609bec3dd89702d769f0ef88e0b85e7b62e6b3",
+  "peakDbfs": -12,
+  "rmsDbfs": -30.482627199472322,
+  "sha256": "c5202a462b5431c5f06b7eca6bf15d5938b748be5dd5c01d3ca6d7134a020e5a",
   "status": "Stylized crowd audition; listening acceptance pending; not installed in match playback."
 }

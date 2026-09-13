@@ -2,7 +2,7 @@ import {mkdirSync, writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 
 // Original formant synthesis: many independently pitched breathy voices,
-// collective breath, a broadband roar and stadium reflections, without samples.
+// restrained collective breath and stadium reflections, without samples.
 const rate = 48000;
 const output = 'assets/original/audio';
 mkdirSync(output, {recursive: true});
@@ -17,7 +17,7 @@ function render(kind, duration, initialSeed) {
   const left = new Float64Array(length);
   const right = new Float64Array(length);
   const cheer = kind === 'goal-cheer';
-  for (let voice = 0; voice < 192; voice++) {
+  for (let voice = 0; voice < 72; voice++) {
     const start = Math.floor((cheer ? 0.24 + random() * 0.1 : 0.035 + random() * 0.08) * rate);
     const life = (cheer ? 4.2 : 1.55) + random() * (cheer ? 0.7 : 0.4);
     const base = cheer ? 105 + random() * 235 : 75 + random() * 65;
@@ -51,7 +51,7 @@ function render(kind, duration, initialSeed) {
       const glottal = phase < 0.38 ? Math.sin(Math.PI * phase / 0.38) ** 2 : 0;
       const noise = random() * 2 - 1;
       breath += 0.25 * (noise - breath);
-      const source = (glottal - 0.19) * (cheer ? 0.65 : 1) + breath * (cheer ? 1.65 : 0.8);
+      const source = (glottal - 0.19) + breath * 0.035;
       let voiced = 0;
       for (let f = 0; f < formants.length; f++) {
         const filter = formants[f];
@@ -68,25 +68,17 @@ function render(kind, duration, initialSeed) {
       right[j + start] += sample * Math.sqrt(pan);
     }
   }
-  // Hundreds of distant unresolved voices form a rough, dense bed underneath
-  // the vowel voices. The opening air intake precedes the goal's abrupt eruption.
+  // Only a brief, quiet band-limited intake: sustained noise masked the voices
+  // in revision 2 and was rejected as microphone wind. No rumble bed remains.
   for (const channel of [left, right]) {
-    let bass = 0;
-    let air = 0;
-    for (let i = 0; i < length; i++) {
-      const t = i / rate;
+    let slow = 0;
+    let fast = 0;
+    for (let i = 0; i < Math.round(0.24 * rate); i++) {
       const noise = random() * 2 - 1;
-      bass += 0.016 * (noise - bass);
-      air += 0.22 * (noise - air);
-      const gasp = Math.sin(Math.PI * Math.min(1, t / 0.24)) ** 2;
-      const eruption = Math.min(1, Math.max(0, (t - 0.24) / 0.055));
-      const sustain = Math.min(1, Math.max(0, (5.25 - t) / 0.75));
-      const sigh = Math.min(1, t / 0.06) * Math.exp(-Math.max(0, t - 0.15) / 0.2);
-      const collapse = Math.exp(-Math.max(0, t - 0.55) / 0.24);
-      const murmur = t > 1.3 ? 0.16 * Math.min(1, (t - 1.3) / 0.25) * Math.exp(-(t - 1.3) / 0.6) : 0;
-      channel[i] += cheer
-        ? air * 5 * gasp + (bass * 40 + air * 8) * eruption * sustain
-        : air * 7 * sigh + bass * 23 * Math.min(1, t / 0.1) * collapse + (bass * 8 + air) * murmur;
+      slow += 0.07 * (noise - slow);
+      fast += 0.3 * (noise - fast);
+      const envelope = Math.sin(Math.PI * i / (0.24 * rate)) ** 2;
+      channel[i] += (fast - slow) * 0.12 * envelope;
     }
   }
   const dryLeft = left.slice();
@@ -101,17 +93,22 @@ function render(kind, duration, initialSeed) {
     }
   }
   let peak = 0;
+  let energy = 0;
   for (const channel of [left, right]) {
     let previousInput = 0;
     let previousOutput = 0;
     for (let i = 0; i < length; i++) {
       const value = channel[i] - previousInput + 0.995 * previousOutput;
       previousInput = channel[i]; previousOutput = value;
-      channel[i] = 12 * Math.tanh(value / 12) * Math.min(1, i / 480, (length - 1 - i) / 4800);
+      channel[i] = value * Math.min(1, i / 480, (length - 1 - i) / 4800);
       peak = Math.max(peak, Math.abs(channel[i]));
+      energy += channel[i] ** 2;
     }
   }
-  const gain = 10 ** (-1.5 / 20) / peak;
+  // Limit both peak and average level; peak-only normalization made the dense
+  // previous audition excessively loud even though it never clipped.
+  const rms = Math.sqrt(energy / (length * 2));
+  const gain = Math.min(10 ** (-12 / 20) / peak, 10 ** (-25 / 20) / rms);
   const wav = Buffer.alloc(44 + length * 4);
   wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8);
   wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(2, 22);
@@ -124,11 +121,11 @@ function render(kind, duration, initialSeed) {
   }
   writeFileSync(`${output}/${kind}.wav`, wav);
   writeFileSync(`${output}/${kind}.json`, JSON.stringify({
-    title: `FCU original crowd ${kind}`, revision: 2,
-    origin: 'Original mathematical voice, collective breath, crowd roar and reflection synthesis; no recordings or external samples.',
+    title: `FCU original crowd ${kind}`, revision: 3,
+    origin: 'Original mathematical voice, restrained breath and reflection synthesis; no recordings or external samples.',
     generator: 'scripts/create-crowd-auditions.mjs', seed: initialSeed,
     sampleRate: rate, channels: 2, bitsPerSample: 16, durationSeconds: duration,
-    peakDbfs: -1.5, sha256: createHash('sha256').update(wav).digest('hex'),
+    peakDbfs: 20 * Math.log10(peak * gain), rmsDbfs: 20 * Math.log10(rms * gain), sha256: createHash('sha256').update(wav).digest('hex'),
     status: 'Stylized crowd audition; listening acceptance pending; not installed in match playback.'
   }, null, 2) + '\n');
   console.log(`Created ${kind}.wav: ${duration}s stereo PCM16 at ${rate} Hz.`);

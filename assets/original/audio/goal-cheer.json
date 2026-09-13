@@ -1,14 +1,15 @@
 {
   "title": "FCU original crowd goal-cheer",
-  "revision": 2,
-  "origin": "Original mathematical voice, collective breath, crowd roar and reflection synthesis; no recordings or external samples.",
+  "revision": 3,
+  "origin": "Original mathematical voice, restrained breath and reflection synthesis; no recordings or external samples.",
   "generator": "scripts/create-crowd-auditions.mjs",
   "seed": 13092027,
   "sampleRate": 48000,
   "channels": 2,
   "bitsPerSample": 16,
   "durationSeconds": 6,
-  "peakDbfs": -1.5,
-  "sha256": "3a75bdc42e5e987a325fdb68f7fe5c6ba88e85195c3bc83abd0c5a504dcb88be",
+  "peakDbfs": -12,
+  "rmsDbfs": -25.68722212136162,
+  "sha256": "21e3daf7ebd6226d029e194a2be7c0d24e132133318578bbb463fd8b1a3bc8a8",
   "status": "Stylized crowd audition; listening acceptance pending; not installed in match playback."
 }
