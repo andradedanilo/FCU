@@ -46,7 +46,7 @@ it('completes a separate Dream season and recovers a saved pending reward withou
  const previous=JSON.parse(gunzipSync(bytes).toString('utf8'));previous.schema=2;previous.payload.game.engineVersion='0.7.3';previous.checksum=checksum(previous.payload);expect(decodeDream(gzipSync(JSON.stringify(previous))).state).toEqual(s);
  const legacy=JSON.parse(gunzipSync(bytes).toString('utf8'));legacy.schema=1;legacy.payload.game.engineVersion='0.7.2';delete legacy.payload.game.marketArchive;legacy.checksum=checksum(legacy.payload);expect(decodeDream(gzipSync(JSON.stringify(legacy))).state).toEqual(s);
  const broken=JSON.parse(gunzipSync(bytes).toString('utf8'));broken.payload.collection.pending.candidates.reverse();broken.checksum='0'.repeat(64);expect(()=>decodeDream(gzipSync(JSON.stringify(broken)))).toThrow('INVALID_SAVE');
- broken.schema=4;expect(()=>decodeDream(gzipSync(JSON.stringify(broken)))).toThrow('FUTURE_SAVE');
+ broken.schema=5;expect(()=>decodeDream(gzipSync(JSON.stringify(broken)))).toThrow('FUTURE_SAVE');
  const pack=s.collection.pending!;s=dreamCommand(s,{type:'Choose',packId:pack.id,playerId:pack.candidates[0]!});expect(s.collection.unlocked).toHaveLength(23);
  s=dreamCommand(s,{type:'Season',tier:'elite'});expect(s.game.season).toBe(2027);expect(s.game.round).toBe(0);expect(validateDream(s)).toEqual(s);
  expect(s.collection.progress).toBe(2);expect(s.game.economy.ledger).toEqual([]);

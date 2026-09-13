@@ -1,3 +1,6 @@
+import manifest from '../package.json' with {type:'json'};
+import {createDreamStore,decodeDream} from '../apps/game/src/main/dreamSaves.ts';
+import {newDream} from '../packages/simulation/src/dreamSeason.ts';
 import {createDiagnostics} from '../apps/game/src/main/diagnostics.ts';
 import {alternateSaveHeads} from '../packages/presentation/src/saveHistory.ts';
 import { it, expect } from 'vitest';
@@ -104,4 +107,15 @@ it('bounds diagnostics and excludes unstructured private data from exported repo
  const report=diagnostics.report();expect(report.payload.records).toHaveLength(100);expect(report.payload.records[0]?.milliseconds).toBe(5);expect(report.payload.records.at(-1)?.milliseconds).toBe(104);
  expect(report.checksum).toBe(checksum(report.payload));expect(JSON.stringify(report)).not.toContain('private');
  report.payload.records.length=0;expect(diagnostics.report().payload.records).toHaveLength(100);
+});
+
+it('records the writer app separately from the unchanged engine and preserves previous formats',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'fcu-writer-')),store=createSaveStore(join(root,'career')),state=career(),id=await store.save(state,'manual');
+ const bytes=await readFile(join(root,'career',state.careerId,id+'.save')),decoded=decode(bytes);expect(decoded.envelope.schema).toBe(24);expect(decoded.envelope.appVersion).toBe(manifest.version);expect(decoded.envelope.engineVersion).toBe('0.7.4');expect(checksum(decoded.state)).toBe(checksum(state));
+ const older={...decoded.envelope,schema:23,appVersion:'0.7.4'};expect(checksum(decode(gzipSync(canonical(older))).state)).toBe(checksum(state));
+ const dream=newDream({type:'New',id:crypto.randomUUID(),seed:2026,name:'Writer FC',tier:'starter',pack:null}),dreamStore=createDreamStore(join(root,'dream')),commit=await dreamStore.save(dream);
+ const raw=decodeDream(await readFile(join(root,'dream',dream.game.careerId,commit+'.dream')));expect(raw.e.schema).toBe(4);expect(raw.e.appVersion).toBe(manifest.version);expect(checksum(raw.state)).toBe(checksum(dream));
+ const previous={...raw.e,schema:3};delete previous.appVersion;expect(checksum(decodeDream(gzipSync(canonical(previous))).state)).toBe(checksum(dream));
+ const missing={...raw.e};delete missing.appVersion;expect(()=>decodeDream(gzipSync(canonical(missing)))).toThrow('INVALID_SAVE');
+ expect((await store.list())[0]?.appVersion).toBe(manifest.version);expect((await dreamStore.list())[0]?.appVersion).toBe(manifest.version);
 });

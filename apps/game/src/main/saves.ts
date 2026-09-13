@@ -1,3 +1,4 @@
+import manifest from '../../../../package.json' with {type:'json'};
 import { mkdir, open, readFile, readdir, rename, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
@@ -31,9 +32,10 @@ const formats=[
  {app:'0.7.1',rules:'world-2',read:migratePersonnelCareer},
  {app:'0.7.2',rules:'world-2',read:migrateBoardCareer},
  {app:'0.7.3',rules:'world-2',read:migrateArchivedCareer},
- {app:'0.7.4',rules:'world-2',read:validateCareer}
+ {app:'0.7.4',rules:'world-2',read:validateCareer},
+ {app:null,engine:'0.7.4',rules:'world-2',read:validateCareer}
 ] as const;
-const envelopeSchema=z.object({schema:z.number().int().min(1).max(formats.length),appVersion:z.string().max(20),engineVersion:z.string().max(20),rulesetVersion:z.string().max(40),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.string().min(1).max(100),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
+const envelopeSchema=z.object({schema:z.number().int().min(1).max(formats.length),appVersion:z.string().regex(/^\d+\.\d+\.\d+$/).max(20),engineVersion:z.string().max(20),rulesetVersion:z.string().max(40),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.string().min(1).max(100),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decode(bytes:Uint8Array) {
   if(bytes.length>MAX_BYTES)throw new Error('INVALID_SAVE');
   const raw:unknown=JSON.parse(gunzipSync(bytes,{maxOutputLength:MAX_BYTES}).toString('utf8'));
@@ -41,7 +43,7 @@ export function decode(bytes:Uint8Array) {
   const e=envelopeSchema.parse(raw);
   if(checksum(e.payload)!==e.checksum)throw new Error('INVALID_SAVE');
   const format=formats[e.schema-1]!;
-  if(e.engineVersion!==format.app||e.appVersion!==format.app||e.rulesetVersion!==format.rules)throw new Error('INVALID_SAVE');
+  if(e.engineVersion!==('engine' in format?format.engine:format.app)||format.app!==null&&e.appVersion!==format.app||e.rulesetVersion!==format.rules)throw new Error('INVALID_SAVE');
   const state=format.read(e.payload);
   if(state.careerId!==e.careerId||state.revision!==e.stateRevision||state.snapshotId!==e.snapshotId)throw new Error('INVALID_SAVE');
   return {envelope:e,state};
@@ -69,8 +71,8 @@ export function createSaveStore(root:string) {
           const path=filename(dir.name,commitId);if((await stat(path)).size>MAX_BYTES)throw new Error('INVALID_SAVE');
           const {envelope:e,state:s}=decode(await readFile(path));
           if(e.saveCommitId!==commitId||s.careerId!==dir.name)throw new Error('INVALID_SAVE');
-          entries.push({careerId:s.careerId,commitId,parentCommitId:e.parentCommitId,season:s.season,club:s.clubs.find(c=>c.id===s.clubId)!.name,round:s.round,tick:s.match?.tick??0,savedAtUTC:e.savedAtUTC,kind:e.kind,valid:true,engineVersion:e.engineVersion,error:null});
-        } catch(error) {entries.push({careerId:dir.name,commitId,parentCommitId:null,season:null,club:'',round:0,tick:0,savedAtUTC:'',kind:'manual',valid:false,engineVersion:null,error:error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':'INVALID_SAVE'});}
+          entries.push({careerId:s.careerId,commitId,parentCommitId:e.parentCommitId,appVersion:e.appVersion,season:s.season,club:s.clubs.find(c=>c.id===s.clubId)!.name,round:s.round,tick:s.match?.tick??0,savedAtUTC:e.savedAtUTC,kind:e.kind,valid:true,engineVersion:e.engineVersion,error:null});
+        } catch(error) {entries.push({careerId:dir.name,commitId,parentCommitId:null,appVersion:null,season:null,club:'',round:0,tick:0,savedAtUTC:'',kind:'manual',valid:false,engineVersion:null,error:error instanceof Error&&error.message==='FUTURE_SAVE'?'FUTURE_SAVE':'INVALID_SAVE'});}
       }
     }
     return entries.sort((a,b)=>b.savedAtUTC.localeCompare(a.savedAtUTC)||a.commitId.localeCompare(b.commitId));
@@ -79,7 +81,7 @@ export function createSaveStore(root:string) {
     const action=pending.then(async()=>{
       const state=validateCareer(input);const saveCommitId=randomUUID();const folder=directory(state.careerId);
       await mkdir(folder,{recursive:true});
-      const envelope={schema:formats.length,appVersion:formats.at(-1)!.app,engineVersion:state.engineVersion,rulesetVersion:state.rulesetVersion,careerId:state.careerId,saveCommitId,parentCommitId:parents.get(state.careerId)??null,stateRevision:state.revision,savedAtUTC:new Date().toISOString(),snapshotId:state.snapshotId,kind,checksum:checksum(state),payload:state};
+      const envelope={schema:formats.length,appVersion:manifest.version,engineVersion:state.engineVersion,rulesetVersion:state.rulesetVersion,careerId:state.careerId,saveCommitId,parentCommitId:parents.get(state.careerId)??null,stateRevision:state.revision,savedAtUTC:new Date().toISOString(),snapshotId:state.snapshotId,kind,checksum:checksum(state),payload:state};
       const temp=join(folder,`${saveCommitId}.tmp`);const handle=await open(temp,'wx');
       try {await handle.writeFile(gzipSync(canonical(envelope)));await handle.sync();}finally{await handle.close();}
       decode(await readFile(temp));await rename(temp,filename(state.careerId,saveCommitId));

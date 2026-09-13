@@ -86,7 +86,7 @@ npm run test:e2e
 npm run check:docs
 ```
 
-The suite registers 78 unit/integration cases plus three Electron journeys in fourteen files. The E2E journey covers offline play, lineup rejection, save/restart, normal/fallback match equivalence, missing-artwork recovery and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
+The suite registers 79 unit/integration cases plus three Electron journeys in fourteen files. The E2E journey covers offline play, lineup rejection, save/restart, normal/fallback match equivalence, missing-artwork recovery and a complete exhibition season. Typechecking explicitly runs TypeScript 7.0.2; ESLint uses Microsoft's separate TypeScript 6 compatibility API.
 
 Portable builds include a file checksum manifest and bundled dependency/audio notices. Packaging refuses stale build inputs; rebuild after source changes. These are local prototypes, not signed public releases.
 
