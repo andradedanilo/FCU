@@ -24,6 +24,8 @@ The game starts fullscreen; **F11** toggles window mode. The layout fills the av
 
 Seasons repeat with promotion, relegation, contract expiry and preseason recruitment. Five domestic cups include both tiers. A 16-club continental cup uses two legs through the semi-finals and a neutral final, with no away-goals rule. Level deciding ties continue into two 15-minute extra-time periods and, if needed, a penalty shootout. Penalties appear in commentary and the scoreboard, separately from open-play goals. Browse draws, byes, results and winners from the League table competition selector. Cup prizes and histories carry through season closing.
 
+If the game screen process stops unexpectedly, FCU offers Return to title or Quit. Return to title lets you load an earlier confirmed checkpoint; progress since the last save may be lost.
+
 At full time, Match report shows points earned, league position, scorers and chance figures. Reopen the last result from the clubhouse.
 
 Keyboard: arrows or Tab move focus, Enter confirms, Esc goes back, P plays/pauses, and Q/E change sections. Standard gamepads use D-pad/left stick, south button to confirm, east button to go back, shoulders for sections and Start for Play/Pause. Controller confirm on a name or numeric field opens an offline keyboard; dropdowns open a controller-friendly chooser. Steam-specific integration and physical controller verification remain future work.

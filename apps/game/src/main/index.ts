@@ -58,7 +58,6 @@ else void app.whenReady().then(async()=>{
   window.webContents.on('will-navigate',event=>event.preventDefault());
   window.webContents.on('will-attach-webview',event=>event.preventDefault());
   protectClose(window,trusted,()=>Promise.all([store.idle(),dream.idle(),settings.idle()]));
-  window.webContents.on('render-process-gone',()=>{void dialog.showMessageBox({type:'error',message:'FCU stopped unexpectedly. Reopen the game and load a confirmed save.'});});
   app.on('second-instance',()=>{window.restore();window.focus();});
   window.once('ready-to-show',()=>window.show());
   await window.loadURL(devURL??productionURL);
