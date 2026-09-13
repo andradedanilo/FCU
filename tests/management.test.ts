@@ -32,3 +32,41 @@ it('promotes an academy player with a paid senior contract once and preserves de
  expect(applyCommand(next,{...action,expectedRevision:next.revision,commandId:'00000000-0000-4000-8000-000000000003'})).toEqual({ok:false,error:'INVALID_COMMAND'});
  expect(applyCommand(state,{...action,bonus:Number.MAX_SAFE_INTEGER})).toEqual({ok:false,error:'INSUFFICIENT_FUNDS'});
 });
+import {marketCommand,processMarket} from '../packages/simulation/src/market.ts';
+import {recruit} from '../packages/simulation/src/recruitment.ts';
+import {returnLoans} from '../packages/simulation/src/loans.ts';
+import {cash} from '../packages/simulation/src/economy.ts';
+import type {Career,Command} from '../packages/contracts/src/index.ts';
+type Action<T=Command>=T extends Command?Omit<T,'careerId'|'expectedRevision'|'commandId'>:never;
+function managementAct(state:Career,action:Action){const result=applyCommand(state,{...action,careerId:state.careerId,expectedRevision:state.revision,commandId:crypto.randomUUID()});if(!result.ok)throw Error(result.error);return result.value;}
+function incoming(kind:'sale'|'loan'){
+ let state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id,'countries');const player=state.players.find(p=>p.clubId===state.clubId&&p.role==='MID')!,buyer=clubs[1]!.id;
+ state=managementAct(state,{type:'SetTransferListing',playerId:player.id,listing:{kind,fee:kind==='sale'?10000000:0,share:50}});
+ const common={playerId:player.id,careerId:state.careerId,expectedRevision:state.revision,commandId:crypto.randomUUID()};
+ expect(marketCommand(state,kind==='sale'?{...common,type:'SubmitOffer',fee:10000000}:{...common,type:'SubmitLoan',share:50},buyer)).toBeNull();
+ const offer=state.offers.at(-1)!;offer.terms={...(kind==='sale'?desiredTerms(state,player):{wage:state.economy.wages[player.id]!,bonus:0}),years:2,role:'rotation'};
+ state.date='2026-07-02';processMarket(state);return {state,player,offer};
+}
+it('requires the manager to accept a sale and repairs selection without duplicate proceeds',()=>{
+ const {state,player,offer}=incoming('sale');expect(offer.status).toBe('submitted');recruit(state);expect(player.clubId).toBe(state.clubId);
+ const money=cash(state.economy,state.clubId),next=managementAct(state,{type:'RespondBid',offerId:offer.id,accept:true});
+ expect(next.players.find(p=>p.id===player.id)?.clubId).toBe(offer.buyerId);expect(cash(next.economy,next.clubId)-money).toBe(offer.fee);expect(next.lineup).not.toContain(player.id);expect(next.bench).not.toContain(player.id);validateCareer(next);
+ expect(()=>managementAct(next,{type:'RespondBid',offerId:offer.id,accept:true})).toThrow('OFFER_CHANGED');
+});
+it('loans out with retained ownership and returns the player to the parent',()=>{
+ const {state,player,offer}=incoming('loan');const next=managementAct(state,{type:'RespondBid',offerId:offer.id,accept:true});
+ expect(next.contracts[player.id]!.ownerId).toBe(next.clubId);expect(next.loans.at(-1)?.share).toBe(50);expect(cash(next.economy,next.clubId)).toBe(cash(state.economy,state.clubId));validateCareer(next);
+ next.date=next.loans.at(-1)!.ends;returnLoans(next);expect(next.players.find(p=>p.id===player.id)?.clubId).toBe(next.clubId);expect(next.loans.at(-1)?.status).toBe('returned');
+});
+it('rejects or expires unaccepted bids without selling and requires affordable current terms',()=>{
+ const {state,player,offer}=incoming('sale');const rejected=managementAct(state,{type:'RespondBid',offerId:offer.id,accept:false});expect(rejected.players.find(p=>p.id===player.id)?.clubId).toBe(state.clubId);expect(rejected.offers.at(-1)?.status).toBe('rejected');
+ offer.terms!.wage=1000000000;offer.terms!.bonus=4000000000;expect(()=>managementAct(state,{type:'RespondBid',offerId:offer.id,accept:true})).toThrow('WAGE_BUDGET');
+ state.date=offer.expires;processMarket(state);expect(offer.status).toBe('expired');expect(player.clubId).toBe(state.clubId);
+});
+it('AI bids on a listed upgrade but never completes the sale without owner acceptance',()=>{
+ let state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id,'countries');
+ const player=state.players.find(p=>p.clubId===state.clubId&&p.role==='MID')!;player.passing=90;player.stamina=90;player.tackling=90;state.personnel.players[player.id]!.potential=95;
+ state=managementAct(state,{type:'SetTransferListing',playerId:player.id,listing:{kind:'sale',fee:10000000,share:100}});
+ state.date='2026-07-06';recruit(state);const offer=state.offers.find(o=>o.playerId===player.id&&o.sellerId===state.clubId);expect(offer).toBeDefined();expect(offer?.terms).not.toBeNull();
+ state.date='2026-07-07';processMarket(state);recruit(state);expect(state.players.find(p=>p.id===player.id)?.clubId).toBe(state.clubId);expect(offer?.status).toBe('submitted');validateCareer(state);
+});

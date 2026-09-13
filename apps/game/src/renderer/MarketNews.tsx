@@ -3,8 +3,8 @@ import {text as t} from '../../../../packages/presentation/src/text.ts';
 import s from './App.module.css';
 import {academyReview} from '../../../../packages/simulation/src/personnel.ts';
 export function MarketNews({state,open}:{state:Career;open:(id:PlayerId)=>void}){
- const own=state.offers.filter(o=>o.buyerId===state.clubId).slice(-3).reverse();
- const other=state.offers.filter(o=>o.buyerId!==state.clubId&&o.status==='completed').slice(-2).reverse();
+ const own=state.offers.filter(o=>(o.buyerId===state.clubId||o.sellerId===state.clubId)).slice(-3).reverse();
+ const other=state.offers.filter(o=>o.buyerId!==state.clubId&&o.sellerId!==state.clubId&&o.status==='completed').slice(-2).reverse();
  const reports=Object.entries(state.scouting.reports).sort((a,b)=>b[1].date.localeCompare(a[1].date)).slice(0,1);
  const academy=academyReview(state),injured=state.players.filter(p=>p.clubId===state.clubId&&p.injuryUntil&&p.injuryUntil>state.date);
  if(!own.length&&!other.length&&!reports.length&&!academy.expiring.length&&!academy.overflow&&!injured.length)return null;

@@ -1,3 +1,4 @@
+import {autoPick,pickBench} from './selection.ts';
 import {seasonEnd} from './competition.ts';
 import {occupiedPlaces,loanEnd} from './loans.ts';
 import type {Career,ClubId,Player,PlayerId,Offer,OfferId,Command,FailureCode} from '../../contracts/src/index.ts';
@@ -9,7 +10,7 @@ export function freePlayers():Player[]{
  return (['GK','GK','DEF','DEF','DEF','DEF','MID','MID','MID','MID','FWD','FWD'] as const).map((role,i)=>({id:`player-00-${String(i+1).padStart(2,'0')}` as PlayerId,clubId:null,name:`${['Alex','Robin','Sam','Jamie','Morgan','Casey','Drew','Ellis','Jules','Riley','Taylor','Noel'][i]} Westbrook`,role,registered:true,academy:false,condition:100000,morale:70,injuryUntil:null,leagueYellows:0,leagueBan:0,goalkeeping:role==='GK'?55+i:15,tackling:50+i,passing:50+i,shooting:50+i,pace:60,stamina:60,discipline:65}));
 }
 export const activeOffer=(offer:Offer)=>['submitted','countered','accepted','ready','queued'].includes(offer.status);
-export function askingPrice(state:Career,player:Player){return player.clubId===null?0:Math.round(marketValue(state,player)*(state.contracts[player.id]!.role==='starter'?1.2:1));}
+export function askingPrice(state:Career,player:Player){return player.clubId===null?0:player.transferListing?.kind==='sale'?player.transferListing.fee:Math.round(marketValue(state,player)*(state.contracts[player.id]!.role==='starter'?1.2:1));}
 export function windowOpen(date:string){const md=date.slice(5);return md>='07-01'&&md<='08-31'||md>='01-01'&&md<='01-31';}
 export function nextWindow(date:string){const year=Number(date.slice(0,4)),md=date.slice(5);return md<'07-01'?`${year}-07-01`:`${year+1}-01-01`;}
 function ownership(state:Career,offer:Offer,player?:Player){return (player??state.players.find(p=>p.id===offer.playerId))?.clubId===offer.sellerId&&state.contracts[offer.playerId]?.revision===offer.contractRevision;}
@@ -50,6 +51,8 @@ export function register(state:Career,offer:Offer):FailureCode|null {
  state.economy.wages[player.id]=offer.terms!.wage;
  if(offer.loanShare!==null){state.loans.push({source:'market',id:offer.id,playerId:player.id,parent:offer.sellerId!,borrower:offer.buyerId,ends:loanEnd(state.date),share:offer.loanShare,status:'active'});state.contracts[player.id]!.revision++;}
  else state.contracts[player.id]={...state.contracts[player.id]!,ownerId:offer.buyerId,ends:contractEnd(state.date,offer.terms!.years),role:offer.terms!.role,revision:offer.contractRevision+1};
+ delete player.transferListing;
+ if(offer.sellerId===state.clubId){state.lineup=autoPick(state.players,state.clubId,state.tactics.formation,state.date);state.bench=pickBench(state.players,state.clubId,state.lineup,state.date);}
  offer.status='completed';offer.activation=null;
  for(const rival of state.offers)if(rival.id!==offer.id&&rival.playerId===offer.playerId&&activeOffer(rival)){rival.status='rejected';rival.reason='competing';rival.activation=null;}
  return null;
@@ -92,6 +95,7 @@ export function processMarket(state:Career){
   }
   if(state.date>=offer.expires){offer.status='expired';changed=true;continue;}
   if(offer.status!=='submitted'||offer.responseDate>state.date)continue;
+  if(offer.sellerId===state.clubId){changed ||= offer.responseDate===state.date;continue;}
   changed=true;
   if(sellerNeeds(state,offer)){offer.status='rejected';offer.reason='squad';continue;}
   const asking=offer.loanShare!==null?0:askingPrice(state,state.players.find(p=>p.id===offer.playerId)!);

@@ -1,5 +1,6 @@
+import {OutgoingPanel,type OutgoingAction} from './OutgoingPanel.tsx';
 import {useRef,useState} from 'react';
-import type {Career,Command,Player,Contract} from '../../../../packages/contracts/src/index.ts';
+import type {Career,Command,Player,Contract,PlayerId} from '../../../../packages/contracts/src/index.ts';
 import {ageOn,contractEnd,desiredTerms,renewalError} from '../../../../packages/simulation/src/contracts.ts';
 import {budgets} from '../../../../packages/simulation/src/economy.ts';
 import {money,parseEuro} from '../../../../packages/presentation/src/money.ts';
@@ -7,10 +8,10 @@ import {text as t} from '../../../../packages/presentation/src/text.ts';
 import {useModal} from './input.ts';
 import s from './ContractsMenu.module.css';
 type Renewal=Omit<Extract<Command,{type:'RenewContract'|'PromoteAcademy'}>,'careerId'|'commandId'|'expectedRevision'>;
-export function ContractsMenu({state,busy,confirm,close}:{state:Career;busy:boolean;confirm:(action:Renewal)=>Promise<boolean>;close:()=>void}){
+export function ContractsMenu({state,busy,confirm,close,initialPlayer}:{initialPlayer:PlayerId|null;state:Career;busy:boolean;confirm:(action:Renewal|OutgoingAction)=>Promise<boolean>;close:()=>void}){
  const players=state.players.filter(p=>p.clubId===state.clubId&&state.contracts[p.id]!.ownerId===state.clubId);
  const draftFor=(p:Player)=>({id:p.id,wage:String(desiredTerms(state,p).wage/100),years:Math.min(5,Number(state.contracts[p.id]!.ends!.slice(0,4))-Number(state.date.slice(0,4))+1),role:state.contracts[p.id]!.role});
- const [draft,setDraft]=useState(()=>players[0]?draftFor(players[0]):null);const [review,setReview]=useState(false);
+ const [draft,setDraft]=useState(()=>players[0]?draftFor(players.find(p=>p.id===initialPlayer)??players[0]):null);const [review,setReview]=useState(false);
  const dialog=useRef<HTMLDialogElement>(null);useModal(dialog);
  const player=draft?players.find(p=>p.id===draft.id):undefined;
  if(!player||!draft)return <dialog ref={dialog} className={s.dialog} aria-label={t.contracts} onCancel={close}><header><h2>{t.contracts}</h2><button onClick={close}>{t.close}</button></header><p>{t.noRenewableContracts}</p></dialog>;
@@ -27,5 +28,6 @@ export function ContractsMenu({state,busy,confirm,close}:{state:Career;busy:bool
    <div className={s.review}><p>{t.signingBonus}: <b>{money(action.bonus)}</b></p><p>{t.weeklyWages}: <b>{money(weekly)} / {money(bank.wage)}</b></p><p>{t.cashAfter}: <b>{money(bank.cash-action.bonus)}</b></p><p>{t.contractUntil}: <b>{contractEnd(state.date,draft.years)}</b></p></div>
    <p>{player.academy?t.promotionHint:t.renewalHint}</p>{error&&<p role="status">{t.errors[error]}</p>}
    {review?<><strong>{t.renewalReview}</strong><div className={s.actions}><button disabled={busy} onClick={()=>setReview(false)}>{t.editTerms}</button><button disabled={busy||!!error} onClick={()=>void confirm(action).then(ok=>{if(ok)close();})}>{player.academy?t.promoteAcademy:t.confirmRenewal}</button></div></>:<button disabled={busy||!!error} onClick={()=>setReview(true)}>{t.reviewRenewal}</button>}
+   <OutgoingPanel key={player.id} state={state} player={player} busy={busy} command={confirm}/>
   </section></div></dialog>;
 }
