@@ -158,11 +158,12 @@ export function App() {
     try{const result=await window.fcu.list();if(result.ok)setSaves(previous=>previous===null?null:result.value);else{setSaves(null);setNotice(t.errors[result.error]);}}catch{setSaves(null);setNotice(t.errors.IO_ERROR);}finally{setListing(false);release();}
   }
   async function load(entry:SaveEntry) {
-    occupied.current=true;setBusy(true);const result=await window.fcu.load(entry.careerId,entry.commitId);
+    if(occupied.current)return;occupied.current=true;setBusy(true);
+    try{const result=await window.fcu.load(entry.careerId,entry.commitId);
     if(result.ok) {
       resetWorker();const loaded=await request({type:'LoadCareer',state:result.value});
       if(loaded.ok){accept(loaded.value);setDirty(false);setSaves(null);setScreen(loaded.value.match?'match':'home');setNotice(entry.engineVersion===loaded.value.engineVersion?t.savedStatus:t.tacticalMigration);}else setNotice(t.errors[loaded.error]);
-    }else setNotice(t.errors[result.error]);release();
+    }else setNotice(t.errors[result.error]);}catch{setNotice(t.errors.IO_ERROR);}finally{release();}
   }
   const title=screen==='title';
   return <div className={s.app} onClickCapture={event=>{if(event.target instanceof Element&&event.target.closest('button'))audio.current?.click();}}>
