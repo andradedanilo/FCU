@@ -1,3 +1,4 @@
+import {PlayerRecords} from './PlayerRecords.tsx';
 import {SaveHistory} from './SaveHistory.tsx';
 import {usePowerPause} from './usePowerPause.ts';
 import type {MatchCue} from './useMatchBroadcast.ts';
@@ -24,6 +25,7 @@ import s from './App.module.css';
 type Action<T>=T extends Command?Omit<T,'careerId'|'commandId'|'expectedRevision'>:never;
 export function DreamClub({packs,exit,cue,ambience,overlayOpen,exitCheckpoint}:{exitCheckpoint:RefObject<(()=>Promise<boolean>)|null>;overlayOpen:boolean;packs:InstalledRoster[];exit:()=>void;cue:(kind:MatchCue)=>void;ambience:(value:boolean)=>void}){
  const [state,setState]=useState<Dream|null>(null),latest=useRef<Dream|null>(null),worker=useRef<Worker|null>(null),occupied=useRef(false);
+ const [recordsOpen,setRecordsOpen]=useState(false);
  const [listing,setListing]=useState(false);
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[durable,setDurable]=useState(true),[screen,setScreen]=useState('home');
  const [name,setName]=useState('Dream FC'),[tier,setTier]=useState<Dream['tier']>('starter'),[pack,setPack]=useState('');
@@ -106,9 +108,10 @@ export function DreamClub({packs,exit,cue,ambience,overlayOpen,exitCheckpoint}:{
  {rewardOdds(state.collection,rewardPool(state)).every(o=>o.total===0)&&<strong>{t.dreamComplete}</strong>}
  {seasonComplete(g)?<><label>{t.dreamTier}<select value={tier} onChange={e=>setTier(e.target.value as Dream['tier'])}>{(['starter','club','elite'] as const).map(v=><option key={v} value={v}>{t.dreamTiers[v]}</option>)}</select></label><button ref={primary} disabled={busy} onClick={()=>void act({type:'Season',tier})}>{t.seasonStarted}</button></>:g.match&&g.match.phase!=='finished'?<button ref={primary} onClick={()=>setScreen('match')}>{t.continue}</button>:<button ref={primary} disabled={busy} onClick={()=>{void (async()=>{if(g.date!==nextManagedFixture(g)?.date&&!await act({type:'Next'}))return;if(await match({type:'StartMatch'}))setScreen('match');})();}}>{t.dreamKickoff}</button>}</section>}
  {!collection&&screen==='table'&&<TableScreen state={g}/>}
- {!collection&&screen==='squad'&&<SquadScreen dream state={g} busy={busy} lineup={lineup} change={setLineup} registration={()=>setCollection(true)} contracts={()=>{}} forfeit={()=>{}} callUp={()=>{}} training={()=>{}} focus={()=>{}} bench={()=>setBench(true)} tactics={()=>setTactics(true)} suggest={()=>setLineup(autoPick(selectionPlayers(g),g.clubId,g.tactics.formation,g.date))} confirm={()=>void match({type:'SelectLineup',lineup})}/>}
+ {!collection&&screen==='squad'&&<SquadScreen records={()=>setRecordsOpen(true)} dream state={g} busy={busy} lineup={lineup} change={setLineup} registration={()=>setCollection(true)} contracts={()=>{}} forfeit={()=>{}} callUp={()=>{}} training={()=>{}} focus={()=>{}} bench={()=>setBench(true)} tactics={()=>setTactics(true)} suggest={()=>setLineup(autoPick(selectionPlayers(g),g.clubId,g.tactics.formation,g.date))} confirm={()=>void match({type:'SelectLineup',lineup})}/>}
  {screen==='match'&&g.match&&<MatchScreen state={g} busy={busy} playing={playing} hold={value=>{hold.current=value;}} play={play} pause={stop} continuousHalf={continuous} changeContinuous={value=>{continuousRef.current=value;setContinuous(value);}} acknowledge={()=>void match({type:'AcknowledgeMatch'})} substitute={(out,incoming)=>match({type:'Substitute',out,in:incoming})} tactics={()=>{stop();setTactics(true);}} report={()=>setReport(true)} done={()=>setScreen('home')} goal={cue}/>}
  {tactics&&<TacticsMenu state={g} busy={busy} draftLineup={lineup} store={(slot,tactics)=>match({type:'StoreTacticPreset',slot,tactics})} confirm={tactics=>match({type:'SetTactics',tactics})} close={()=>setTactics(false)}/>}
+ {recordsOpen&&<PlayerRecords state={g} close={()=>setRecordsOpen(false)}/>}
  {bench&&<BenchMenu state={g} busy={busy} confirm={bench=>match({type:'SelectBench',bench})} close={()=>setBench(false)}/>}
  {report&&<MatchReport state={g} close={()=>setReport(false)}/>}
  </>}

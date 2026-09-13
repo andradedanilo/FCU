@@ -23,8 +23,9 @@ export const fitPlayerSchema=playerSchema.extend({condition:integer.max(100000),
 export const availablePlayerSchema=fitPlayerSchema.extend({academy:z.boolean(),injuryUntil:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),leagueYellows:integer.max(4),leagueBan:integer.max(100)});
 export const transferablePlayerSchema=availablePlayerSchema.extend({clubId:clubId.nullable()});
 export const registeredPlayerSchema=transferablePlayerSchema.extend({registered:z.boolean()});
+export const playerPerformanceSchema=z.object({season:integer.min(2026).max(2101),clubId,competition:z.enum(['league','domestic','continental']),fromDate:z.iso.date(),appearances:integer.max(300),starts:integer.max(300),minutes:integer.max(39000),goals:integer.max(3000),assists:integer.max(3000),yellows:integer.max(600),reds:integer.max(300)});
 export const transferListingSchema=z.object({kind:z.enum(['sale','loan']),fee:integer.max(1000000000000),share:z.union([z.literal(0),z.literal(50),z.literal(100)])}).refine(l=>l.kind==='sale'||l.fee===0);
-export const positionedPlayerSchema=registeredPlayerSchema.extend({secondaryRoles:z.array(roleSchema).max(3).optional(),transferListing:transferListingSchema.optional()}).refine(p=>new Set(p.secondaryRoles??[]).size===(p.secondaryRoles??[]).length&&!(p.secondaryRoles??[]).includes(p.role));
+export const positionedPlayerSchema=registeredPlayerSchema.extend({secondaryRoles:z.array(roleSchema).max(3).optional(),transferListing:transferListingSchema.optional(),performance:z.array(playerPerformanceSchema).max(1000).optional()}).refine(p=>new Set(p.secondaryRoles??[]).size===(p.secondaryRoles??[]).length&&!(p.secondaryRoles??[]).includes(p.role));
 export type Player = z.infer<typeof positionedPlayerSchema>;
 export const trainingSchema=z.enum(['light','balanced','intense']);
 export const eventSchema = z.object({ tick: integer.max(90), order: integer, clubId, playerId, assistId: playerId.nullable(), type: z.enum(['pass', 'shot', 'save', 'goal']), homeGoals: integer.max(90), awayGoals: integer.max(90) });
@@ -123,7 +124,8 @@ export const archivedCareerSchema=boardCareerSchema.extend({engineVersion:z.lite
 export const preAttackCareerSchema=archivedCareerSchema.extend({engineVersion:z.literal('0.7.4')});
 export const prePositionCareerSchema=preAttackCareerSchema.extend({engineVersion:z.literal('0.7.5'),match:knockoutMatchSchema.extend({events:z.array(attackingEventSchema).max(3000),homeStats:knockoutMatchSchema.shape.homeStats.extend({shots:integer.max(260),onTarget:integer.max(260),quality:integer.max(2600000)}),awayStats:knockoutMatchSchema.shape.awayStats.extend({shots:integer.max(260),onTarget:integer.max(260),quality:integer.max(2600000)})}).nullable()});
 export const preOutgoingCareerSchema=prePositionCareerSchema.extend({engineVersion:z.literal('0.7.6'),players:z.array(positionedPlayerSchema).min(176).max(60000)});
-export const careerSchema=preOutgoingCareerSchema.extend({engineVersion:z.literal('0.7.7')});
+export const preRecordsCareerSchema=preOutgoingCareerSchema.extend({engineVersion:z.literal('0.7.7')});
+export const careerSchema=preRecordsCareerSchema.extend({engineVersion:z.literal('0.7.8')});
 export type Career=z.infer<typeof careerSchema>;
 
 

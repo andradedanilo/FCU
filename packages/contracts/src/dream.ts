@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {careerSchema,registeredPlayerSchema,commandSchema,installedRosterSchema} from './index.ts';
+import {careerSchema,positionedPlayerSchema,commandSchema,installedRosterSchema} from './index.ts';
 
 const id=z.string().min(1).max(100);
 const count=z.number().int().min(0).max(10000);
@@ -12,7 +12,7 @@ export const collectionSchema=z.strictObject({
 });
 export type Collection=z.infer<typeof collectionSchema>;
 export interface RewardPlayer {id:string;ability:number}
-export const dreamSchema=z.strictObject({gameMode:z.literal('dreamClub'),schema:z.literal(1),game:careerSchema.extend({players:z.array(registeredPlayerSchema).min(176).max(60200)}),snapshotId:id,tier:z.enum(['starter','club','elite']),pool:z.array(z.strictObject({id,player:registeredPlayerSchema})).min(22).max(60000),instances:z.record(z.string(),id),collection:collectionSchema});
+export const dreamSchema=z.strictObject({gameMode:z.literal('dreamClub'),schema:z.literal(1),game:careerSchema.extend({players:z.array(positionedPlayerSchema).min(176).max(60200)}),snapshotId:id,tier:z.enum(['starter','club','elite']),pool:z.array(z.strictObject({id,player:positionedPlayerSchema})).min(22).max(60000),instances:z.record(z.string(),id),collection:collectionSchema});
 export type Dream=z.infer<typeof dreamSchema>;
 export const dreamRequestSchema=z.discriminatedUnion('type',[
  z.object({type:z.literal('New'),id:z.string().uuid(),seed:z.number().int().min(0).max(4294967295),name:z.string().trim().min(1).max(40),tier:z.enum(['starter','club','elite']),pack:installedRosterSchema.nullable()}),

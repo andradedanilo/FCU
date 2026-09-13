@@ -1,0 +1,15 @@
+import {useRef,useState} from 'react';
+import type {Career} from '../../../../packages/contracts/src/index.ts';
+import {performanceTotals} from '../../../../packages/simulation/src/playerRecords.ts';
+import {text as t} from '../../../../packages/presentation/src/text.ts';
+import {useModal} from './input.ts';
+import s from './ContractsMenu.module.css';
+const metrics=['appearances','starts','minutes','goals','assists','yellows','reds'] as const;
+export function PlayerRecords({state,close}:{state:Career;close:()=>void}){
+ const dialog=useRef<HTMLDialogElement>(null);useModal(dialog);
+ const [query,setQuery]=useState(''),[own,setOwn]=useState(true),[page,setPage]=useState(0),[selected,setSelected]=useState(state.lineup[0]);
+ const players=state.players.filter(p=>(!own||p.clubId===state.clubId)&&p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(p=>({player:p,total:performanceTotals(p,state.season)})).sort((a,b)=>b.total.goals-a.total.goals||b.total.assists-a.total.assists||a.player.id.localeCompare(b.player.id));
+ const last=Math.max(0,Math.ceil(players.length/50)-1),current=Math.min(page,last),visible=players.slice(current*50,current*50+50),player=players.find(p=>p.player.id===selected)?.player??visible[0]?.player;
+ return <dialog ref={dialog} className={s.dialog} aria-label={t.playerRecords} onCancel={close}><header><h2>{t.playerRecords}</h2><button onClick={close}>{t.close}</button></header><p>{t.recordsHint}</p><label>{t.searchPlayers}<input value={query} onChange={e=>{setQuery(e.target.value);setPage(0);}}/></label><div><button aria-pressed={own} onClick={()=>{setOwn(!own);setPage(0);}}>{own?t.ownRecords:t.allRecords}</button> <button disabled={current===0} onClick={()=>setPage(current-1)}>{t.previousPage}</button> {current+1}/{last+1} <button disabled={current===last} onClick={()=>setPage(current+1)}>{t.nextPage}</button></div>
+ <div className={s.body}><div className={s.players}>{visible.map(({player:p,total})=><button key={p.id} aria-pressed={p.id===player?.id} onClick={()=>setSelected(p.id)}><strong>{p.name}</strong><small>{state.clubs.find(c=>c.id===p.clubId)?.short??t.freeAgent} / {t.performanceLabels.goals}: {total.goals} / {t.performanceLabels.assists}: {total.assists}</small></button>)}</div><section className={s.terms}>{player&&<><h3>{player.name}</h3><p>{t.recordOrder}</p><table><thead><tr><th>{t.season}</th><th>{t.clubName}</th><th>{t.recordCompetition}</th>{metrics.map(k=><th key={k}>{t.performanceLabels[k]}</th>)}</tr></thead><tbody>{[...(player.performance??[])].reverse().map(r=><tr key={`${r.season}/${r.clubId}/${r.competition}`}><td>{r.season}/{r.season+1}<small> ({r.fromDate})</small></td><td>{state.clubs.find(c=>c.id===r.clubId)?.short}</td><td>{t.recordCompetitions[r.competition]}</td>{metrics.map(k=><td key={k}>{r[k]}</td>)}</tr>)}</tbody><tfoot><tr><th colSpan={3}>{t.trackedTotal}</th>{metrics.map(k=><td key={k}>{performanceTotals(player)[k]}</td>)}</tr></tfoot></table>{!player.performance?.length&&<p>{t.noPlayerRecords}</p>}</>}</section></div></dialog>;
+}

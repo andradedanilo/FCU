@@ -1,3 +1,4 @@
+import {PlayerRecords} from './PlayerRecords.tsx';
 import {Help} from './Help.tsx';
 import {Diagnostics} from './Diagnostics.tsx';
 import {SaveHistory} from './SaveHistory.tsx';
@@ -54,6 +55,7 @@ export function App() {
   const [historyOpen,setHistoryOpen]=useState(false);
   const [newsPlayer,setNewsPlayer]=useState<PlayerId|null>(null);
   const [scoutingOpen,setScoutingOpen]=useState(false);
+  const [recordsOpen,setRecordsOpen]=useState(false);
   const [contractsOpen,setContractsOpen]=useState(false);
   const [financeOpen,setFinanceOpen]=useState(false);
   const [reportOpen,setReportOpen]=useState(false);
@@ -183,7 +185,7 @@ export function App() {
         {screen==='dream'&&<DreamClub exitCheckpoint={dreamCheckpoint} overlayOpen={diagnosticsOpen||soundLibrary||helpOpen} cue={kind=>audio.current?.highlight(kind)} ambience={value=>audio.current?.match(value)} packs={packs} exit={()=>navigate('title')}/>}
         {screen==='setup'&&<ClubSelect packs={packs} packId={packId} changePack={id=>{setPackId(id);setWorldKind('countries');setClub(clubs[0]!.id);}} importPack={()=>void importPack()} importedClubs={selectedPack?rosterClubs(selectedPack):null} worldKind={worldKind} changeWorld={kind=>{setPackId('');setWorldKind(kind);setClub(clubs[0]!.id);}} club={club} seed={seed} changeClub={setClub} changeSeed={setSeed} begin={()=>void newCareer()} busy={busy}/>}
         {state&&screen==='home'&&<Clubhouse board={()=>setBoardOpen(true)} closeSeason={()=>void command({type:'CloseSeason'})} history={()=>setHistoryOpen(true)} news={id=>{setNewsPlayer(id);if(state.players.some(p=>p.id===id&&p.clubId===state.clubId))setContractsOpen(true);else setScoutingOpen(true);}} scouting={()=>{setNewsPlayer(null);setScoutingOpen(true);}} advance={target=>void command({type:'AdvanceCalendar',target})} finance={()=>setFinanceOpen(true)} report={()=>setReportOpen(true)} state={state} busy={busy} squad={()=>navigate('squad')} table={()=>navigate('table')} match={()=>state.match&&state.match.phase!=='finished'?navigate('match'):void command({type:'StartMatch'})}/>}
-        {state&&screen==='squad'&&<SquadScreen registration={()=>setRegistrationOpen(true)} contracts={()=>{setNewsPlayer(null);setContractsOpen(true);}} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} focus={focus=>{void command({type:'SetTrainingFocus',focus});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
+        {state&&screen==='squad'&&<SquadScreen records={()=>setRecordsOpen(true)} registration={()=>setRegistrationOpen(true)} contracts={()=>{setNewsPlayer(null);setContractsOpen(true);}} forfeit={()=>{void command({type:'ForfeitMatch'}).then(ok=>{if(ok)setScreen('match');});}} callUp={()=>{void command({type:'CallUp'});}} focus={focus=>{void command({type:'SetTrainingFocus',focus});}} training={training=>{void command({type:'SetTraining',training});}} bench={()=>setBenchOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} lineup={lineup} change={setLineup} suggest={()=>setLineup(autoPick(selectionPlayers(state),state.clubId,state.tactics.formation,state.date))} confirm={()=>void command({type:'SelectLineup',lineup})} busy={busy}/>}
         {state&&registrationOpen&&<RegistrationMenu state={state} busy={busy} confirm={players=>command({type:'SetRegistration',players})} close={()=>setRegistrationOpen(false)}/>}
         {state&&screen==='table'&&<TableScreen state={state}/>}
         {state?.match&&screen==='match'&&<MatchScreen hold={value=>{presentationBusy.current=value;}} acknowledge={()=>{void command({type:'AcknowledgeMatch'});}} report={()=>setReportOpen(true)} tactics={()=>{stop();setTacticsOpen(true);}} state={state} busy={busy} playing={playing} play={play} pause={stop} substitute={(out,incoming)=>command({type:'Substitute',out,in:incoming})} continuousHalf={continuousHalf} changeContinuous={value=>{setContinuousHalf(value);continuousRef.current=value;}} done={()=>navigate('home')} goal={kind=>audio.current?.highlight(kind)}/>}
@@ -193,6 +195,7 @@ export function App() {
     {state&&tacticsOpen&&<TacticsMenu store={(slot,tactics)=>command({type:'StoreTacticPreset',slot,tactics})} draftLineup={screen==='squad'?lineup:state.lineup} state={state} busy={busy} close={()=>setTacticsOpen(false)} confirm={tactics=>command({type:'SetTactics',tactics})}/>}
     {state&&historyOpen&&<SeasonHistory state={state} close={()=>setHistoryOpen(false)}/>}
     {state&&scoutingOpen&&<ScoutingMenu squad={()=>{setScoutingOpen(false);navigate('squad');}} initialPlayer={newsPlayer} state={state} busy={busy} command={command} close={()=>setScoutingOpen(false)}/>}
+    {state&&recordsOpen&&<PlayerRecords state={state} close={()=>setRecordsOpen(false)}/>}
     {state&&contractsOpen&&<ContractsMenu initialPlayer={newsPlayer} state={state} busy={busy} confirm={command} close={()=>setContractsOpen(false)}/>}
     {state&&screen!=='title'&&screen!=='setup'&&screen!=='dream'&&(boardOpen||state.board.status!=='employed')&&<BoardMenu state={state} busy={busy} close={()=>setBoardOpen(false)} assisted={enabled=>void command({type:'SetAssisted',enabled})} job={clubId=>{void command({type:'AcceptJob',clubId}).then(ok=>{if(ok){setBoardOpen(false);setScreen('home');}});}} retire={()=>void command({type:'RetireManager'})} newCareer={()=>{setBoardOpen(false);navigate('setup');}}/>}
     {state&&financeOpen&&<FinanceMenu state={state} busy={busy} upgrade={kind=>void command({type:'UpgradeFacility',kind})} close={()=>setFinanceOpen(false)}/>}

@@ -70,3 +70,17 @@ it('AI bids on a listed upgrade but never completes the sale without owner accep
  state.date='2026-07-06';recruit(state);const offer=state.offers.find(o=>o.playerId===player.id&&o.sellerId===state.clubId);expect(offer).toBeDefined();expect(offer?.terms).not.toBeNull();
  state.date='2026-07-07';processMarket(state);recruit(state);expect(state.players.find(p=>p.id===player.id)?.clubId).toBe(state.clubId);expect(offer?.status).toBe('submitted');validateCareer(state);
 });
+import {performanceTotals,recordPerformance,validatePerformance} from '../packages/simulation/src/playerRecords.ts';
+it('records played minutes goals assists and cards once at match settlement',()=>{
+ let state=createCareer('00000000-0000-4000-8000-000000000001',2026,clubs[0]!.id);state=managementAct(state,{type:'StartMatch'});
+ while(state.match!.phase!=='finished'){if(state.match!.pendingDismissal||state.match!.pendingInjuries.length)state=managementAct(state,{type:'AcknowledgeMatch'});state=managementAct(state,{type:'AdvanceMatch',minutes:90});}
+ const match=state.match!,totals=state.players.filter(p=>p.clubId===match.home||p.clubId===match.away).map(p=>performanceTotals(p));
+ expect(totals.reduce((n,p)=>n+p.goals,0)).toBe(match.events.filter(e=>e.type==='goal').length);
+ expect(totals.reduce((n,p)=>n+p.assists,0)).toBe(match.events.filter(e=>e.type==='goal'&&e.assistId!==null).length);
+ expect(totals.reduce((n,p)=>n+p.starts,0)).toBe(22);
+ expect(totals.reduce((n,p)=>n+p.yellows,0)).toBe(match.events.filter(e=>e.type==='yellow'||e.type==='secondYellow').length);
+ expect(totals.every(p=>p.minutes<=130*p.appearances)).toBe(true);
+ const encoded=canonical(state);expect(canonical(validateCareer(JSON.parse(encoded)))).toBe(encoded);expect(()=>managementAct(state,{type:'AdvanceMatch',minutes:1})).toThrow('INVALID_COMMAND');expect(canonical(state)).toBe(encoded);
+ const player=state.players.find(p=>p.performance?.length)!;const past=canonical(player.performance);const next=structuredClone(state);next.season++;next.date=`${next.season}-07-01`;const replay={...match,date:next.date};recordPerformance(next,replay);validatePerformance(next);expect(next.players.find(p=>p.id===player.id)!.performance).toHaveLength(2);expect(canonical(player.performance)).toBe(past);
+ const corrupt=structuredClone(state);corrupt.players.find(p=>p.id===player.id)!.performance![0]!.starts=300;expect(()=>validateCareer(corrupt)).toThrow();
+});

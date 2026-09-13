@@ -6,7 +6,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { z } from 'zod';
 import { canonical, type SaveEntry } from '../../../../packages/contracts/src/index.ts';
-import { migrateOutgoingCareer, migratePositionCareer, migratePreAttackCareer, migrateArchivedCareer, migrateBoardCareer, migratePersonnelCareer, migrateFacilitiesCareer, migrateRegistrationCareer, migrateRosterCareer, migrateCompetitionCareer, validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer, migrateExhibitionCareer, migrateRepeatingCareer, migrateCountryCareer } from '../../../../packages/simulation/src/engine.ts';
+import { migrateRecordsCareer, migrateOutgoingCareer, migratePositionCareer, migratePreAttackCareer, migrateArchivedCareer, migrateBoardCareer, migratePersonnelCareer, migrateFacilitiesCareer, migrateRegistrationCareer, migrateRosterCareer, migrateCompetitionCareer, validateCareer, migrateLegacyCareer, migratePreviousCareer, migrateTacticalCareer, migratePlanningCareer, migrateConditionCareer, migrateAvailabilityCareer, migrateTimedCareer, migrateFinancialCareer, migrateRenewalCareer, migrateScoutingCareer, migrateTransferCareer, migrateRecruitingCareer, migrateExhibitionCareer, migrateRepeatingCareer, migrateCountryCareer } from '../../../../packages/simulation/src/engine.ts';
 
 const MAX_BYTES=32*1024*1024;
 export const checksum=(value:unknown)=>createHash('sha256').update(canonical(value)).digest('hex');
@@ -37,7 +37,8 @@ const formats=[
  {app:null,engine:'0.7.4',rules:'world-2',read:migratePreAttackCareer},
  {app:null,engine:'0.7.5',rules:'world-2',read:migratePositionCareer},
  {app:null,engine:'0.7.6',rules:'world-2',read:migrateOutgoingCareer},
- {app:null,engine:'0.7.7',rules:'world-2',read:validateCareer}
+ {app:null,engine:'0.7.7',rules:'world-2',read:migrateRecordsCareer},
+ {app:null,engine:'0.7.8',rules:'world-2',read:validateCareer}
 ] as const;
 const envelopeSchema=z.object({schema:z.number().int().min(1).max(formats.length),appVersion:z.string().regex(/^\d+\.\d+\.\d+$/).max(20),engineVersion:z.string().max(20),rulesetVersion:z.string().max(40),careerId:z.string().uuid(),saveCommitId:z.string().uuid(),parentCommitId:z.string().uuid().nullable(),stateRevision:z.number().int().nonnegative(),savedAtUTC:z.string().datetime(),snapshotId:z.string().min(1).max(100),kind:z.enum(['manual','auto']),checksum:z.string().regex(/^[a-f0-9]{64}$/),payload:z.unknown()});
 export function decode(bytes:Uint8Array) {

@@ -63,7 +63,7 @@ it('migrates a v0.1 checkpoint without rewriting it and refuses missing current 
  const id=await store.save(started.value,'manual');const file=join(root,s.careerId,id+'.save');const raw=JSON.parse(gunzipSync(await readFile(file)).toString());
  const malformed=structuredClone(raw);delete malformed.payload.match.homeBench;malformed.checksum=checksum(malformed.payload);expect(()=>decode(gzipSync(canonical(malformed)))).toThrow();
  raw.schema=1;raw.rulesetVersion='exhibition-1';raw.payload.rulesetVersion='exhibition-1';delete raw.payload.tactics;delete raw.payload.match.homeTactics;delete raw.payload.match.awayTactics;raw.appVersion='0.1.0';raw.engineVersion='0.1.0';raw.payload.engineVersion='0.1.0';delete raw.payload.match.homeBench;delete raw.payload.match.awayBench;delete raw.payload.match.substitutions;raw.payload.players=raw.payload.players.filter((p:{clubId:string|null})=>p.clubId!==null);raw.checksum=checksum(raw.payload);
- const legacy=gzipSync(canonical(raw));await writeFile(file,legacy);const loaded=await store.load(s.careerId,id);expect(loaded.match?.homeBench).toHaveLength(9);expect(loaded.match?.substitutions).toEqual([]);expect(loaded.engineVersion).toBe('0.7.7');expect({...loaded,economy:started.value.economy}).toEqual(started.value);expect(loaded.economy.ledger.every(e=>e.kind==='opening')).toBe(true);
+ const legacy=gzipSync(canonical(raw));await writeFile(file,legacy);const loaded=await store.load(s.careerId,id);expect(loaded.match?.homeBench).toHaveLength(9);expect(loaded.match?.substitutions).toEqual([]);expect(loaded.engineVersion).toBe('0.7.8');expect({...loaded,economy:started.value.economy}).toEqual(started.value);expect(loaded.economy.ledger.every(e=>e.kind==='opening')).toBe(true);
  await store.save(loaded,'manual');expect(await readFile(file)).toEqual(legacy);
 });
 
@@ -111,10 +111,10 @@ it('bounds diagnostics and excludes unstructured private data from exported repo
 
 it('records the writer app separately from the unchanged engine and preserves previous formats',async()=>{
  const root=await mkdtemp(join(tmpdir(),'fcu-writer-')),store=createSaveStore(join(root,'career')),state=career(),id=await store.save(state,'manual');
- const bytes=await readFile(join(root,'career',state.careerId,id+'.save')),decoded=decode(bytes);expect(decoded.envelope.schema).toBe(27);expect(decoded.envelope.appVersion).toBe(manifest.version);expect(decoded.envelope.engineVersion).toBe('0.7.7');expect(checksum(decoded.state)).toBe(checksum(state));
+ const bytes=await readFile(join(root,'career',state.careerId,id+'.save')),decoded=decode(bytes);expect(decoded.envelope.schema).toBe(28);expect(decoded.envelope.appVersion).toBe(manifest.version);expect(decoded.envelope.engineVersion).toBe('0.7.8');expect(checksum(decoded.state)).toBe(checksum(state));
  const oldPayload={...state,engineVersion:'0.7.4'};const older={...decoded.envelope,schema:24,engineVersion:'0.7.4',payload:oldPayload,checksum:checksum(oldPayload)};expect(checksum(decode(gzipSync(canonical(older))).state)).toBe(checksum(state));
  const dream=newDream({type:'New',id:crypto.randomUUID(),seed:2026,name:'Writer FC',tier:'starter',pack:null}),dreamStore=createDreamStore(join(root,'dream')),commit=await dreamStore.save(dream);
- const raw=decodeDream(await readFile(join(root,'dream',dream.game.careerId,commit+'.dream')));expect(raw.e.schema).toBe(7);expect(raw.e.appVersion).toBe(manifest.version);expect(checksum(raw.state)).toBe(checksum(dream));
+ const raw=decodeDream(await readFile(join(root,'dream',dream.game.careerId,commit+'.dream')));expect(raw.e.schema).toBe(8);expect(raw.e.appVersion).toBe(manifest.version);expect(checksum(raw.state)).toBe(checksum(dream));
  const oldDream={...dream,game:{...dream.game,engineVersion:'0.7.4'}};const previous={...raw.e,schema:3,payload:oldDream,checksum:checksum(oldDream)};delete previous.appVersion;expect(checksum(decodeDream(gzipSync(canonical(previous))).state)).toBe(checksum(dream));
  const missing={...raw.e};delete missing.appVersion;expect(()=>decodeDream(gzipSync(canonical(missing)))).toThrow('INVALID_SAVE');
  expect((await store.list())[0]?.appVersion).toBe(manifest.version);expect((await dreamStore.list())[0]?.appVersion).toBe(manifest.version);

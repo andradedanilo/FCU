@@ -43,11 +43,12 @@ it('completes a separate Dream season and recovers a saved pending reward withou
  expect(await createDreamStore(root).load(s.game.careerId,commit)).toEqual(s);expect(validateDream(JSON.parse(canonical(s)))).toEqual(s);
  const path=join(root,s.game.careerId,commit+'.dream'),bytes=await readFile(path);
  await writeFile(join(root,s.game.careerId,'interrupted.tmp'),'partial');expect(await store.list()).toHaveLength(1);
- const previous=JSON.parse(gunzipSync(bytes).toString('utf8'));previous.schema=2;previous.payload.game.engineVersion='0.7.3';previous.payload.game.match=null;previous.checksum=checksum(previous.payload);expect(decodeDream(gzipSync(JSON.stringify(previous))).state).toEqual({...s,game:{...s.game,match:null}});
- const legacy=JSON.parse(gunzipSync(bytes).toString('utf8'));legacy.schema=1;legacy.payload.game.engineVersion='0.7.2';legacy.payload.game.match=null;delete legacy.payload.game.marketArchive;legacy.checksum=checksum(legacy.payload);expect(decodeDream(gzipSync(JSON.stringify(legacy))).state).toEqual({...s,game:{...s.game,match:null}});
+ const historical=structuredClone(s);historical.game.match=null;for(const player of historical.game.players)delete player.performance;
+ const previous=JSON.parse(gunzipSync(bytes).toString('utf8'));previous.schema=2;previous.payload.game.engineVersion='0.7.3';previous.payload=structuredClone(historical);previous.payload.game.engineVersion='0.7.3';previous.checksum=checksum(previous.payload);expect(decodeDream(gzipSync(JSON.stringify(previous))).state).toEqual(historical);
+ const legacy=JSON.parse(gunzipSync(bytes).toString('utf8'));legacy.schema=1;legacy.payload.game.engineVersion='0.7.2';legacy.payload=structuredClone(historical);legacy.payload.game.engineVersion='0.7.2';delete legacy.payload.game.marketArchive;legacy.checksum=checksum(legacy.payload);expect(decodeDream(gzipSync(JSON.stringify(legacy))).state).toEqual(historical);
  const broken=JSON.parse(gunzipSync(bytes).toString('utf8'));broken.payload.collection.pending.candidates.reverse();broken.checksum='0'.repeat(64);expect(()=>decodeDream(gzipSync(JSON.stringify(broken)))).toThrow('INVALID_SAVE');
  await writeFile(path,gzipSync(JSON.stringify(broken)));expect((await store.list())[0]?.valid).toBe(false);await expect(store.load(s.game.careerId,commit)).rejects.toThrow('INVALID_SAVE');await writeFile(path,bytes);expect((await store.list())[0]?.valid).toBe(true);
- broken.schema=6;expect(()=>decodeDream(gzipSync(JSON.stringify(broken)))).toThrow('FUTURE_SAVE');
+ broken.schema=9;expect(()=>decodeDream(gzipSync(JSON.stringify(broken)))).toThrow('FUTURE_SAVE');
  const pack=s.collection.pending!;s=dreamCommand(s,{type:'Choose',packId:pack.id,playerId:pack.candidates[0]!});expect(s.collection.unlocked).toHaveLength(23);
  s=dreamCommand(s,{type:'Season',tier:'elite'});expect(s.game.season).toBe(2027);expect(s.game.round).toBe(0);expect(validateDream(s)).toEqual(s);
  expect(s.collection.progress).toBe(2);expect(s.game.economy.ledger).toEqual([]);
