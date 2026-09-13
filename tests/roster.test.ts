@@ -16,8 +16,19 @@ import {createSaveStore} from '../apps/game/src/main/saves.ts';
 import {applyCommand,validateCareer} from '../packages/simulation/src/engine.ts';
 import {returnLoans,validateLoans} from '../packages/simulation/src/loans.ts';
 import {available} from '../packages/simulation/src/availability.ts';
+import {fictionalProvider,syncFictional} from '../packages/roster-pipeline/src/fictional-provider.ts';
 
 describe('Publisher roster boundaries',()=>{
+  it('builds the offline candidate through every adapter page and rejects a missing squad',async()=>{
+    const result=await syncFictional();
+    expect(result.audit.completedTeamIds).toHaveLength(96);
+    expect(result.roster.players).toHaveLength(2112);
+    expect(result.audit.reviewedTeamIds).toEqual([]);
+    expect(canonicalRoster(result.roster)).toBe(canonicalRoster(fictionalCandidate().roster));
+    const broken=fictionalProvider(),fetch=broken.fetchSquad;
+    broken.fetchSquad=async(...args)=>{const page=await fetch(...args);return {...page,total:0,items:[],nextCursor:null};};
+    await expect(syncFictional(broken)).rejects.toThrow('INCOMPLETE_SQUAD');
+  });
   it('preserves Unicode and stable identity through reordered snapshots and a transfer',async()=>{
     const a=fictionalCandidate(true), b=structuredClone(a);
     b.roster.players[0]!.displayName='Jos\u00e9 M\u00fcller';a.roster.players[0]!.displayName=b.roster.players[0]!.displayName;

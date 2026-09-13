@@ -5,6 +5,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {z} from 'zod';
 import {rosterSchema,auditSchema,type EntityId} from '../../../packages/roster-pipeline/src/model.ts';
 import {fictionalCandidate} from '../../../packages/roster-pipeline/src/fictional.ts';
+import {syncFictional} from '../../../packages/roster-pipeline/src/fictional-provider.ts';
 import {validateRoster} from '../../../packages/roster-pipeline/src/validate.ts';
 import {approve,canonical,canonicalRoster,rosterChanges,sha256} from '../../../packages/roster-pipeline/src/review.ts';
 import {createArchive,openArchive,type OpenPack} from '../../../packages/roster-pipeline/src/archive.ts';
@@ -46,7 +47,7 @@ else void app.whenReady().then(async()=>{
     queue=queue.then(async():Promise<Reply>=>{
       try{
         const action=actionSchema.parse(raw);let message:string|null=null;
-        if(action.type==='fixture')current={...fictionalCandidate(),approvedHash:null,exported:null};
+        if(action.type==='fixture')current={...await syncFictional(),approvedHash:null,exported:null};
         else if(action.type==='import'){
           const selected=await dialog.showOpenDialog(window,{filters:[{name:'Normalized roster candidate',extensions:['json']}],properties:['openFile']});
           if(selected.canceled)return {ok:true,view:view()};
