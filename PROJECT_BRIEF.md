@@ -8,7 +8,7 @@ Build a fast, offline football management game for Steam, inspired by the feelin
 
 ## Current completion priority
 
-Owner direction: complete pending match rules and automate broader Career/Dream progression, economy and balance checks before the dedicated UI/audio pass. Those rules and reproducible workloads are now implemented; native Windows packaging and offline Save/restart verification also pass. The expanded paid-market workload is under final validation; all 106 registered cases and the clean Windows portable offline Save/restart check pass. Finish that remaining automated gate before the next local development focus, UI/audio. Steam integration, live provider verification and unavailable platforms remain explicit deferred items, not completed gates. Test ceilings no longer block meaningful verification. Preserve the approved visual direction; technical and external release checks still require actual evidence. Automated balance signals do not certify enjoyment.
+Owner direction: complete pending match rules and automate broader Career/Dream progression, economy and balance checks before the dedicated UI/audio pass. Those rules and reproducible workloads are now implemented; native Windows packaging and offline Save/restart verification also pass. The expanded paid-market workload passes across three ten-season careers and 420 Dream fixtures; all 106 registered cases and the clean Windows portable offline Save/restart check pass. The agreed gameplay completion pass is done. The next local development focus is UI/audio. Steam integration, live provider verification and unavailable platforms remain explicit deferred items, not completed gates. Test ceilings no longer block meaningful verification. Preserve the approved visual direction; technical and external release checks still require actual evidence. Automated balance signals do not certify enjoyment.
 
 ## Approved visual direction
 
@@ -31,7 +31,7 @@ Keep these seven agent/specification documents plus the public README (eight Mar
 
 ## Gameplay completion before visual work
 
-Owner authorized a final gameplay pass: outgoing sales and loans with explicit acceptance, academy senior contracts, persistent player performance records, secondary positions, and paid-market progression validation. Complete these before the dedicated visual/audio redesign. Keep existing art and layout while adding necessary functional controls. External platform/provider checks remain deferred; no automated claim of enjoyment.
+Owner authorized a final gameplay pass: outgoing sales and loans with explicit acceptance, academy senior contracts, persistent player performance records, secondary positions, and paid-market progression validation. These features and their fixed progression checks are complete on Windows; proceed to the dedicated visual/audio redesign. Keep existing art and layout while adding necessary functional controls. External platform/provider checks remain deferred; no automated claim of enjoyment.
 
 ## GitHub backup workflow
 
