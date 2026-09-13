@@ -3,13 +3,14 @@ import {controllerAction,keyboardAction,type InputAction} from '../../../../pack
 const selector='button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,a[href],[tabindex="0"]';
 function targets(root:ParentNode){return [...root.querySelectorAll<HTMLElement>(selector)].filter(el=>el.checkVisibility()&&!el.closest('[inert]'));}
 function focus(el:HTMLElement|undefined){el?.focus({preventScroll:true});el?.scrollIntoView({block:'nearest',inline:'nearest'});}
-export function dispatchInput(action:InputAction){
- const modal=document.querySelector<HTMLDialogElement>('dialog[open]');const scope=modal??document;
+export function dispatchInput(action:InputAction,source:'keyboard'|'controller'='keyboard'){
+ const modal=[...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].at(-1);const scope=modal??document;
  const nodes=targets(scope);const active=document.activeElement;
  if(action==='back'){
   if(modal){modal.dispatchEvent(new Event('cancel',{cancelable:true}));}else document.querySelector<HTMLButtonElement>('[data-input-back]:not(:disabled)')?.click();return;
  }
  if(action==='pause'){if(!modal)document.querySelector<HTMLButtonElement>('[data-input-pause]:not(:disabled)')?.click();return;}
+ if(action==='confirm'&&source==='controller'&&active instanceof HTMLElement&&!active.closest('[data-input-editor]')&&(active instanceof HTMLSelectElement||active instanceof HTMLInputElement&&!active.readOnly&&['text','search','number','tel','url','email'].includes(active.type))){active.dispatchEvent(new Event('fcu-edit-field',{bubbles:true}));return;}
  if(action==='confirm'){if(active instanceof HTMLElement&&nodes.includes(active))active.click();else focus(nodes[0]);return;}
  if(action==='nextSection'||action==='previousSection'){
   const sections=[...scope.querySelectorAll<HTMLElement>('[data-input-section]')].filter(el=>targets(el).length>0);
@@ -37,8 +38,8 @@ export function useGameInput(screen:string){
   const poll=(now:number)=>{
    frame=0;if(document.hidden)return;const pad=pads();if(!pad){held=null;return;}
    const action=controllerAction(pad.buttons.map(b=>b.pressed),pad.axes);
-   if(action!==held){held=action;repeatAt=now+400;if(action)dispatchInput(action);}
-   else if(action&&['up','down','left','right'].includes(action)&&now>=repeatAt){dispatchInput(action);repeatAt=now+140;}
+   if(action!==held){held=action;repeatAt=now+400;if(action)dispatchInput(action,'controller');}
+   else if(action&&['up','down','left','right'].includes(action)&&now>=repeatAt){dispatchInput(action,'controller');repeatAt=now+140;}
    frame=requestAnimationFrame(poll);
   };
   const wake=()=>{cancelAnimationFrame(frame);frame=0;held=null;if(!document.hidden&&pads())frame=requestAnimationFrame(poll);};

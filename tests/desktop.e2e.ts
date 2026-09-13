@@ -108,7 +108,17 @@ test('chooses an earned Dream player by keyboard and stops audio on exit',async(
    window.Audio=class extends Original{constructor(src?:string){super(src);clips.push(this);}};
   });
   const audible=()=>page.evaluate(()=>(window as unknown as {fcuAuditionClips:HTMLAudioElement[]}).fcuAuditionClips.filter(clip=>clip.loop&&!clip.paused).length);
-  await page.getByRole('button',{name:'FCU Dream Club',exact:true}).click();await page.getByRole('button',{name:'Begin Dream Club',exact:true}).click();
+  await page.evaluate(()=>{let pressed=-1;Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[{connected:true,mapping:'standard',buttons:Array.from({length:16},(_,i)=>({pressed:i===pressed})),axes:[0,0]}]});window.addEventListener('fcu-pad',event=>{pressed=(event as CustomEvent<number>).detail;});window.dispatchEvent(new Event('gamepadconnected'));});
+  const pad=async(button:number)=>{await page.evaluate(async value=>{window.dispatchEvent(new CustomEvent('fcu-pad',{detail:value}));await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));},button);};
+  const confirmPad=async()=>{await pad(0);await pad(-1);};
+  await page.getByRole('button',{name:'FCU Dream Club',exact:true}).click();const name=page.getByLabel('Club',{exact:true});await name.focus();await confirmPad();
+  const editor=page.getByRole('dialog',{name:'Controller text entry',exact:true});await expect(editor).toBeVisible();
+  await editor.getByRole('button',{name:'Clear',exact:true}).focus();await confirmPad();await editor.getByRole('button',{name:'f',exact:true}).focus();await confirmPad();await editor.getByRole('button',{name:'c',exact:true}).focus();await confirmPad();
+  await editor.getByRole('button',{name:'Apply',exact:true}).focus();await confirmPad();await expect(name).toHaveValue('fc');await expect(name).toBeFocused();
+  await confirmPad();await editor.getByLabel('Value',{exact:true}).fill('Cancelled');await pad(1);await pad(-1);await expect(editor).toHaveCount(0);await expect(name).toHaveValue('fc');
+  const tier=page.getByRole('combobox',{name:'Opponent tier',exact:true});await tier.focus();await confirmPad();const options=page.getByRole('dialog',{name:'Choose an option',exact:true});await options.getByRole('button',{name:'Club (65-74)',exact:true}).focus();await confirmPad();await expect(tier).toHaveValue('club');await expect(tier).toBeFocused();
+  await page.evaluate(()=>{delete (navigator as unknown as {getGamepads?:unknown}).getGamepads;window.dispatchEvent(new Event('gamepaddisconnected'));});
+  await page.getByRole('button',{name:'Begin Dream Club',exact:true}).click();
   for(let fixture=0;fixture<3;fixture++){await page.getByRole('button',{name:'Instant result',exact:true}).click();await expect(page.getByRole('button',{name:'Instant result',exact:true})).toBeEnabled();}
   await page.getByRole('button',{name:'Reveal earned choices',exact:true}).click();
   const choices=page.getByRole('group',{name:'Choose one player',exact:true});await expect(choices.getByRole('button')).toHaveCount(3);
