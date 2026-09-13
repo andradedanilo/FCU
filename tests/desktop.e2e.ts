@@ -98,7 +98,7 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
   }finally{await app!.close();}
 });
 
-test('stops Dream stadium audio when returning to the title',async()=>{
+test('chooses an earned Dream player by keyboard and stops audio on exit',async()=>{
  const data=await mkdtemp(join(tmpdir(),'fcu-dream-audio-'));
  const app=await electron.launch({args:['.'],env:{...process.env,FCU_USER_DATA:data}});
  try{const page=await app.firstWindow();await page.context().setOffline(true);
@@ -109,6 +109,11 @@ test('stops Dream stadium audio when returning to the title',async()=>{
   });
   const audible=()=>page.evaluate(()=>(window as unknown as {fcuAuditionClips:HTMLAudioElement[]}).fcuAuditionClips.filter(clip=>clip.loop&&!clip.paused).length);
   await page.getByRole('button',{name:'FCU Dream Club',exact:true}).click();await page.getByRole('button',{name:'Begin Dream Club',exact:true}).click();
+  for(let fixture=0;fixture<3;fixture++){await page.getByRole('button',{name:'Instant result',exact:true}).click();await expect(page.getByRole('button',{name:'Instant result',exact:true})).toBeEnabled();}
+  await page.getByRole('button',{name:'Reveal earned choices',exact:true}).click();
+  const choices=page.getByRole('group',{name:'Choose one player',exact:true});await expect(choices.getByRole('button')).toHaveCount(3);
+  await expect(choices.getByRole('button').first()).toBeFocused();await expect(choices).toContainText('Best active player in this role');
+  await page.keyboard.press('Enter');await expect(choices).toHaveCount(0);await expect(page.getByRole('button',{name:'Play next fixture',exact:true})).toBeFocused();
   await page.getByRole('button',{name:'Play next fixture',exact:true}).click();await page.getByRole('button',{name:'Play',exact:true}).click();
   await expect.poll(audible).toBe(1);await page.getByRole('button',{name:'Title screen',exact:true}).click();
   await expect(page.getByRole('button',{name:'Start a career',exact:true})).toBeVisible();await expect.poll(audible).toBe(0);

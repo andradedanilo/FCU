@@ -29,6 +29,16 @@ export function DreamClub({packs,exit,cue,ambience}:{packs:InstalledRoster[];exi
  const [playing,setPlaying]=useState(false),running=useRef(false),hold=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const sound=useRef(ambience);sound.current=ambience;
  const cancelRequest=useRef<(()=>void)|null>(null);
+ const choices=useRef<HTMLDivElement|null>(null),primary=useRef<HTMLButtonElement|null>(null),previousChoice=useRef<number|null>(null);
+ const pendingId=state?.collection.pending?.id??null;
+ useEffect(()=>{
+  if(busy||screen!=='home'||saves||!durable)return;
+  if(pendingId!==previousChoice.current){
+   if(pendingId!==null)choices.current?.querySelector('button')?.focus();
+   else if(previousChoice.current!==null)primary.current?.focus();
+   previousChoice.current=pendingId;
+  }
+ },[pendingId,busy,screen,saves,durable]);
  function stop(){ambience(false);running.current=false;setPlaying(false);if(timer.current)clearTimeout(timer.current);}
  useEffect(()=>()=>{running.current=false;sound.current(false);cancelRequest.current?.();worker.current?.terminate();if(timer.current)clearTimeout(timer.current);},[]);
  function send(request:DreamRequest):Promise<Result<Dream>>{
@@ -64,9 +74,19 @@ export function DreamClub({packs,exit,cue,ambience}:{packs:InstalledRoster[];exi
  {screen!=='match'&&<nav>{!seasonComplete(g)&&<button disabled={busy} onClick={()=>{stop();void act({type:'Instant'}).then(ok=>{if(ok)setScreen('home');});}}>{t.dreamInstant}</button>}<button disabled={busy} onClick={()=>{stop();setScreen('home');}}>{t.back}</button><button disabled={busy} onClick={()=>{stop();setScreen('squad');}}>{t.squad}</button><button disabled={busy} onClick={()=>{stop();setScreen('table');}}>{t.table}</button><button disabled={busy} onClick={()=>{stop();setCollection(!collection);}}>{t.dreamCollection}</button></nav>}
  {collection&&screen!=='match'&&<Collection key={g.revision} state={state} busy={busy} confirm={players=>act({type:'Squad',players})}/>}
  {screen==='home'&&<section className={d.home}><h2>{g.clubs[0]!.name}</h2><p>{g.season} / {g.round}/14 / {t.dreamTiers[state.tier]}</p><p>{t.dreamSnapshot}: {state.snapshotId}</p><p>{t.dreamProgress}: {state.collection.progress}/3 / {t.dreamQueued}: {state.collection.queued.length}</p><p>{t.dreamOdds}: {rewardOdds(state.collection,rewardPool(state)).map((o,i)=>`${t.dreamBands[i]} ${o.total?Math.round(100*o.weight/o.total):0}%`).join(' / ')}</p><p>{t.dreamGuarantee}</p>
- {state.collection.pending?<div role="group" aria-label={t.dreamChoices} className={s.actionTiles}>{state.collection.pending.candidates.map(id=>{const p=state.pool.find(p=>p.id===id)!;return <button key={id} disabled={busy} onClick={()=>void act({type:'Choose',packId:state.collection.pending!.id,playerId:id})}><strong>{p.player.name}</strong><span>{p.player.role} / {overall(p.player)}</span><small>{state.snapshotId}</small></button>;})}</div>:<button disabled={busy||!state.collection.queued.length} onClick={()=>void act({type:'Reveal'})}>{t.dreamReveal}</button>}
+ {state.collection.pending?<div ref={choices} role="group" aria-label={t.dreamChoices} className={d.choices}>{state.collection.pending.candidates.map(id=>{
+  const p=state.pool.find(p=>p.id===id)!.player,rating=overall(p);
+  const best=g.players.filter(player=>player.clubId===g.clubId&&player.registered&&player.role===p.role).sort((a,b)=>overall(b)-overall(a)||a.id.localeCompare(b.id))[0];
+  const difference=best?rating-overall(best):null;
+  return <button key={id} disabled={busy} onClick={()=>void act({type:'Choose',packId:state.collection.pending!.id,playerId:id})}>
+   <strong>{p.name}</strong><span className={d.rating}>{p.role} / {rating}</span>
+   <span>{t.dreamBestRole}: {best?best.name+' / '+overall(best):t.dreamNoRole}</span>
+   {difference!==null&&<span>{t.dreamRatingDifference}: {difference>0?'+':''}{difference}</span>}
+   <span>{t.dreamChooseHint}</span>
+  </button>;
+ })}</div>:<button disabled={busy||!state.collection.queued.length} onClick={()=>void act({type:'Reveal'})}>{t.dreamReveal}</button>}
  {rewardOdds(state.collection,rewardPool(state)).every(o=>o.total===0)&&<strong>{t.dreamComplete}</strong>}
- {seasonComplete(g)?<><label>{t.dreamTier}<select value={tier} onChange={e=>setTier(e.target.value as Dream['tier'])}>{(['starter','club','elite'] as const).map(v=><option key={v} value={v}>{t.dreamTiers[v]}</option>)}</select></label><button disabled={busy} onClick={()=>void act({type:'Season',tier})}>{t.seasonStarted}</button></>:g.match&&g.match.phase!=='finished'?<button onClick={()=>setScreen('match')}>{t.continue}</button>:<button disabled={busy} onClick={()=>{void (async()=>{if(g.date!==nextManagedFixture(g)?.date&&!await act({type:'Next'}))return;if(await match({type:'StartMatch'}))setScreen('match');})();}}>{t.dreamKickoff}</button>}</section>}
+ {seasonComplete(g)?<><label>{t.dreamTier}<select value={tier} onChange={e=>setTier(e.target.value as Dream['tier'])}>{(['starter','club','elite'] as const).map(v=><option key={v} value={v}>{t.dreamTiers[v]}</option>)}</select></label><button ref={primary} disabled={busy} onClick={()=>void act({type:'Season',tier})}>{t.seasonStarted}</button></>:g.match&&g.match.phase!=='finished'?<button ref={primary} onClick={()=>setScreen('match')}>{t.continue}</button>:<button ref={primary} disabled={busy} onClick={()=>{void (async()=>{if(g.date!==nextManagedFixture(g)?.date&&!await act({type:'Next'}))return;if(await match({type:'StartMatch'}))setScreen('match');})();}}>{t.dreamKickoff}</button>}</section>}
  {screen==='table'&&<TableScreen state={g}/>}
  {screen==='squad'&&<SquadScreen dream state={g} busy={busy} lineup={lineup} change={setLineup} registration={()=>setCollection(true)} contracts={()=>{}} forfeit={()=>{}} callUp={()=>{}} training={()=>{}} focus={()=>{}} bench={()=>setBench(true)} tactics={()=>setTactics(true)} suggest={()=>setLineup(autoPick(selectionPlayers(g),g.clubId,g.tactics.formation,g.date))} confirm={()=>void match({type:'SelectLineup',lineup})}/>}
  {screen==='match'&&g.match&&<MatchScreen state={g} busy={busy} playing={playing} hold={value=>{hold.current=value;}} play={play} pause={stop} continuousHalf={continuous} changeContinuous={value=>{continuousRef.current=value;setContinuous(value);}} acknowledge={()=>void match({type:'AcknowledgeMatch'})} substitute={(out,incoming)=>match({type:'Substitute',out,in:incoming})} tactics={()=>{stop();setTactics(true);}} report={()=>setReport(true)} done={()=>setScreen('home')} goal={cue}/>}
