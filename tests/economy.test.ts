@@ -3,7 +3,6 @@ import {createCareer,applyCommand,validateCareer,migrateTimedCareer} from '../pa
 import {budgets,cash,settleDay,settleGate,validateEconomy} from '../packages/simulation/src/economy.ts';
 import {clubs} from '../packages/contracts/src/identity.ts';
 import {canonical} from '../packages/contracts/src/index.ts';
-import {advanceCalendar} from '../packages/simulation/src/calendar.ts';
 import {facilityCosts} from '../packages/simulation/src/facilities.ts';
 import {migrateRegistrationCareer} from '../packages/simulation/src/engine.ts';
 import {boardDay,boardFixture} from '../packages/simulation/src/board.ts';
@@ -38,9 +37,9 @@ it('charges facilities once, preserves reserves and completes recovery construct
  expect(validateCareer(JSON.parse(canonical(state)))).toEqual(state);
  state.date='2026-07-30';state.players[0]!.condition=50000;
  expect(state.facilities[state.clubId]!.recovery).toBe(0);
- expect(advanceCalendar(state,'day',()=>{})).toBeNull();
- expect(state.facilities[state.clubId]).toMatchObject({recovery:1,construction:null});
- expect(state.players[0]!.condition).toBe(59000);expect(()=>validateCareer(state)).not.toThrow();
+ const prior=canonical(state),advanced=applyCommand(state,{type:'AdvanceCalendar',target:'day',careerId:state.careerId,expectedRevision:state.revision,commandId:crypto.randomUUID()});if(!advanced.ok)throw Error(advanced.error);
+ expect(canonical(state)).toBe(prior);expect(advanced.value.facilities[state.clubId]).toMatchObject({recovery:1,construction:null});
+ expect(advanced.value.players[0]!.condition).toBe(59000);expect(()=>validateCareer(advanced.value)).not.toThrow();
  const poor=structuredClone(old);poor.economy.ledger=[];expect(applyCommand(poor,command).ok).toBe(false);
 });
 it('balances dated operating transactions once and keeps initial wage commitments affordable',()=>{

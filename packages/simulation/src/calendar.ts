@@ -21,7 +21,8 @@ export function advanceCalendar(state:Career,target:'day'|'event',simulate:(stat
  while(state.date<end){
   state.date=addDays(state.date,1);
   const facilityComplete=completeFacilities(state);personnelDay(state);
-  state.players=state.players.map(p=>({...p,condition:Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>state.date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced'])+(p.clubId?state.facilities[p.clubId]!.recovery*1000:0))}));
+  // The command boundary already owns writable players; recovery needs no second copy.
+  for(const p of state.players)if(p.condition<100000)p.condition=Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>state.date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced'])+(p.clubId?state.facilities[p.clubId]!.recovery*1000:0));
   const returned=returnLoans(state);if(state.date===seasonEnd(state.season))for(const offer of state.offers)if(['submitted','countered','accepted','ready','queued'].includes(offer.status)){offer.status='expired';offer.activation=null;}settleDay(state,state.date);boardDay(state);
   const report=finishScouting(state),market=processMarket(state);recruit(state);const injured=trainingInjuries(state);simulate(state);if(report||market||returned||facilityComplete||injured||state.board.status!=='employed')break;
  }

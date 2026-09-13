@@ -45,7 +45,7 @@ for(const seed of seeds){
   }
   while(s.date<seasonEnd(s.season)){act({type:'AdvanceCalendar',target:'event'});job();}
   validateCareer(s);games+=s.fixtures.length;goals+=s.fixtures.reduce((n,f)=>n+(f.score?.[0]??0)+(f.score?.[1]??0),0);
-  act({type:'CloseSeason'});job();validateCareer(s);
+  act({type:'CloseSeason'});job();
   const saved=canonical(s);assert(Buffer.byteLength(saved)<32*1024*1024,'Ten-season save exceeds payload capacity');s=validateCareer(JSON.parse(saved));assert.equal(canonical(s),saved,'Season save roundtrip changed state');if(maintained)assert.equal(ownForfeits,0,'Maintained manager forfeited: '+seed+' season '+s.season);assert(s.players.length<60000,'Population exceeded supported capacity');
   if(maintained&&year===9)for(const key of ['promotions','paidSignings','sales','loanIns','loanOuts'] as const)assert(trading[key]>0,'Unexercised market path: '+key);
   const balances=s.clubs.map(c=>cash(s.economy,c.id)),wages=Object.values(s.economy.wages).sort((a,b)=>a-b);balances.sort((a,b)=>a-b);
