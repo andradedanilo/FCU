@@ -56,7 +56,7 @@ test('offline career, lineup, commentary clock, highlight recovery and full exhi
       window.dispatchEvent(new Event('gamepadconnected'));
     });
     const pad=async(button:number)=>{await page.evaluate(value=>window.dispatchEvent(new CustomEvent('fcu-test-pad',{detail:value})),button);await page.clock.runFor(32);};
-    await pad(13);await expect(page.getByRole('button',{name:'FCU Dream Club',exact:true})).toBeFocused();await pad(-1);await pad(13);await expect(page.getByRole('button',{name:'Load',exact:true})).toBeFocused();await pad(-1);await pad(0);await expect(page.getByRole('dialog',{name:'Saved careers'})).toBeVisible();await page.clock.runFor(1000);await expect(page.getByRole('dialog',{name:'Saved careers'})).toBeVisible();await pad(-1);await pad(1);await expect(page.getByRole('dialog')).toHaveCount(0);await pad(-1);
+    await pad(15);await expect(page.getByRole('button',{name:'FCU Dream Club',exact:true})).toBeFocused();await pad(-1);await pad(15);await expect(page.getByRole('button',{name:'Load',exact:true})).toBeFocused();await pad(-1);await pad(0);await expect(page.getByRole('dialog',{name:'Saved careers'})).toBeVisible();await page.clock.runFor(1000);await expect(page.getByRole('dialog',{name:'Saved careers'})).toBeVisible();await pad(-1);await pad(1);await expect(page.getByRole('dialog')).toHaveCount(0);await pad(-1);
     await page.evaluate(()=>{delete (navigator as unknown as {getGamepads?:unknown}).getGamepads;window.dispatchEvent(new Event('gamepaddisconnected'));});
     await click('SFX On');await expect(page.getByRole('button',{name:'SFX Off',exact:true})).toHaveAttribute('aria-pressed','false');
     await page.getByRole('button',{name:'Start a career',exact:true}).focus();

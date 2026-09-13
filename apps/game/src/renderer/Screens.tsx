@@ -12,15 +12,25 @@ import { brand } from '../../../../packages/contracts/src/index.ts';
 import { clubs } from '../../../../packages/contracts/src/identity.ts';
 import { overall, standings, requiresCallUp, arrangeLineup, validLineup } from '../../../../packages/simulation/src/engine.ts';
 import { text as t } from '../../../../packages/presentation/src/text.ts';
-import { ClubBadge, Shirt, StadiumArt } from './GameArt.tsx';
+import { ClubBadge, Shirt } from './GameArt.tsx';
 import s from './App.module.css';
+import titleArt from '../../../../assets/original/store/header-master.png';
+import title from './TitleScreen.module.css';
 
 export function TitleScreen({start,load,resume,dream}:{dream:()=>void;start:()=>void;load:()=>void;resume:(()=>void)|null}) {
-  return <section className={s.titleScene}>
-    <div className={s.titleGlow}/><StadiumArt/>
-    <div className={s.titleContent}><p className={s.eyebrow}>{t.retroMode}</p><h1 className={s.titleLogo}>{brand.short}<span>{brand.title}</span></h1><p className={s.tagline}>{t.titleTag}</p>
-      <div className={s.titleButtons}><button className={s.primary} onClick={start}><span aria-hidden="true">▶</span> {t.startGame}</button><button onClick={dream}>{brand.dreamClub}</button><button onClick={load}>{t.load}</button>{resume&&<button onClick={resume}>{t.continue}</button>}</div>
-    </div><p className={s.titleFoot}>{t.gameNote}</p>
+  return <section className={title.scene} aria-label={brand.title}>
+    <h1 className={title.accessibleTitle}>{brand.title}</h1>
+    <div className={title.artwork}><img src={titleArt} alt="" /></div>
+    <div className={title.menu}>
+      <p>{t.titleTag}</p>
+      <div className={title.buttons}>
+        <button className={s.primary} onClick={start}>{t.startGame}</button>
+        <button onClick={dream}>{brand.dreamClub}</button>
+        <button onClick={load}>{t.load}</button>
+        {resume&&<button onClick={resume}>{t.continue}</button>}
+      </div>
+      <small>{t.gameNote}</small>
+    </div>
   </section>;
 }
 export function ClubSelect({packs,packId,changePack,importPack,importedClubs,club,worldKind,changeWorld,seed,changeClub,changeSeed,begin,busy}:{packs:InstalledRoster[];packId:string;changePack:(id:string)=>void;importPack:()=>void;importedClubs:Career['clubs']|null;club:ClubId;worldKind:Career['world']['kind'];changeWorld:(kind:Career['world']['kind'])=>void;seed:string;changeClub:(id:ClubId)=>void;changeSeed:(seed:string)=>void;begin:()=>void;busy:boolean}) {

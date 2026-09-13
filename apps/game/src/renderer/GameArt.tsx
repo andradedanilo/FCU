@@ -14,15 +14,3 @@ export function Shirt({color}:{color:string}) {
     <text x="80" y="101" textAnchor="middle" fontSize="20" fontWeight="900" fontFamily="monospace" fill="#fff7de">{brand.short}</text>
   </svg>;
 }
-export function StadiumArt() {
-  return <svg className={s.stadiumArt} viewBox="0 0 960 400" preserveAspectRatio="xMidYMax slice" aria-hidden="true" shapeRendering="crispEdges">
-    <path fill="#403b70" d="M0 180H30V120H80V165H120V110H160V170H220V130H270V175H340V140H400V175H520V120H580V170H640V135H720V160H780V115H830V175H900V130H960V400H0Z"/>
-    <path fill="#161f42" d="M0 230L160 160H800L960 230V400H0Z"/>
-    <path fill="#637296" d="M55 230L175 177H785L905 230V246H55Z"/>
-    <path fill="#d9ad77" d="M87 226H873V234H87Z"/><path fill="#274164" d="M96 244H864V267H96Z"/>
-    {Array.from({length:48},(_,i)=><g key={i} fill={['#dba060','#839acd','#b25057','#e5cc8b'][i%4]}><path d={`M${102+i*16} 242h6v6h-6zM${108+i*16} 258h6v6h-6z`}/></g>)}
-    <path fill="#163f46" d="M130 280H830L960 400H0Z"/><path fill="#26614e" d="M195 290H765L895 400H65Z"/>
-    <path fill="none" stroke="#8eae78" strokeWidth="3" d="M204 300H756L860 388H100ZM480 300V388M435 338H525V360H435Z"/>
-    {[90,850].map(x=><g key={x}><path fill="#a4bad3" d={`M${x} 90h8v174h-8zM${x-23} 83h56v26h-56z`}/><path fill="#fff0b9" d={`M${x-18} 88h11v15h-11zM${x-2} 88h11v15h-11zM${x+14} 88h11v15h-11z`}/></g>)}
-  </svg>;
-}

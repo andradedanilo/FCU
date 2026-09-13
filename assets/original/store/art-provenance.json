@@ -2,7 +2,7 @@
   "tool": "Built-in image_gen",
   "date": "2026-09-13",
   "prompt": "Use case: ads-marketing. Create original draft Steam header capsule artwork for the offline football management game Football Club Universe (FCU). Wide 920 by 430 pixel composition, no borders. Detailed classic 1995-style pixel-art illustration with deliberately visible crisp pixel clusters, layered limited-color shading and a grand packed football stadium at dusk. Foreground right: a thoughtful football manager in a dark navy suit, waist-up three-quarter rear view, holding a small tactics clipboard, watching the pitch; management rather than playable action football is the subject. Small blue-and-white and red-and-white footballers on the distant green pitch, no identifiable real players, club logos or sponsors. Left two thirds: extremely readable large warm-gold title 'FCU' with a small star, matching a restrained navy and gold retro football identity; directly below in two legible lines 'FOOTBALL CLUB' and 'UNIVERSE'. Only these words, no tagline, awards, buttons or release claims. Balanced navy dusk, green pitch and warm stadium lights, blue/white and red/white crowd flags. Pixel-art still illustration, not photorealistic, not 3D, not vector, no modern neon or lasers. Keep title and important composition comfortably inside all edges. Output one complete header capsule image.",
-  "status": "Unpublished draft master; final capsule sizing and owner art review pending",
+  "status": "Owner-approved title artwork; unpublished store master with final capsule sizing pending",
   "file": "header-master.png",
   "width": 1833,
   "height": 858,
@@ -11,5 +11,5 @@
     "height": 430
   },
   "sha256": "75898e694f74417c8f690921eeef9f8f3beb975ed5f4cd87e7684cc5fe8d8af3",
-  "usage": "Store key art only. Not a gameplay screenshot, in-game asset or replacement for the accepted match stills."
+  "usage": "Shared title-screen and store key art. Not a gameplay screenshot or replacement for the accepted match stills."
 }
