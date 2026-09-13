@@ -58,6 +58,6 @@ writeFileSync(`${output}/deep-ball-kick.json`, JSON.stringify({
   durationSeconds: duration,
   peakDbfs: -1.2,
   sha256: createHash('sha256').update(wav).digest('hex'),
-  status: 'Audition only; owner listening acceptance pending; not installed in match playback.'
+  status: 'Owner approved on 2026-09-13; preserved original; not yet installed in match playback.'
 }, null, 2) + '\n');
 console.log(`Created ${output}/deep-ball-kick.wav (${duration}s, ${rate} Hz, mono PCM16, -1.2 dBFS peak).`);
