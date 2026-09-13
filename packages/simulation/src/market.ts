@@ -12,19 +12,21 @@ export const activeOffer=(offer:Offer)=>['submitted','countered','accepted','rea
 export function askingPrice(state:Career,player:Player){return player.clubId===null?0:Math.round(marketValue(state,player)*(state.contracts[player.id]!.role==='starter'?1.2:1));}
 export function windowOpen(date:string){const md=date.slice(5);return md>='07-01'&&md<='08-31'||md>='01-01'&&md<='01-31';}
 export function nextWindow(date:string){const year=Number(date.slice(0,4)),md=date.slice(5);return md<'07-01'?`${year}-07-01`:`${year+1}-01-01`;}
-function ownership(state:Career,offer:Offer){return state.players.find(p=>p.id===offer.playerId)?.clubId===offer.sellerId&&state.contracts[offer.playerId]?.revision===offer.contractRevision;}
-function sellerNeeds(state:Career,offer:Offer){
+function ownership(state:Career,offer:Offer,player?:Player){return (player??state.players.find(p=>p.id===offer.playerId))?.clubId===offer.sellerId&&state.contracts[offer.playerId]?.revision===offer.contractRevision;}
+type SquadFacts={player:Player;occupied:number;seller:{size:number;keepers:number}|null};
+function sellerNeeds(state:Career,offer:Offer,facts?:SquadFacts){
  if(offer.sellerId===null)return false;
+ if(facts?.seller)return facts.seller.size-1<18||facts.seller.keepers-Number(facts.player.role==='GK')<2;
  const others=state.players.filter(p=>p.clubId===offer.sellerId&&p.id!==offer.playerId&&!p.academy);
  return others.length<18||others.filter(p=>p.role==='GK').length<2;
 }
-export function dealError(state:Career,offer:Offer,knownBudget?:ReturnType<typeof budgets>):FailureCode|null {
- if(state.personnel.players[offer.playerId]?.retired!==null||!ownership(state,offer)||state.loans.some(l=>l.playerId===offer.playerId&&l.status==='active'))return 'OFFER_CHANGED';
- if(sellerNeeds(state,offer))return 'SQUAD_NEED';
+export function dealError(state:Career,offer:Offer,knownBudget?:ReturnType<typeof budgets>,facts?:SquadFacts):FailureCode|null {
+ if(state.personnel.players[offer.playerId]?.retired!==null||!ownership(state,offer,facts?.player)||state.loans.some(l=>l.playerId===offer.playerId&&l.status==='active'))return 'OFFER_CHANGED';
+ if(sellerNeeds(state,offer,facts))return 'SQUAD_NEED';
  if(state.match&&state.match.phase!=='finished')return 'INVALID_COMMAND';
- if(occupiedPlaces(state,offer.buyerId)>=30)return 'SQUAD_FULL';
+ if((facts?.occupied??occupiedPlaces(state,offer.buyerId))>=30)return 'SQUAD_FULL';
  const terms=offer.terms;if(!terms)return 'PLAYER_TERMS';
- const player=state.players.find(p=>p.id===offer.playerId)!;
+ const player=facts?.player??state.players.find(p=>p.id===offer.playerId)!;
  const roles={prospect:0,rotation:1,starter:2};
  if(offer.loanShare!==null&&(loanEnd(state.date)<=state.date||offer.sellerId===null||offer.fee!==0||terms.bonus!==0||terms.wage!==state.economy.wages[player.id]||state.contracts[player.id]!.ends!<loanEnd(state.date)))return 'PLAYER_TERMS';
  if(offer.loanShare===null&&(terms.wage<desiredTerms(state,player).wage||terms.bonus<4*terms.wage||roles[terms.role]<roles[state.contracts[player.id]!.role]))return 'PLAYER_TERMS';
@@ -101,6 +103,10 @@ export function processMarket(state:Career){
 }
 export function validateMarket(state:Career){
  const clubs=state.clubs.map(c=>c.id),ids=new Set<string>();
+ for(const record of state.marketArchive){
+  if(ids.has(record.id)||!state.players.some(p=>p.id===record.playerId)||!clubs.includes(record.buyerId)||(record.sellerId!==null&&!clubs.includes(record.sellerId))||record.buyerId===record.sellerId||!validDate(record.date)||record.date>=`${state.season}-07-01`)throw Error('INVALID_SAVE');
+  ids.add(record.id);
+ }
  for(const offer of state.offers){
   if(ids.has(offer.id)||!state.players.some(p=>p.id===offer.playerId)||!clubs.includes(offer.buyerId)||(offer.sellerId!==null&&!clubs.includes(offer.sellerId))||offer.sellerId===offer.buyerId||[offer.date,offer.responseDate,offer.expires,...offer.activation?[offer.activation]:[]].some(d=>!validDate(d))||offer.date>state.date||offer.responseDate<=offer.date||offer.expires<=offer.date||(offer.sellerId===null&&offer.fee!==0))throw Error('INVALID_SAVE');
   if(activeOffer(offer)&&(!ownership(state,offer)||(offer.status!=='queued'&&offer.expires<=state.date)))throw Error('INVALID_SAVE');
@@ -113,4 +119,9 @@ export function validateMarket(state:Career){
   if(offer.loanShare!==null&&(offer.sellerId===null||offer.fee!==0||(offer.status==='completed'&&!state.loans.some(l=>l.id===offer.id))))throw Error('INVALID_SAVE');
   ids.add(offer.id);
  }
+}
+export function archiveMarket(state:Career){
+ for(const offer of state.offers)if(offer.status==='completed'&&offer.loanShare===null)state.marketArchive.push({id:offer.id,playerId:offer.playerId,buyerId:offer.buyerId,sellerId:offer.sellerId,date:offer.date,fee:offer.fee,wage:offer.terms!.wage});
+ // Loan records keep their originating offers; unsuccessful old negotiations have no financial effect.
+ state.offers=state.offers.filter(o=>o.loanShare!==null&&o.status==='completed');
 }

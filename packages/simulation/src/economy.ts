@@ -55,10 +55,20 @@ export function monday(date:string){
 }
 export function settleDay(state:Pick<Career,'economy'|'players'|'loans'>,date:string){
  const weekly=monday(date),monthly=date.endsWith('-01');if(!weekly&&!monthly)return;
+ // Calculate the world's payroll once; loan shares still sum to the original wage.
+ const payroll=new Map<ClubId,number>();
+ if(weekly){
+  const loans=new Map(state.loans.filter(l=>l.status==='active').map(l=>[l.playerId,l]));
+  const add=(club:ClubId,amount:number)=>payroll.set(club,(payroll.get(club)??0)+amount);
+  for(const player of state.players){const wage=state.economy.wages[player.id]!,loan=loans.get(player.id);
+   if(loan){const share=Math.floor(wage*loan.share/100);add(loan.parent,wage-share);add(loan.borrower,share);}
+   else if(player.clubId)add(player.clubId,wage);
+  }
+ }
  const batch={...state.economy,ledger:[] as LedgerEntry[]};
  for(const club of state.economy.clubs){
   if(monthly)external(batch,club.clubId,date,'sponsor',Math.floor(club.sponsorship/12)+(date.slice(5,7)==='06'?club.sponsorship%12:0));
-  if(weekly){external(batch,club.clubId,date,'wages',-commitments(state,club.clubId));external(batch,club.clubId,date,'overhead',-club.overhead);}
+  if(weekly){external(batch,club.clubId,date,'wages',-(payroll.get(club.clubId)??0));external(batch,club.clubId,date,'overhead',-club.overhead);}
  }
  const existing=new Set(state.economy.ledger.map(e=>e.id));
  state.economy.ledger.push(...batch.ledger.filter(e=>!existing.has(e.id)));

@@ -80,7 +80,7 @@ export function dreamCommand(input:Dream,request:Exclude<DreamRequest,{type:'New
 }
 export function validateDream(input:unknown):Dream{
  const state=dreamSchema.parse(input),g=state.game;
- if(g.world.kind!=='exhibition'||g.clubs.length!==8||g.cups.length||g.history.length||g.offers.length||g.loans.length||g.economy.ledger.length)throw Error('INVALID_SAVE');
+ if(g.world.kind!=='exhibition'||g.clubs.length!==8||g.cups.length||g.history.length||g.marketArchive.length||g.offers.length||g.loans.length||g.economy.ledger.length)throw Error('INVALID_SAVE');
  validateCollection(state.collection,rewardPool(state));validateMatchState(g);
  const owned=g.players.filter(p=>p.clubId===g.clubId).map(p=>state.instances[p.id]);
  if(new Set(owned).size!==owned.length||owned.length!==state.collection.unlocked.length||owned.some(id=>!id||!state.collection.unlocked.includes(id)))throw Error('INVALID_SAVE');
