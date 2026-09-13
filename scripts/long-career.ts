@@ -21,11 +21,11 @@ const seedInput:unknown=workerData;
 const seeds=isMainThread?[]:typeof seedInput==='number'&&[2026,2027,2028].includes(seedInput)?[seedInput]:[];
 for(const seed of seeds){
  let s=createCareer(`00000000-0000-4000-8000-${seed.toString().padStart(12,'0')}`,seed,'club-01' as ClubId,'countries');
- let sequence=0,goals=0,games=0,managedGames=0,managedCards=0,managedInjuries=0;
+ let sequence=0,goals=0,games=0,managedGames=0,managedCards=0,managedInjuries=0,managedTrainingInjuries=0,managedForfeits=0;
  const act=(action:Action<Command>)=>{
   if(performance.now()-started>200000)throw Error('LONG_CAREER_BUDGET');
   const result=applyCommand(s,{...action,careerId:s.careerId,expectedRevision:s.revision,commandId:`00000000-0000-4000-8000-${(++sequence).toString().padStart(12,'0')}`});
-  if(!result.ok)throw Error(`${seed} ${s.season} ${s.date} ${action.type} ${result.error}`);s=result.value;
+  if(!result.ok)throw Error(`${seed} ${s.season} ${s.date} ${action.type} ${result.error}`);if(action.type==='AdvanceCalendar')managedTrainingInjuries+=result.value.players.filter(p=>p.clubId===s.clubId&&p.injuryUntil&&p.injuryUntil>s.date&&p.injuryUntil!==s.players.find(old=>old.id===p.id)?.injuryUntil).length;s=result.value;
  };
  const job=()=>{if(s.board.status==='dismissed'){const clubId=s.board.vacancies[0];if(!clubId)throw Error('NO_CAREER_JOB');act({type:'AcceptJob',clubId});}};
  for(let year=0;year<10;year++){
@@ -35,13 +35,13 @@ for(const seed of seeds){
    const lineup=autoPick(selectionPlayers(s),s.clubId,s.tactics.formation,s.date);
    if(lineup.length<7)act({type:'ForfeitMatch'});
    else {act({type:'SelectLineup',lineup});act({type:'StartMatch'});while(s.match!.phase!=='finished'){if(s.match!.pendingDismissal||s.match!.pendingInjuries.length)act({type:'AcknowledgeMatch'});act({type:'AdvanceMatch',minutes:90});}}
-   if(s.match){managedGames++;managedCards+=s.match.events.filter(e=>e.type==='yellow'||e.type==='red'||e.type==='secondYellow').length;managedInjuries+=s.match.injuries.length;}
+   if(s.match){managedGames++;managedForfeits+=Number(s.match.forfeit!==null);managedCards+=s.match.events.filter(e=>e.type==='yellow'||e.type==='red'||e.type==='secondYellow').length;managedInjuries+=s.match.injuries.length;}
    job();
   }
   while(s.date<seasonEnd(s.season)){act({type:'AdvanceCalendar',target:'event'});job();}
   validateCareer(s);games+=s.fixtures.length;goals+=s.fixtures.reduce((n,f)=>n+(f.score?.[0]??0)+(f.score?.[1]??0),0);
   act({type:'CloseSeason'});job();validateCareer(s);
   const balances=s.clubs.map(c=>cash(s.economy,c.id)),wages=Object.values(s.economy.wages).sort((a,b)=>a-b);balances.sort((a,b)=>a-b);
-  parentPort!.postMessage({seed,seasons:year+1,goalsPerMatch:goals/games,managedGames,managedCardsPerMatch:managedCards/managedGames,managedInjuriesPerMatch:managedInjuries/managedGames,population:s.players.length,retired:Object.values(s.personnel.players).filter(p=>p.retired!==null).length,injured:s.players.filter(p=>p.injuryUntil&&p.injuryUntil>s.date).length,wageMedian:wages[Math.floor(wages.length/2)],cashMedian:balances[Math.floor(balances.length/2)],wageMin:Math.min(...wages),wageMax:Math.max(...wages),cashMin:Math.min(...balances),cashMax:Math.max(...balances),memoryMB:Math.round(process.memoryUsage().heapUsed/1048576),elapsedSeconds:(performance.now()-started)/1000});
+  parentPort!.postMessage({seed,seasons:year+1,goalsPerMatch:goals/games,managedGames,managedForfeits,managedTrainingInjuries,managedCardsPerMatch:managedCards/managedGames,managedInjuriesPerMatch:managedInjuries/managedGames,population:s.players.length,retired:Object.values(s.personnel.players).filter(p=>p.retired!==null).length,injured:s.players.filter(p=>p.injuryUntil&&p.injuryUntil>s.date).length,wageMedian:wages[Math.floor(wages.length/2)],cashMedian:balances[Math.floor(balances.length/2)],wageMin:Math.min(...wages),wageMax:Math.max(...wages),cashMin:Math.min(...balances),cashMax:Math.max(...balances),memoryMB:Math.round(process.memoryUsage().heapUsed/1048576),elapsedSeconds:(performance.now()-started)/1000});
  }
 }

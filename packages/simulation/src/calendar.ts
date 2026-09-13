@@ -1,5 +1,5 @@
 import {boardDay} from './board.ts';
-import {personnelDay} from './personnel.ts';
+import {personnelDay,trainingInjuries} from './personnel.ts';
 import {completeFacilities} from './facilities.ts';
 import {seasonEnd,nextManagedFixture} from './competition.ts';
 import {nextLoanDate,returnLoans} from './loans.ts';
@@ -23,7 +23,7 @@ export function advanceCalendar(state:Career,target:'day'|'event',simulate:(stat
   const facilityComplete=completeFacilities(state);personnelDay(state);
   state.players=state.players.map(p=>({...p,condition:Math.min(100000,p.condition+(p.injuryUntil&&p.injuryUntil>state.date?6000:rules.recovery[p.clubId===state.clubId?state.training:'balanced'])+(p.clubId?state.facilities[p.clubId]!.recovery*1000:0))}));
   const returned=returnLoans(state);if(state.date===seasonEnd(state.season))for(const offer of state.offers)if(['submitted','countered','accepted','ready','queued'].includes(offer.status)){offer.status='expired';offer.activation=null;}settleDay(state,state.date);boardDay(state);
-  const report=finishScouting(state),market=processMarket(state);recruit(state);simulate(state);if(report||market||returned||facilityComplete||state.board.status!=='employed')break;
+  const report=finishScouting(state),market=processMarket(state);recruit(state);const injured=trainingInjuries(state);simulate(state);if(report||market||returned||facilityComplete||injured||state.board.status!=='employed')break;
  }
  return null;
 }

@@ -39,6 +39,25 @@ export function personnelDay(state:Career){
     person.starts=0;person.eligible=0;
   }
 }
+export function trainingInjuries(state:Career):boolean{
+  const matchClubs=new Set(state.fixtures.filter(f=>f.date===state.date).flatMap(f=>[f.home,f.away]));
+  let rng=stream(state.seed,`training-injuries/${state.date}`),managed=false;
+  const roll=()=>{let value;[rng,value]=draw(rng);return value%10000;};
+  const players=state.players.filter(p=>p.clubId&&!matchClubs.has(p.clubId)&&state.personnel.players[p.id]!.retired===null&&(!p.injuryUntil||p.injuryUntil<=state.date)).sort((a,b)=>a.id<b.id?-1:1);
+  for(const player of players){
+    const chance=player.clubId===state.clubId?{light:2,balanced:4,intense:8}[state.training]:4;
+    if(roll()>=chance)continue;
+    const severity=roll(),low=severity<7000?3:severity<9500?14:56,high=severity<7000?7:severity<9500?28:112;
+    player.injuryUntil=addDays(state.date,low+Math.floor(roll()*(high-low+1)/10000));
+    managed ||= player.clubId===state.clubId;
+  }
+  return managed;
+}
+export function academyReview(state:Career){
+  const end=`${state.season+1}-06-30`,academy=state.players.filter(p=>p.clubId===state.clubId&&p.academy);
+  const expiring=state.date>=`${state.season+1}-06-01`?academy.filter(p=>state.contracts[p.id]!.ends!==null&&state.contracts[p.id]!.ends!<=end):[];
+  return {date:end,expiring,overflow:state.date>=`${state.season+1}-06-01`?Math.max(0,academy.length-expiring.length+4-8):0};
+}
 export function annualDevelopment(state:Career){
   state.personnel.reports=[];
   for(const player of [...state.players].sort((a,b)=>a.id.localeCompare(b.id))){
